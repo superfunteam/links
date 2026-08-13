@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Driving Range",
+    "holes": [
+      { "seed": "CAT", "words": ["CRAB","APPLE","TREE"],          "links": ["crab apple","apple tree"] },
+      { "seed": "FAT", "words": ["FRESH","AIR","TIME"],           "links": ["fresh air","air time"] },
+      { "seed": "FAR", "words": ["FIRE","ARM","REST"],            "links": ["fire arm","arm rest"] }
+    ]
+  },
+  {
+    "name": "Tee Time",
+    "holes": [
+      { "seed": "FLY", "words": ["FLASH","LIGHT","YEAR"],         "links": ["flash light","light year"] },
+      { "seed": "OFF", "words": ["OPEN","FIRE","FLY"],            "links": ["open fire","fire fly"] },
+      { "seed": "TWO", "words": ["TEAM","WORK","OUT"],            "links": ["team work","work out"] }
+    ]
+  },
+  {
+    "name": "The Turn",
+    "holes": [
+      { "seed": "POP", "words": ["PUSH","OVER","PASS"],           "links": ["push over","over pass"] },
+      { "seed": "DOG", "words": ["DROP","OUT","GOING"],           "links": ["drop out","out going"] },
+      { "seed": "SIT", "words": ["SIGN","IN","TAKE"],             "links": ["sign in","in take"] }
+    ]
+  },
+  {
+    "name": "Short Grass",
+    "holes": [
+      { "seed": "MUD", "words": ["MAKE","UP","DATE"],             "links": ["make up","up date"] },
+      { "seed": "DID", "words": ["DRIVE","IN","DOOR"],            "links": ["drive in","in door"] },
+      { "seed": "BUS", "words": ["BACK","UP","SET"],              "links": ["back up","up set"] }
+    ]
+  },
+  {
+    "name": "The Fairway",
+    "holes": [
+      { "seed": "SOFT", "words": ["SNAKE","OIL","FIELD","TRIP"],  "links": ["snake oil","oil field","field trip"] },
+      { "seed": "BLIP", "words": ["BACK","LOG","IN","PUT"],       "links": ["back log","log in","in put"] },
+      { "seed": "SPUR", "words": ["SAFETY","PIN","UP","RIGHT"],   "links": ["safety pin","pin up","up right"] }
+    ]
+  },
+  {
+    "name": "The Dogleg",
+    "holes": [
+      { "seed": "SHUT", "words": ["STRONG","HOLD","UP","TOWN"],   "links": ["strong hold","hold up","up town"] },
+      { "seed": "BOLT", "words": ["BOIL","OVER","LAP","TOP"],     "links": ["boil over","over lap","lap top"] },
+      { "seed": "FORT", "words": ["FACE","OFF","ROAD","TRIP"],    "links": ["face off","off road","road trip"] }
+    ]
+  },
+  {
+    "name": "Water Hazard",
+    "holes": [
+      { "seed": "PLUG", "words": ["PIPE","LINE","UP","GRADE"],    "links": ["pipe line","line up","up grade"] },
+      { "seed": "LONG", "words": ["LEFT","OVER","NIGHT","GOWN"],  "links": ["left over","over night","night gown"] },
+      { "seed": "HOST", "words": ["HANG","OUT","SIDE","TRACK"],   "links": ["hang out","out side","side track"] }
+    ]
+  },
+  {
+    "name": "The Bunker",
+    "holes": [
+      { "seed": "SHOP", "words": ["SHORT","HAND","OUT","POST"],   "links": ["short hand","hand out","out post"] },
+      { "seed": "SPOT", "words": ["SMALL","PRINT","OUT","TAKE"],  "links": ["small print","print out","out take"] },
+      { "seed": "DUSK", "words": ["DRESS","UP","SIDE","KICK"],    "links": ["dress up","up side","side kick"] }
+    ]
+  },
+  {
+    "name": "The Back Nine",
+    "holes": [
+      { "seed": "COLOR", "words": ["CROSS","OVER","LOOK","OUT","RIGHT"], "links": ["cross over","over look","look out","out right"] },
+      { "seed": "FLOSS", "words": ["FORK","LIFT","OFF","SIDE","SHOW"],   "links": ["fork lift","lift off","off side","side show"] },
+      { "seed": "SCOLD", "words": ["SHORT","CUT","OUT","LET","DOWN"],    "links": ["short cut","cut out","out let","let down"] }
+    ]
+  },
+  {
+    "name": "Championship",
+    "holes": [
+      { "seed": "MAMBO", "words": ["MID","AIR","MAIL","BOX","OFFICE"],       "links": ["mid air","air mail","mail box","box office"] },
+      { "seed": "PROWL", "words": ["PAY","ROLL","OVER","WEIGHT","LIFTER"],   "links": ["pay roll","roll over","over weight","weight lifter"] },
+      { "seed": "MOTOR", "words": ["MAKE","OVER","TIME","OUT","RAGE"],       "links": ["make over","over time","time out","out rage"] }
+    ]
+  }
+]
