@@ -110,16 +110,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 
 /* ─────────────────────────────  board  ───────────────────────────── */
-.play-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 0 4px}
-.seedbar{text-align:center;margin-bottom:16px}
-.seedbar .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:7px}
-.seedword{display:flex;justify-content:center;gap:6px}
-.seedword b{
-  font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:26px;
-  width:36px;height:40px;display:grid;place-items:center;border-radius:10px;
-  background:var(--ink);color:var(--paper);animation:drop .45s var(--spring) backwards
-}
-.seedword b.done{background:var(--green)}
+/* Play is a fixed-height column: header / board / keyboard. Because the game
+   ships its own keyboard, no OS keyboard ever opens and the layout never shifts. */
+#s-play.on{height:100dvh;max-height:100dvh}
+.play-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:6px 0}
 
 .board{display:grid;gap:9px;justify-items:start}
 .row{display:flex;align-items:center;gap:9px;width:100%;opacity:.34;transition:opacity .3s var(--ease)}
@@ -162,6 +156,32 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .linkhint.on{opacity:1}
 
+/* ─────────────────────────────  keyboard  ───────────────────────────── */
+.tray{flex:none;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+.buybar{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  border:2px solid var(--line-2);background:var(--card);border-radius:12px;
+  padding:9px 12px;margin-bottom:9px;box-shadow:0 3px 0 var(--line-2);
+  font-weight:700;font-size:14.5px;transition:transform .13s var(--ease),box-shadow .13s var(--ease)
+}
+.buybar b{font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.03em}
+.buybar:active{transform:translateY(3px);box-shadow:none}
+.buybar:disabled{opacity:.4;pointer-events:none}
+.kb{display:grid;gap:6px;touch-action:manipulation}
+.kb-row{display:flex;gap:5px;justify-content:center}
+.key{
+  flex:1 1 0;min-width:0;height:46px;border-radius:9px;
+  border:2px solid var(--line-2);background:var(--card);box-shadow:0 3px 0 var(--line-2);
+  font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:16px;
+  display:grid;place-items:center;transition:transform .1s var(--ease),box-shadow .1s var(--ease),background .1s
+}
+.key:active,.key.hit{transform:translateY(3px);box-shadow:none;background:#EFEDE7}
+.key.wide{flex:1.6 1 0}
+.key.go{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:0 3px 0 #000;font-size:13px}
+.key.go:active,.key.go.hit{background:#000}
+.key svg{width:20px;height:20px}
+@media (max-height:700px){ .key{height:40px} .board{gap:6px} }
+
 /* ─────────────────────────────  actions  ───────────────────────────── */
 .actions{display:flex;gap:9px;padding:16px 0 max(20px,env(safe-area-inset-bottom))}
 .btn{
@@ -174,7 +194,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn.ghost:active{box-shadow:none}
 .btn:disabled{opacity:.4;pointer-events:none}
 .btn small{display:block;font-size:11px;font-weight:600;opacity:.65;letter-spacing:.03em;margin-top:1px}
-#entry{position:absolute;opacity:0;pointer-events:none;height:0;width:0;border:0}
 
 /* ─────────────────────────────  scorecards  ───────────────────────────── */
 .sheet{
@@ -285,19 +304,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="play-body">
-      <div class="seedbar">
-        <div class="lab">Seed</div>
-        <div class="seedword flex" id="p-seed"></div>
-      </div>
       <div class="board" id="board"></div>
       <div class="linkhint" id="p-hint"></div>
     </div>
 
-    <div class="actions">
-      <button class="btn ghost" id="buy">Buy a letter<small>+1 stroke</small></button>
-      <button class="btn" id="submit">Submit<small>+1 stroke</small></button>
+    <div class="tray">
+      <button class="buybar" id="buy"><span>Buy a letter</span><b>+1 stroke</b></button>
+      <div class="kb" id="kb"></div>
     </div>
-    <input id="entry" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-label="Type your answer">
   </section>
 </div>
 
@@ -309,7 +323,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* ═══════════════════════════════════════════════════════════════
    PUZZLE DATA  (base64 so a casual view-source doesn't spoil it)
    ═══════════════════════════════════════════════════════════════ */
-const PUZZLE_B64 = "W3sibmFtZSI6IkRyaXZpbmcgUmFuZ2UiLCJob2xlcyI6W3sic2VlZCI6IkNBVCIsIndvcmRzIjpbIkNSQUIiLCJBUFBMRSIsIlRSRUUiXSwibGlua3MiOlsiY3JhYiBhcHBsZSIsImFwcGxlIHRyZWUiXX0seyJzZWVkIjoiRkFUIiwid29yZHMiOlsiRlJFU0giLCJBSVIiLCJUSU1FIl0sImxpbmtzIjpbImZyZXNoIGFpciIsImFpciB0aW1lIl19LHsic2VlZCI6IkZBUiIsIndvcmRzIjpbIkZJUkUiLCJBUk0iLCJSRVNUIl0sImxpbmtzIjpbImZpcmUgYXJtIiwiYXJtIHJlc3QiXX1dfSx7Im5hbWUiOiJUZWUgVGltZSIsImhvbGVzIjpbeyJzZWVkIjoiRkxZIiwid29yZHMiOlsiRkxBU0giLCJMSUdIVCIsIllFQVIiXSwibGlua3MiOlsiZmxhc2ggbGlnaHQiLCJsaWdodCB5ZWFyIl19LHsic2VlZCI6Ik9GRiIsIndvcmRzIjpbIk9QRU4iLCJGSVJFIiwiRkxZIl0sImxpbmtzIjpbIm9wZW4gZmlyZSIsImZpcmUgZmx5Il19LHsic2VlZCI6IlRXTyIsIndvcmRzIjpbIlRFQU0iLCJXT1JLIiwiT1VUIl0sImxpbmtzIjpbInRlYW0gd29yayIsIndvcmsgb3V0Il19XX0seyJuYW1lIjoiVGhlIFR1cm4iLCJob2xlcyI6W3sic2VlZCI6IlBPUCIsIndvcmRzIjpbIlBVU0giLCJPVkVSIiwiUEFTUyJdLCJsaW5rcyI6WyJwdXNoIG92ZXIiLCJvdmVyIHBhc3MiXX0seyJzZWVkIjoiRE9HIiwid29yZHMiOlsiRFJPUCIsIk9VVCIsIkdPSU5HIl0sImxpbmtzIjpbImRyb3Agb3V0Iiwib3V0IGdvaW5nIl19LHsic2VlZCI6IlNJVCIsIndvcmRzIjpbIlNJR04iLCJJTiIsIlRBS0UiXSwibGlua3MiOlsic2lnbiBpbiIsImluIHRha2UiXX1dfSx7Im5hbWUiOiJTaG9ydCBHcmFzcyIsImhvbGVzIjpbeyJzZWVkIjoiTVVEIiwid29yZHMiOlsiTUFLRSIsIlVQIiwiREFURSJdLCJsaW5rcyI6WyJtYWtlIHVwIiwidXAgZGF0ZSJdfSx7InNlZWQiOiJESUQiLCJ3b3JkcyI6WyJEUklWRSIsIklOIiwiRE9PUiJdLCJsaW5rcyI6WyJkcml2ZSBpbiIsImluIGRvb3IiXX0seyJzZWVkIjoiQlVTIiwid29yZHMiOlsiQkFDSyIsIlVQIiwiU0VUIl0sImxpbmtzIjpbImJhY2sgdXAiLCJ1cCBzZXQiXX1dfSx7Im5hbWUiOiJUaGUgRmFpcndheSIsImhvbGVzIjpbeyJzZWVkIjoiU09GVCIsIndvcmRzIjpbIlNOQUtFIiwiT0lMIiwiRklFTEQiLCJUUklQIl0sImxpbmtzIjpbInNuYWtlIG9pbCIsIm9pbCBmaWVsZCIsImZpZWxkIHRyaXAiXX0seyJzZWVkIjoiQkxJUCIsIndvcmRzIjpbIkJBQ0siLCJMT0ciLCJJTiIsIlBVVCJdLCJsaW5rcyI6WyJiYWNrIGxvZyIsImxvZyBpbiIsImluIHB1dCJdfSx7InNlZWQiOiJTUFVSIiwid29yZHMiOlsiU0FGRVRZIiwiUElOIiwiVVAiLCJSSUdIVCJdLCJsaW5rcyI6WyJzYWZldHkgcGluIiwicGluIHVwIiwidXAgcmlnaHQiXX1dfSx7Im5hbWUiOiJUaGUgRG9nbGVnIiwiaG9sZXMiOlt7InNlZWQiOiJTSFVUIiwid29yZHMiOlsiU1RST05HIiwiSE9MRCIsIlVQIiwiVE9XTiJdLCJsaW5rcyI6WyJzdHJvbmcgaG9sZCIsImhvbGQgdXAiLCJ1cCB0b3duIl19LHsic2VlZCI6IkJPTFQiLCJ3b3JkcyI6WyJCT0lMIiwiT1ZFUiIsIkxBUCIsIlRPUCJdLCJsaW5rcyI6WyJib2lsIG92ZXIiLCJvdmVyIGxhcCIsImxhcCB0b3AiXX0seyJzZWVkIjoiRk9SVCIsIndvcmRzIjpbIkZBQ0UiLCJPRkYiLCJST0FEIiwiVFJJUCJdLCJsaW5rcyI6WyJmYWNlIG9mZiIsIm9mZiByb2FkIiwicm9hZCB0cmlwIl19XX0seyJuYW1lIjoiV2F0ZXIgSGF6YXJkIiwiaG9sZXMiOlt7InNlZWQiOiJQTFVHIiwid29yZHMiOlsiUElQRSIsIkxJTkUiLCJVUCIsIkdSQURFIl0sImxpbmtzIjpbInBpcGUgbGluZSIsImxpbmUgdXAiLCJ1cCBncmFkZSJdfSx7InNlZWQiOiJMT05HIiwid29yZHMiOlsiTEVGVCIsIk9WRVIiLCJOSUdIVCIsIkdPV04iXSwibGlua3MiOlsibGVmdCBvdmVyIiwib3ZlciBuaWdodCIsIm5pZ2h0IGdvd24iXX0seyJzZWVkIjoiSE9TVCIsIndvcmRzIjpbIkhBTkciLCJPVVQiLCJTSURFIiwiVFJBQ0siXSwibGlua3MiOlsiaGFuZyBvdXQiLCJvdXQgc2lkZSIsInNpZGUgdHJhY2siXX1dfSx7Im5hbWUiOiJUaGUgQnVua2VyIiwiaG9sZXMiOlt7InNlZWQiOiJTSE9QIiwid29yZHMiOlsiU0hPUlQiLCJIQU5EIiwiT1VUIiwiUE9TVCJdLCJsaW5rcyI6WyJzaG9ydCBoYW5kIiwiaGFuZCBvdXQiLCJvdXQgcG9zdCJdfSx7InNlZWQiOiJTUE9UIiwid29yZHMiOlsiU01BTEwiLCJQUklOVCIsIk9VVCIsIlRBS0UiXSwibGlua3MiOlsic21hbGwgcHJpbnQiLCJwcmludCBvdXQiLCJvdXQgdGFrZSJdfSx7InNlZWQiOiJEVVNLIiwid29yZHMiOlsiRFJFU1MiLCJVUCIsIlNJREUiLCJLSUNLIl0sImxpbmtzIjpbImRyZXNzIHVwIiwidXAgc2lkZSIsInNpZGUga2ljayJdfV19LHsibmFtZSI6IlRoZSBCYWNrIE5pbmUiLCJob2xlcyI6W3sic2VlZCI6IkNPTE9SIiwid29yZHMiOlsiQ1JPU1MiLCJPVkVSIiwiTE9PSyIsIk9VVCIsIlJJR0hUIl0sImxpbmtzIjpbImNyb3NzIG92ZXIiLCJvdmVyIGxvb2siLCJsb29rIG91dCIsIm91dCByaWdodCJdfSx7InNlZWQiOiJGTE9TUyIsIndvcmRzIjpbIkZPUksiLCJMSUZUIiwiT0ZGIiwiU0lERSIsIlNIT1ciXSwibGlua3MiOlsiZm9yayBsaWZ0IiwibGlmdCBvZmYiLCJvZmYgc2lkZSIsInNpZGUgc2hvdyJdfSx7InNlZWQiOiJTQ09MRCIsIndvcmRzIjpbIlNIT1JUIiwiQ1VUIiwiT1VUIiwiTEVUIiwiRE9XTiJdLCJsaW5rcyI6WyJzaG9ydCBjdXQiLCJjdXQgb3V0Iiwib3V0IGxldCIsImxldCBkb3duIl19XX0seyJuYW1lIjoiQ2hhbXBpb25zaGlwIiwiaG9sZXMiOlt7InNlZWQiOiJNQU1CTyIsIndvcmRzIjpbIk1JRCIsIkFJUiIsIk1BSUwiLCJCT1giLCJPRkZJQ0UiXSwibGlua3MiOlsibWlkIGFpciIsImFpciBtYWlsIiwibWFpbCBib3giLCJib3ggb2ZmaWNlIl19LHsic2VlZCI6IlBST1dMIiwid29yZHMiOlsiUEFZIiwiUk9MTCIsIk9WRVIiLCJXRUlHSFQiLCJMSUZURVIiXSwibGlua3MiOlsicGF5IHJvbGwiLCJyb2xsIG92ZXIiLCJvdmVyIHdlaWdodCIsIndlaWdodCBsaWZ0ZXIiXX0seyJzZWVkIjoiTU9UT1IiLCJ3b3JkcyI6WyJNQUtFIiwiT1ZFUiIsIlRJTUUiLCJPVVQiLCJSQUdFIl0sImxpbmtzIjpbIm1ha2Ugb3ZlciIsIm92ZXIgdGltZSIsInRpbWUgb3V0Iiwib3V0IHJhZ2UiXX1dfV0=";
+const PUZZLE_B64 = "W3sibmFtZSI6IkJhYnkgU3RlcHMiLCJob2xlcyI6W3sic2VlZCI6IkNBVCIsIndvcmRzIjpbIkNSQUIiLCJBUFBMRSIsIlRSRUUiXSwibGlua3MiOlsiY3JhYiBhcHBsZSIsImFwcGxlIHRyZWUiXX0seyJzZWVkIjoiRkFUIiwid29yZHMiOlsiRlJFU0giLCJBSVIiLCJUSU1FIl0sImxpbmtzIjpbImZyZXNoIGFpciIsImFpciB0aW1lIl19LHsic2VlZCI6IkZBUiIsIndvcmRzIjpbIkZJUkUiLCJBUk0iLCJSRVNUIl0sImxpbmtzIjpbImZpcmUgYXJtIiwiYXJtIHJlc3QiXX1dfSx7Im5hbWUiOiJFYXN5IE1vbmV5IiwiaG9sZXMiOlt7InNlZWQiOiJGTFkiLCJ3b3JkcyI6WyJGTEFTSCIsIkxJR0hUIiwiWUVBUiJdLCJsaW5rcyI6WyJmbGFzaCBsaWdodCIsImxpZ2h0IHllYXIiXX0seyJzZWVkIjoiT0ZGIiwid29yZHMiOlsiT1BFTiIsIkZJUkUiLCJGTFkiXSwibGlua3MiOlsib3BlbiBmaXJlIiwiZmlyZSBmbHkiXX0seyJzZWVkIjoiVFdPIiwid29yZHMiOlsiVEVBTSIsIldPUksiLCJPVVQiXSwibGlua3MiOlsidGVhbSB3b3JrIiwid29yayBvdXQiXX1dfSx7Im5hbWUiOiJDaGFpbiBSZWFjdGlvbiIsImhvbGVzIjpbeyJzZWVkIjoiUE9QIiwid29yZHMiOlsiUFVTSCIsIk9WRVIiLCJQQVNTIl0sImxpbmtzIjpbInB1c2ggb3ZlciIsIm92ZXIgcGFzcyJdfSx7InNlZWQiOiJET0ciLCJ3b3JkcyI6WyJEUk9QIiwiT1VUIiwiR09JTkciXSwibGlua3MiOlsiZHJvcCBvdXQiLCJvdXQgZ29pbmciXX0seyJzZWVkIjoiU0lUIiwid29yZHMiOlsiU0lHTiIsIklOIiwiVEFLRSJdLCJsaW5rcyI6WyJzaWduIGluIiwiaW4gdGFrZSJdfV19LHsibmFtZSI6Ik1pc3NpbmcgTGlua3MiLCJob2xlcyI6W3sic2VlZCI6Ik1VRCIsIndvcmRzIjpbIk1BS0UiLCJVUCIsIkRBVEUiXSwibGlua3MiOlsibWFrZSB1cCIsInVwIGRhdGUiXX0seyJzZWVkIjoiRElEIiwid29yZHMiOlsiRFJJVkUiLCJJTiIsIkRPT1IiXSwibGlua3MiOlsiZHJpdmUgaW4iLCJpbiBkb29yIl19LHsic2VlZCI6IkJVUyIsIndvcmRzIjpbIkJBQ0siLCJVUCIsIlNFVCJdLCJsaW5rcyI6WyJiYWNrIHVwIiwidXAgc2V0Il19XX0seyJuYW1lIjoiTG9vc2UgRW5kcyIsImhvbGVzIjpbeyJzZWVkIjoiU09GVCIsIndvcmRzIjpbIlNOQUtFIiwiT0lMIiwiRklFTEQiLCJUUklQIl0sImxpbmtzIjpbInNuYWtlIG9pbCIsIm9pbCBmaWVsZCIsImZpZWxkIHRyaXAiXX0seyJzZWVkIjoiQkxJUCIsIndvcmRzIjpbIkJBQ0siLCJMT0ciLCJJTiIsIlBVVCJdLCJsaW5rcyI6WyJiYWNrIGxvZyIsImxvZyBpbiIsImluIHB1dCJdfSx7InNlZWQiOiJTUFVSIiwid29yZHMiOlsiU0FGRVRZIiwiUElOIiwiVVAiLCJSSUdIVCJdLCJsaW5rcyI6WyJzYWZldHkgcGluIiwicGluIHVwIiwidXAgcmlnaHQiXX1dfSx7Im5hbWUiOiJEb3VibGUgVHJvdWJsZSIsImhvbGVzIjpbeyJzZWVkIjoiU0hVVCIsIndvcmRzIjpbIlNUUk9ORyIsIkhPTEQiLCJVUCIsIlRPV04iXSwibGlua3MiOlsic3Ryb25nIGhvbGQiLCJob2xkIHVwIiwidXAgdG93biJdfSx7InNlZWQiOiJCT0xUIiwid29yZHMiOlsiQk9JTCIsIk9WRVIiLCJMQVAiLCJUT1AiXSwibGlua3MiOlsiYm9pbCBvdmVyIiwib3ZlciBsYXAiLCJsYXAgdG9wIl19LHsic2VlZCI6IkZPUlQiLCJ3b3JkcyI6WyJGQUNFIiwiT0ZGIiwiUk9BRCIsIlRSSVAiXSwibGlua3MiOlsiZmFjZSBvZmYiLCJvZmYgcm9hZCIsInJvYWQgdHJpcCJdfV19LHsibmFtZSI6IlRoZSBEZWVwIEVuZCIsImhvbGVzIjpbeyJzZWVkIjoiUExVRyIsIndvcmRzIjpbIlBJUEUiLCJMSU5FIiwiVVAiLCJHUkFERSJdLCJsaW5rcyI6WyJwaXBlIGxpbmUiLCJsaW5lIHVwIiwidXAgZ3JhZGUiXX0seyJzZWVkIjoiTE9ORyIsIndvcmRzIjpbIkxFRlQiLCJPVkVSIiwiTklHSFQiLCJHT1dOIl0sImxpbmtzIjpbImxlZnQgb3ZlciIsIm92ZXIgbmlnaHQiLCJuaWdodCBnb3duIl19LHsic2VlZCI6IkhPU1QiLCJ3b3JkcyI6WyJIQU5HIiwiT1VUIiwiU0lERSIsIlRSQUNLIl0sImxpbmtzIjpbImhhbmcgb3V0Iiwib3V0IHNpZGUiLCJzaWRlIHRyYWNrIl19XX0seyJuYW1lIjoiVG9uZ3VlIFR3aXN0ZXIiLCJob2xlcyI6W3sic2VlZCI6IlNIT1AiLCJ3b3JkcyI6WyJTSE9SVCIsIkhBTkQiLCJPVVQiLCJQT1NUIl0sImxpbmtzIjpbInNob3J0IGhhbmQiLCJoYW5kIG91dCIsIm91dCBwb3N0Il19LHsic2VlZCI6IlNQT1QiLCJ3b3JkcyI6WyJTTUFMTCIsIlBSSU5UIiwiT1VUIiwiVEFLRSJdLCJsaW5rcyI6WyJzbWFsbCBwcmludCIsInByaW50IG91dCIsIm91dCB0YWtlIl19LHsic2VlZCI6IkRVU0siLCJ3b3JkcyI6WyJEUkVTUyIsIlVQIiwiU0lERSIsIktJQ0siXSwibGlua3MiOlsiZHJlc3MgdXAiLCJ1cCBzaWRlIiwic2lkZSBraWNrIl19XX0seyJuYW1lIjoiQnJhaW4gRnJlZXplIiwiaG9sZXMiOlt7InNlZWQiOiJDT0xPUiIsIndvcmRzIjpbIkNST1NTIiwiT1ZFUiIsIkxPT0siLCJPVVQiLCJSSUdIVCJdLCJsaW5rcyI6WyJjcm9zcyBvdmVyIiwib3ZlciBsb29rIiwibG9vayBvdXQiLCJvdXQgcmlnaHQiXX0seyJzZWVkIjoiRkxPU1MiLCJ3b3JkcyI6WyJGT1JLIiwiTElGVCIsIk9GRiIsIlNJREUiLCJTSE9XIl0sImxpbmtzIjpbImZvcmsgbGlmdCIsImxpZnQgb2ZmIiwib2ZmIHNpZGUiLCJzaWRlIHNob3ciXX0seyJzZWVkIjoiU0NPTEQiLCJ3b3JkcyI6WyJTSE9SVCIsIkNVVCIsIk9VVCIsIkxFVCIsIkRPV04iXSwibGlua3MiOlsic2hvcnQgY3V0IiwiY3V0IG91dCIsIm91dCBsZXQiLCJsZXQgZG93biJdfV19LHsibmFtZSI6IkdyYW5kIEZpbmFsZSIsImhvbGVzIjpbeyJzZWVkIjoiTUFNQk8iLCJ3b3JkcyI6WyJNSUQiLCJBSVIiLCJNQUlMIiwiQk9YIiwiT0ZGSUNFIl0sImxpbmtzIjpbIm1pZCBhaXIiLCJhaXIgbWFpbCIsIm1haWwgYm94IiwiYm94IG9mZmljZSJdfSx7InNlZWQiOiJQUk9XTCIsIndvcmRzIjpbIlBBWSIsIlJPTEwiLCJPVkVSIiwiV0VJR0hUIiwiTElGVEVSIl0sImxpbmtzIjpbInBheSByb2xsIiwicm9sbCBvdmVyIiwib3ZlciB3ZWlnaHQiLCJ3ZWlnaHQgbGlmdGVyIl19LHsic2VlZCI6Ik1PVE9SIiwid29yZHMiOlsiTUFLRSIsIk9WRVIiLCJUSU1FIiwiT1VUIiwiUkFHRSJdLCJsaW5rcyI6WyJtYWtlIG92ZXIiLCJvdmVyIHRpbWUiLCJ0aW1lIG91dCIsIm91dCByYWdlIl19XX1d";
 const COURSES = JSON.parse(decodeURIComponent(escape(atob(PUZZLE_B64))));
 
 /* ═══════════════════════════════════════════════════════════════
@@ -428,12 +442,9 @@ function startHole(){
   const h = hole(), c = course();
   $('#p-course').textContent = c.name;
   $('#p-hole').textContent = `Hole ${S.hi+1} of ${c.holes.length} · Par ${par(h)}`;
-  // the first letter is already earned — its word is given
-  $('#p-seed').innerHTML = [...h.seed].map((l,i)=>`<b class="${i===0?'done':''}" style="animation-delay:${i*55}ms">${l}</b>`).join('');
   $('#p-hint').classList.remove('on');
   renderStrokes(false);
   renderBoard();
-  focusEntry();
 }
 function renderStrokes(bump){
   const n = $('#p-strokes'); n.querySelector('.v').textContent = S.strokes;
@@ -464,8 +475,6 @@ function renderBoard(){
   });
 }
 
-function focusEntry(){ const e=$('#entry'); e.value=''; try{ e.focus({preventScroll:true}); }catch(err){ e.focus(); } }
-$('#board').addEventListener('click', focusEntry);
 
 /* ── typing ── */
 function typeChar(ch){
@@ -481,6 +490,43 @@ function backspace(){
   if(S.typed === ''){ if(S.pre > 0){ S.pre--; Snd.del(); } return; }
   S.typed = S.typed.slice(0,-1); Snd.del(); renderBoard();
 }
+/* ── on-screen keyboard: the game owns its keys, so no OS keyboard ever
+      opens over the board and the layout stays put ── */
+const BKSP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-6 7 6 7h13z"/><path d="M15 9l-5 6M10 9l5 6"/></svg>`;
+const KB_ROWS = [
+  [..."QWERTYUIOP"].map(c=>({k:c})),
+  [..."ASDFGHJKL"].map(c=>({k:c})),
+  [{k:'ENTER', cls:'wide go'}, ...[..."ZXCVBNM"].map(c=>({k:c})), {k:'BKSP', cls:'wide', html:BKSP}]
+];
+(function buildKeyboard(){
+  const kb = $('#kb');
+  KB_ROWS.forEach(row=>{
+    const r = el('div','kb-row');
+    row.forEach(({k, cls, html})=>{
+      const b = el('button', 'key' + (cls?' '+cls:''), html ?? k);
+      b.dataset.k = k;
+      b.setAttribute('aria-label', k==='BKSP' ? 'Delete' : k);
+      b.addEventListener('click', ()=>{ Snd.boot(); tapKey(k); });
+      r.appendChild(b);
+    });
+    kb.appendChild(r);
+  });
+})();
+const sheetOpen = () => document.querySelector('.sheet.on') !== null;
+function tapKey(k){
+  // a finished hole leaves S.row past the last word, so keys must go dead
+  if(S.busy || sheetOpen() || S.row >= hole().words.length) return;
+  if(k==='ENTER') submit();
+  else if(k==='BKSP') backspace();
+  else typeChar(k);
+}
+// flash the matching on-screen key when a physical key is pressed
+function flashKey(k){
+  const b = $('#kb').querySelector(`[data-k="${k}"]`);
+  if(!b) return;
+  b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'), 110);
+}
+
 document.addEventListener('keydown', e=>{
   if(!$('#s-play').classList.contains('on') || S.busy) return;
   if($('#sheet-hole').classList.contains('on') || $('#sheet-course').classList.contains('on')){
@@ -488,29 +534,24 @@ document.addEventListener('keydown', e=>{
     return;
   }
   Snd.boot();
-  if(/^[a-zA-Z]$/.test(e.key)){ e.preventDefault(); typeChar(e.key.toUpperCase()); }
-  else if(e.key==='Backspace'){ e.preventDefault(); backspace(); }
-  else if(e.key==='Enter'){ e.preventDefault(); submit(); }
-});
-$('#entry').addEventListener('input', e=>{
-  const v = e.target.value; e.target.value='';
-  [...v].forEach(ch=>{ if(/[a-zA-Z]/.test(ch)) typeChar(ch.toUpperCase()); });
+  if(/^[a-zA-Z]$/.test(e.key)){ e.preventDefault(); const c=e.key.toUpperCase(); flashKey(c); typeChar(c); }
+  else if(e.key==='Backspace'){ e.preventDefault(); flashKey('BKSP'); backspace(); }
+  else if(e.key==='Enter'){ e.preventDefault(); flashKey('ENTER'); submit(); }
 });
 
 /* ── buy a letter ── */
 $('#buy').onclick = async ()=>{
-  if(S.busy) return; Snd.boot();
+  if(S.busy || sheetOpen() || S.row >= hole().words.length) return; Snd.boot();
   const w = answer();
   if(S.revealed >= w.length) return;
   S.strokes++; S.revealed++;
   // buying a letter keeps whatever they'd already typed past it
   S.typed = S.typed.slice(1); S.pre = Math.min(S.pre, S.revealed);
-  Snd.buy(); renderStrokes(true); renderBoard(); focusEntry();
+  Snd.buy(); renderStrokes(true); renderBoard();
   if(S.revealed >= w.length){ await wait(240); accept(true); }
 };
 
 /* ── submit ── */
-$('#submit').onclick = ()=>{ Snd.boot(); submit(); };
 function submit(){
   if(S.busy) return;
   const w = answer(), guess = norm(entryStr());
@@ -527,7 +568,7 @@ function nudge(){
 function reject(){
   const row = $('#board').children[S.row];
   row.classList.add('shake'); Snd.bonk();
-  setTimeout(()=>{ row.classList.remove('shake'); clearEntry(); renderBoard(); focusEntry(); }, 460);
+  setTimeout(()=>{ row.classList.remove('shake'); clearEntry(); renderBoard(); }, 460);
 }
 async function accept(bought){
   S.busy = true;
@@ -539,7 +580,6 @@ async function accept(bought){
     t.classList.add('pop'); t.style.animationDelay = `${k*45}ms`;
     setTimeout(()=>Snd.pop(k), k*45);
   });
-  $('#p-seed').children[idx]?.classList.add('done');
   const hint = $('#p-hint');
   hint.textContent = `${hole().words[idx-1]} ${w}`.toLowerCase();
   hint.classList.add('on');
@@ -548,7 +588,7 @@ async function accept(bought){
   await wait(300);
   S.row++; S.revealed=1; clearEntry(); S.busy=false;
   if(S.row >= hole().words.length){ endHole(); }
-  else { hint.classList.remove('on'); renderBoard(); focusEntry(); }
+  else { hint.classList.remove('on'); renderBoard(); }
 }
 
 $('#back').onclick = ()=>{ Snd.blip(); renderHome(); show('s-home'); };
@@ -578,11 +618,7 @@ async function endHole(){
         ${i>0?`<span class="cl">${h.words[i-1].toLowerCase()} ${w.toLowerCase()}</span>`:'<span class="cl">given</span>'}
       </div>`).join('')}</div>
     <div class="actions"><button class="btn" id="nexthole">${S.hi+1 < course().holes.length ? 'Next hole' : 'See scorecard'}</button></div>`;
-  $('#sheet-hole').classList.add('on');
-  await wait(120);
-  used - p <= -1 ? Snd.win(1) : used === p ? Snd.solved() : Snd.tick(0);
-  h.words.forEach((_,i)=> setTimeout(()=>Snd.tick(i), 300+i*110));
-  if(used - p <= -1) confetti(v.k==='e' ? 46 : 26);
+  // wire the button before any await, or it's dead while the card animates
   const nb = $('#nexthole');
   nb.onclick = ()=>{
     if(nb.disabled) return;              // a double-tap would otherwise skip a hole
@@ -591,6 +627,11 @@ async function endHole(){
     if(S.hi+1 < course().holes.length){ S.hi++; startHole(); }
     else endCourse();
   };
+  $('#sheet-hole').classList.add('on');
+  await wait(120);
+  used - p <= -1 ? Snd.win(1) : used === p ? Snd.solved() : Snd.tick(0);
+  h.words.forEach((_,i)=> setTimeout(()=>Snd.tick(i), 300+i*110));
+  if(used - p <= -1) confetti(v.k==='e' ? 46 : 26);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -627,14 +668,14 @@ async function endCourse(){
       <button class="btn ghost" id="again">Replay</button>
       <button class="btn" id="tocourses">Courses</button>
     </div>`;
+  const once = (btn, fn) => { btn.onclick = ()=>{ if(btn.disabled) return; btn.disabled = true; Snd.blip(); $('#sheet-course').classList.remove('on'); fn(); }; };
+  once($('#again'),     ()=> startCourse(S.ci));
+  once($('#tocourses'), ()=>{ renderHome(); show('s-home'); });
   $('#sheet-course').classList.add('on');
   c.holes.forEach((_,i)=> setTimeout(()=>Snd.tick(i*2), 400+i*300));
   await wait(400 + c.holes.length*300);
   d<=0 ? Snd.win(d<0?1:0) : Snd.sad();
   if(d<0) confetti(64);
-  const once = (btn, fn) => { btn.onclick = ()=>{ if(btn.disabled) return; btn.disabled = true; Snd.blip(); $('#sheet-course').classList.remove('on'); fn(); }; };
-  once($('#again'),     ()=> startCourse(S.ci));
-  once($('#tocourses'), ()=>{ renderHome(); show('s-home'); });
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -19,6 +19,11 @@ costs **1 stroke**. Every hole has a par (blanks + 1, or blanks + 2 for the long
 there's no fail state — you always finish the hole, you just pay for it. Ten courses, three
 holes each, 30 chains.
 
+The game draws its own keyboard and has no text input anywhere, so a phone's OS keyboard
+never opens over the board. The play screen is a fixed `100dvh` column — header, board,
+keyboard — and nothing moves while you type. A physical keyboard works too, and lights up
+the matching on-screen key.
+
 ## Running it
 
 It's one self-contained `index.html` with no build step and no dependencies — open it, or
