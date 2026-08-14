@@ -24,6 +24,14 @@ never opens over the board. The play screen is a fixed `100dvh` column — heade
 keyboard — and nothing moves while you type. A physical keyboard works too, and lights up
 the matching on-screen key.
 
+Every row shares one column grid sized to the hole's longest word, so tiles are a uniform
+size and each word's first letter stacks into a column. Read that column top to bottom and
+it spells the seed.
+
+**Master mode** (in settings) hides how many letters each word has. Unsolved rows show only
+what you've earned or typed, and the input doesn't stop at the answer's length — otherwise
+hitting the wall would tell you the length anyway.
+
 ## Running it
 
 It's one self-contained `index.html` with no build step and no dependencies — open it, or

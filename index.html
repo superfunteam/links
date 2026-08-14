@@ -97,17 +97,29 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .icon-btn:active{transform:translateY(2px);box-shadow:none}
 .icon-btn svg{width:18px;height:18px}
+/* icon buttons are fixed width and the middle flexes, so the title is truly centred */
 .top-mid{flex:1;text-align:center;min-width:0}
-.top-t{font-weight:700;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.top-s{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
-.strokes{
-  flex:none;min-width:64px;text-align:center;border:2px solid var(--line);background:var(--card);
-  border-radius:12px;padding:4px 8px;box-shadow:0 2px 0 var(--line-2)
+.top-t{font-weight:700;font-size:16.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-s{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+
+.strokerow{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 0 2px}
+.sr-lab,.sr-par{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.odo{
+  position:relative;display:block;overflow:hidden;height:38px;min-width:42px;
+  border:2px solid var(--line);background:var(--card);border-radius:11px;box-shadow:0 2px 0 var(--line-2)
 }
-.strokes .v{font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:20px;line-height:1.05;display:block}
-.strokes .l{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.strokes.bump .v{animation:bump .3s var(--spring)}
-@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.odo .d{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:22px
+}
+.odo .d.in{animation:rollIn .34s var(--spring)}
+.odo .d.out{animation:rollOut .3s var(--ease) forwards}
+@keyframes rollIn{from{transform:translateY(105%);opacity:0}to{transform:none;opacity:1}}
+@keyframes rollOut{from{transform:none;opacity:1}to{transform:translateY(-105%);opacity:0}}
+.odo.flash{animation:odoFlash .42s var(--ease)}
+@keyframes odoFlash{0%{border-color:var(--line);background:var(--card)}
+  35%{border-color:var(--gold);background:var(--gold-soft)}
+  100%{border-color:var(--line);background:var(--card)}}
 
 /* ─────────────────────────────  board  ───────────────────────────── */
 /* Play is a fixed-height column: header / board / keyboard. Because the game
@@ -115,21 +127,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #s-play.on{height:100dvh;max-height:100dvh}
 .play-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:6px 0}
 
-.board{display:grid;gap:9px;justify-items:start}
-.row{display:flex;align-items:center;gap:9px;width:100%;opacity:.34;transition:opacity .3s var(--ease)}
+/* Every row shares one column grid sized to the hole's longest word, so tiles are
+   a uniform size and each word's first letter stacks into a column — that column
+   spells the seed, which is the whole point of the puzzle. */
+.board{display:grid;gap:8px;justify-items:stretch;width:100%}
+.row{display:flex;align-items:center;width:100%;opacity:.34;transition:opacity .3s var(--ease)}
 .row.given,.row.solved,.row.active{opacity:1}
-.row.locked .tiles{filter:blur(.4px)}
-.chip{
-  font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:15px;flex:none;
-  width:30px;height:30px;display:grid;place-items:center;border-radius:9px;
-  background:var(--line);color:var(--muted);transition:background .25s,color .25s
-}
-.row.active .chip{background:var(--ink);color:var(--paper)}
-.row.solved .chip,.row.given .chip{background:var(--green);color:#fff}
 .tiles{
-  display:grid;gap:5px;flex:1;min-width:0;
-  grid-template-columns:repeat(var(--len),minmax(0,1fr));
-  max-width:calc(var(--len) * 46px + (var(--len) - 1) * 5px)
+  display:grid;gap:5px;margin:0 auto;justify-content:start;
+  grid-template-columns:repeat(var(--cols),minmax(0,1fr));
+  width:100%;max-width:calc(var(--cols) * 46px + (var(--cols) - 1) * 5px)
 }
 .tile{
   aspect-ratio:1/1;display:grid;place-items:center;border-radius:10px;
@@ -159,28 +166,59 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* ─────────────────────────────  keyboard  ───────────────────────────── */
 .tray{flex:none;padding-bottom:max(8px,env(safe-area-inset-bottom))}
 .buybar{
-  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
-  border:2px solid var(--line-2);background:var(--card);border-radius:12px;
-  padding:9px 12px;margin-bottom:9px;box-shadow:0 3px 0 var(--line-2);
-  font-weight:700;font-size:14.5px;transition:transform .13s var(--ease),box-shadow .13s var(--ease)
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  border:2px solid var(--line-2);background:var(--card);border-radius:14px;
+  padding:15px 14px;margin-bottom:20px;box-shadow:0 4px 0 var(--line-2);
+  font-weight:700;font-size:15.5px;transition:transform .13s var(--ease),box-shadow .13s var(--ease)
 }
-.buybar b{font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.03em}
-.buybar:active{transform:translateY(3px);box-shadow:none}
+.buybar .pen{
+  font-size:11px;font-weight:800;letter-spacing:.04em;
+  background:var(--red-soft);color:var(--red);border-radius:999px;padding:3px 9px
+}
+.buybar:active{transform:translateY(4px);box-shadow:none}
 .buybar:disabled{opacity:.4;pointer-events:none}
+
+/* 20-unit grid per row: every letter spans 2 so keys are identical across rows,
+   which a flex row can't guarantee when the rows hold different counts. */
 .kb{display:grid;gap:6px;touch-action:manipulation}
-.kb-row{display:flex;gap:5px;justify-content:center}
+.kb-row{display:grid;grid-template-columns:repeat(20,1fr);gap:5px}
 .key{
-  flex:1 1 0;min-width:0;height:46px;border-radius:9px;
+  grid-column:span 2;min-width:0;height:48px;border-radius:9px;
   border:2px solid var(--line-2);background:var(--card);box-shadow:0 3px 0 var(--line-2);
   font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:16px;
   display:grid;place-items:center;transition:transform .1s var(--ease),box-shadow .1s var(--ease),background .1s
 }
 .key:active,.key.hit{transform:translateY(3px);box-shadow:none;background:#EFEDE7}
-.key.wide{flex:1.6 1 0}
-.key.go{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:0 3px 0 #000;font-size:13px}
+.key.wide{grid-column:span 3}
+.kb-row .pad{grid-column:span 1}
+.key.go{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:0 3px 0 #000;font-size:12.5px}
 .key.go:active,.key.go.hit{background:#000}
+/* word is full — make the enter key impossible to miss */
+.key.go.ready{background:var(--green);border-color:var(--green);box-shadow:0 3px 0 var(--green-2);animation:readyPulse 1.15s var(--ease) infinite}
+@keyframes readyPulse{0%,100%{transform:none;filter:brightness(1)}50%{transform:translateY(-2px);filter:brightness(1.14)}}
 .key svg{width:20px;height:20px}
-@media (max-height:700px){ .key{height:40px} .board{gap:6px} }
+@media (max-height:730px){ .key{height:42px} .buybar{padding:12px;margin-bottom:14px} .board{gap:6px} }
+
+/* ─────────────────────────────  settings  ───────────────────────────── */
+.set-h{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:14px}
+.opt{
+  width:100%;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:10px;
+  background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:0 3px 0 var(--line-2)
+}
+.opt:active{transform:translateY(3px);box-shadow:none}
+.opt-b{flex:1;min-width:0}
+.opt-t{display:block;font-weight:700;font-size:16px}
+.opt-d{display:block;font-size:12.5px;color:var(--muted);font-weight:500;margin-top:2px}
+.sw{
+  flex:none;width:52px;height:31px;border-radius:999px;background:var(--line);
+  border:2px solid var(--line-2);position:relative;transition:background .2s,border-color .2s
+}
+.sw::after{
+  content:"";position:absolute;top:1.5px;left:2px;width:23px;height:23px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .22s var(--spring)
+}
+.opt.on .sw{background:var(--green);border-color:var(--green-2)}
+.opt.on .sw::after{transform:translateX(21px)}
 
 /* ─────────────────────────────  actions  ───────────────────────────── */
 .actions{display:flex;gap:9px;padding:16px 0 max(20px,env(safe-area-inset-bottom))}
@@ -293,14 +331,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   <section id="s-play" class="screen">
     <div class="top">
       <button class="icon-btn" id="back" aria-label="Back to courses">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       <div class="top-mid">
         <div class="top-t" id="p-course"></div>
         <div class="top-s" id="p-hole"></div>
       </div>
-      <button class="icon-btn" id="mute" aria-label="Toggle sound"></button>
-      <div class="strokes" id="p-strokes"><span class="v">0</span><span class="l">Strokes</span></div>
+      <button class="icon-btn" id="gear" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 004.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V2a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
+      </button>
+    </div>
+
+    <div class="strokerow">
+      <span class="sr-lab">Strokes</span>
+      <span class="odo" id="p-strokes"><span class="d">0</span></span>
+      <span class="sr-par" id="p-par"></span>
     </div>
 
     <div class="play-body">
@@ -309,13 +354,27 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="tray">
-      <button class="buybar" id="buy"><span>Buy a letter</span><b>+1 stroke</b></button>
+      <button class="buybar" id="buy">
+        <span>Buy a letter</span><b class="pen">+1 stroke</b>
+      </button>
       <div class="kb" id="kb"></div>
     </div>
   </section>
 </div>
 
 <!-- ══════════════ SHEETS ══════════════ -->
+<div class="sheet" id="sheet-set"><div class="sheet-in">
+  <h2 class="set-h">Settings</h2>
+  <button class="opt" id="opt-snd">
+    <span class="opt-b"><span class="opt-t">Sound</span><span class="opt-d">Blips, bonks and fanfares</span></span>
+    <span class="sw"></span>
+  </button>
+  <button class="opt" id="opt-master">
+    <span class="opt-b"><span class="opt-t">Master mode</span><span class="opt-d">Hide how many letters are in each word</span></span>
+    <span class="sw"></span>
+  </button>
+  <div class="actions"><button class="btn" id="set-done">Done</button></div>
+</div></div>
 <div class="sheet" id="sheet-hole"><div class="sheet-in" id="sheet-hole-in"></div></div>
 <div class="sheet" id="sheet-course"><div class="sheet-in" id="sheet-course-in"></div></div>
 
@@ -441,38 +500,70 @@ function startHole(){
   S.row=1; S.revealed=1; clearEntry(); S.busy=false;
   const h = hole(), c = course();
   $('#p-course').textContent = c.name;
-  $('#p-hole').textContent = `Hole ${S.hi+1} of ${c.holes.length} · Par ${par(h)}`;
+  $('#p-hole').textContent = `Hole ${S.hi+1} of ${c.holes.length}`;
+  $('#p-par').textContent = `Par ${par(h)}`;
   $('#p-hint').classList.remove('on');
   renderStrokes(false);
   renderBoard();
 }
 function renderStrokes(bump){
-  const n = $('#p-strokes'); n.querySelector('.v').textContent = S.strokes;
-  if(bump){ n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+  const n = $('#p-strokes'), cur = n.querySelector('.d:not(.out)');
+  if(cur && cur.textContent === String(S.strokes)) return;
+  if(!bump || !cur){ n.innerHTML = `<span class="d">${S.strokes}</span>`; return; }
+  cur.classList.add('out');
+  setTimeout(()=>cur.remove(), 320);
+  const nx = el('span','d in', String(S.strokes));
+  n.appendChild(nx);
+  setTimeout(()=>nx.classList.remove('in'), 360);
+  n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash');
 }
 
 function renderBoard(){
   const h = hole(), board = $('#board'); board.innerHTML='';
+  const visibleLen = (w,i) => {
+    const done = i < S.row || i===0;
+    if(done || !MASTER.on) return w.length;
+    return i===S.row ? entryStr().length + 1 : 1;
+  };
+  const cols = Math.max(...h.words.map(visibleLen));
+  board.style.setProperty('--cols', cols);
   h.words.forEach((w,i)=>{
     const state = i===0 ? 'given' : i < S.row ? 'solved' : i===S.row ? 'active' : 'locked';
     const row = el('div', `row ${state}`);
-    row.appendChild(el('span','chip flex', h.seed[i]));
-    const tiles = el('div','tiles'); tiles.style.setProperty('--len', w.length);
-    const shown = i < S.row || i===0 ? w : i===S.row ? entryStr() : '';
-    for(let k=0;k<w.length;k++){
+    const done = i < S.row || i===0;
+    const shown = done ? w : i===S.row ? entryStr() : h.seed[i];
+
+    // In master mode an unsolved row shows only what's been earned or typed,
+    // plus one empty slot — never the word's true length.
+    const len = (done || !MASTER.on) ? w.length
+              : i===S.row ? shown.length + 1
+              : 1;
+
+    const tiles = el('div','tiles');
+    for(let k=0;k<len;k++){
       const t = el('div','tile');
-      if(i===S.row){
+      if(done){ t.textContent = w[k]; }
+      else if(i===S.row){
         // index 0 is the free seed letter; gold is reserved for letters actually paid for
         if(k < S.revealed){ t.className = k===0 ? 'tile freebie' : 'tile bought'; t.textContent = w[k]; }
         else if(k < shown.length){ t.className='tile typed'; t.textContent = shown[k]; }
         else if(k === shown.length){ t.className='tile cursor'; }
-      } else if(i < S.row || i===0){
-        t.textContent = w[k];
+      } else if(k===0){
+        t.className='tile freebie'; t.textContent = h.seed[i];   // locked row: seed letter only
       }
       tiles.appendChild(t);
     }
     row.appendChild(tiles); board.appendChild(row);
   });
+  paintReady();
+}
+
+// light up ENTER once the word is full. Master mode can't reveal that, so it stays dark.
+function paintReady(){
+  const go = $('#kb')?.querySelector('[data-k="ENTER"]'); if(!go) return;
+  const full = !MASTER.on && S.row < hole().words.length && !S.busy &&
+               entryStr().length === answer().length;
+  go.classList.toggle('ready', !!full);
 }
 
 
@@ -481,13 +572,16 @@ function typeChar(ch){
   const w = answer();
   // Re-typing a letter that's already visible on the board is a no-op, so
   // typing "APPLE" and typing "PPLE" both land on APPLE.
-  if(S.typed === '' && S.pre < S.revealed && ch === w[S.pre]){ S.pre++; Snd.blip(); return; }
-  if(S.revealed + S.typed.length >= w.length) return;
+  if(S.typed === '' && S.pre < S.revealed && ch === w[S.pre]){ S.pre++; Snd.blip(); paintReady(); return; }
+  // In master mode the input must not stop at the answer's length, or the wall
+  // itself tells the player how long the word is.
+  const cap = MASTER.on ? 14 : w.length;
+  if(S.revealed + S.typed.length >= cap) return;
   S.typed += ch;
   Snd.blip(); renderBoard();
 }
 function backspace(){
-  if(S.typed === ''){ if(S.pre > 0){ S.pre--; Snd.del(); } return; }
+  if(S.typed === ''){ if(S.pre > 0){ S.pre--; Snd.del(); paintReady(); } return; }
   S.typed = S.typed.slice(0,-1); Snd.del(); renderBoard();
 }
 /* ── on-screen keyboard: the game owns its keys, so no OS keyboard ever
@@ -495,14 +589,15 @@ function backspace(){
 const BKSP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-6 7 6 7h13z"/><path d="M15 9l-5 6M10 9l5 6"/></svg>`;
 const KB_ROWS = [
   [..."QWERTYUIOP"].map(c=>({k:c})),
-  [..."ASDFGHJKL"].map(c=>({k:c})),
+  [{pad:1}, ...[..."ASDFGHJKL"].map(c=>({k:c})), {pad:1}],
   [{k:'ENTER', cls:'wide go'}, ...[..."ZXCVBNM"].map(c=>({k:c})), {k:'BKSP', cls:'wide', html:BKSP}]
 ];
 (function buildKeyboard(){
   const kb = $('#kb');
   KB_ROWS.forEach(row=>{
     const r = el('div','kb-row');
-    row.forEach(({k, cls, html})=>{
+    row.forEach(({k, cls, html, pad})=>{
+      if(pad){ r.appendChild(el('span','pad')); return; }
       const b = el('button', 'key' + (cls?' '+cls:''), html ?? k);
       b.dataset.k = k;
       b.setAttribute('aria-label', k==='BKSP' ? 'Delete' : k);
@@ -513,6 +608,11 @@ const KB_ROWS = [
   });
 })();
 const sheetOpen = () => document.querySelector('.sheet.on') !== null;
+// Master mode hides how many letters a word has, so the board can't be counted.
+const MASTER = {
+  on: JSON.parse(localStorage.getItem('links.master') ?? 'false'),
+  set(v){ this.on = v; localStorage.setItem('links.master', JSON.stringify(v)); }
+};
 function tapKey(k){
   // a finished hole leaves S.row past the last word, so keys must go dead
   if(S.busy || sheetOpen() || S.row >= hole().words.length) return;
@@ -592,11 +692,23 @@ async function accept(bought){
 }
 
 $('#back').onclick = ()=>{ Snd.blip(); renderHome(); show('s-home'); };
-function paintMute(){ $('#mute').innerHTML = Snd.on
-  ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M16 9a4 4 0 010 6"/><path d="M19 6.5a8 8 0 010 11"/></svg>`
-  : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>`; }
-$('#mute').onclick = ()=>{ Snd.on=!Snd.on; localStorage.setItem('links.snd',JSON.stringify(Snd.on)); paintMute(); if(Snd.on){Snd.boot();Snd.blip();} };
-paintMute();
+function paintSettings(){
+  $('#opt-snd').classList.toggle('on', Snd.on);
+  $('#opt-master').classList.toggle('on', MASTER.on);
+}
+$('#gear').onclick = ()=>{ Snd.boot(); Snd.blip(); paintSettings(); $('#sheet-set').classList.add('on'); };
+$('#set-done').onclick = ()=>{ Snd.blip(); $('#sheet-set').classList.remove('on'); };
+$('#sheet-set').addEventListener('click', e=>{ if(e.target.id==='sheet-set'){ $('#sheet-set').classList.remove('on'); } });
+$('#opt-snd').onclick = ()=>{
+  Snd.on = !Snd.on; localStorage.setItem('links.snd', JSON.stringify(Snd.on));
+  paintSettings(); if(Snd.on){ Snd.boot(); Snd.blip(); }
+};
+$('#opt-master').onclick = ()=>{
+  MASTER.set(!MASTER.on); Snd.blip(); paintSettings();
+  // redraw immediately so the change is visible behind the sheet
+  if($('#s-play').classList.contains('on') && S.row < hole().words.length) renderBoard();
+};
+paintSettings();
 
 /* ═══════════════════════════════════════════════════════════════
    END OF HOLE
