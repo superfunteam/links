@@ -32,6 +32,11 @@ it spells the seed.
 what you've earned or typed, and the input doesn't stop at the answer's length — otherwise
 hitting the wall would tell you the length anyway.
 
+Strokes shown in the header are **per hole** and reset at each tee; the scorecard adds them
+up. Finishing a course offers a share card — a Wordle-style emoji grid where each square is
+one word you filled in: 🟩 first guess, 🟨 needed another, 🟧 bought a letter, ⬛ bought the
+whole word. It never shows an answer.
+
 ## Running it
 
 It's one self-contained `index.html` with no build step and no dependencies — open it, or

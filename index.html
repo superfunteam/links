@@ -8,7 +8,7 @@
 <meta name="description" content="Every word links to the next. Play the chain, count your strokes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Flex:wght@400..1000&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Flex:wght@400..1000&family=Google+Sans+Code:wght@400..700&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⛳️</text></svg>">
 <style>
 /* ─────────────────────────────  tokens  ───────────────────────────── */
@@ -102,11 +102,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .top-t{font-weight:700;font-size:16.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-s{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
 
-.strokerow{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 0 2px}
-.sr-lab,.sr-par{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700}
+/* full-width bar, flush with the header's inner width */
+.strokebar{
+  display:flex;align-items:stretch;width:100%;margin:10px 0 2px;
+  border:2px solid var(--line);background:var(--card);border-radius:14px;
+  box-shadow:0 3px 0 var(--line-2);overflow:hidden
+}
+.sb-cell{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:9px 12px}
+.sb-div{width:2px;background:var(--line);flex:none}
+.sb-lab{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sb-val{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:22px;line-height:1}
 .odo{
-  position:relative;display:block;overflow:hidden;height:38px;min-width:42px;
-  border:2px solid var(--line);background:var(--card);border-radius:11px;box-shadow:0 2px 0 var(--line-2)
+  position:relative;display:block;overflow:hidden;height:28px;min-width:26px;border-radius:8px
 }
 .odo .d{
   position:absolute;inset:0;display:grid;place-items:center;
@@ -116,9 +123,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .odo .d.out{animation:rollOut .3s var(--ease) forwards}
 @keyframes rollIn{from{transform:translateY(105%);opacity:0}to{transform:none;opacity:1}}
 @keyframes rollOut{from{transform:none;opacity:1}to{transform:translateY(-105%);opacity:0}}
-.odo.flash{animation:odoFlash .42s var(--ease)}
+.strokebar.flash{animation:odoFlash .45s var(--ease)}
 @keyframes odoFlash{0%{border-color:var(--line);background:var(--card)}
-  35%{border-color:var(--gold);background:var(--gold-soft)}
+  30%{border-color:var(--gold);background:var(--gold-soft)}
   100%{border-color:var(--line);background:var(--card)}}
 
 /* ─────────────────────────────  board  ───────────────────────────── */
@@ -201,6 +208,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* ─────────────────────────────  settings  ───────────────────────────── */
 .set-h{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:14px}
+.share-prev{
+  font-family:"Google Sans Code",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:13.5px;line-height:1.62;white-space:pre-wrap;word-break:break-word;
+  background:var(--card);border:2px solid var(--line);border-radius:16px;
+  padding:16px 17px;box-shadow:0 3px 0 var(--line-2);margin-bottom:4px;
+  max-height:46vh;overflow-y:auto;user-select:text;-webkit-user-select:text
+}
+.actions.col{flex-direction:column}
+.actions.col .btn{width:100%}
+.btn.ok{background:var(--green);border-color:var(--green);box-shadow:0 4px 0 var(--green-2)}
 .opt{
   width:100%;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:10px;
   background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:0 3px 0 var(--line-2)
@@ -240,6 +257,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   align-items:flex-end;justify-content:center;padding:14px
 }
 .sheet.on{display:flex;animation:fade .28s var(--ease)}
+/* share and settings open on top of a scorecard, so they must outrank it —
+   equal z-index would let the later element in the DOM win */
+#sheet-share,#sheet-set{z-index:50}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet-in{
   width:100%;max-width:532px;background:var(--paper);border:2px solid var(--ink);
@@ -342,10 +362,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </button>
     </div>
 
-    <div class="strokerow">
-      <span class="sr-lab">Strokes</span>
-      <span class="odo" id="p-strokes"><span class="d">0</span></span>
-      <span class="sr-par" id="p-par"></span>
+    <div class="strokebar">
+      <span class="sb-cell"><span class="sb-lab">Strokes</span><span class="odo" id="p-strokes"><span class="d">0</span></span></span>
+      <span class="sb-div"></span>
+      <span class="sb-cell"><span class="sb-lab">Par</span><span class="sb-val flex" id="p-par">–</span></span>
     </div>
 
     <div class="play-body">
@@ -374,6 +394,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <span class="sw"></span>
   </button>
   <div class="actions"><button class="btn" id="set-done">Done</button></div>
+</div></div>
+<div class="sheet" id="sheet-share"><div class="sheet-in">
+  <h2 class="set-h">Share your round</h2>
+  <pre class="share-prev" id="share-prev"></pre>
+  <div class="actions col">
+    <button class="btn" id="share-copy">Copy to clipboard</button>
+    <button class="btn ghost" id="share-native" hidden>Share…</button>
+    <button class="btn ghost" id="share-back">Back to scorecard</button>
+  </div>
 </div></div>
 <div class="sheet" id="sheet-hole"><div class="sheet-in" id="sheet-hole-in"></div></div>
 <div class="sheet" id="sheet-course"><div class="sheet-in" id="sheet-course-in"></div></div>
@@ -455,7 +484,11 @@ const BEST = {
    ═══════════════════════════════════════════════════════════════ */
 // `typed` holds only what the player has entered past the revealed prefix.
 // `pre` counts prefix letters they re-typed out of habit, which we swallow.
-let S = { ci:0, hi:0, row:1, revealed:1, typed:'', pre:0, strokes:0, holeScores:[], busy:false };
+// `hs` is strokes on the CURRENT hole — the header shows this and it resets each
+// hole. `holeScores` accumulates finished holes; the course total is their sum.
+// `marks` records how each word was won, for the share card.
+let S = { ci:0, hi:0, row:1, revealed:1, typed:'', pre:0, hs:0, holeScores:[], marks:[], rowG:0, rowB:0, busy:false };
+let holeMarks = [];   // {g,b} per solved word on the hole in progress
 const entryStr = () => answer().slice(0, S.revealed) + S.typed;
 const clearEntry = () => { S.typed=''; S.pre=0; };
 const course = () => COURSES[S.ci];
@@ -493,11 +526,12 @@ function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.t
    PLAY
    ═══════════════════════════════════════════════════════════════ */
 function startCourse(i){
-  S.ci=i; S.hi=0; S.strokes=0; S.holeScores=[];
+  S.ci=i; S.hi=0; S.hs=0; S.holeScores=[]; S.marks=[];
   startHole(); show('s-play');
 }
 function startHole(){
   S.row=1; S.revealed=1; clearEntry(); S.busy=false;
+  S.hs=0; S.rowG=0; S.rowB=0; holeMarks = [];
   const h = hole(), c = course();
   $('#p-course').textContent = c.name;
   $('#p-hole').textContent = `Hole ${S.hi+1} of ${c.holes.length}`;
@@ -508,14 +542,15 @@ function startHole(){
 }
 function renderStrokes(bump){
   const n = $('#p-strokes'), cur = n.querySelector('.d:not(.out)');
-  if(cur && cur.textContent === String(S.strokes)) return;
-  if(!bump || !cur){ n.innerHTML = `<span class="d">${S.strokes}</span>`; return; }
+  if(cur && cur.textContent === String(S.hs)) return;
+  if(!bump || !cur){ n.innerHTML = `<span class="d">${S.hs}</span>`; return; }
   cur.classList.add('out');
   setTimeout(()=>cur.remove(), 320);
-  const nx = el('span','d in', String(S.strokes));
+  const nx = el('span','d in', String(S.hs));
   n.appendChild(nx);
   setTimeout(()=>nx.classList.remove('in'), 360);
-  n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash');
+  const bar = n.closest('.strokebar');
+  bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash');
 }
 
 function renderBoard(){
@@ -644,7 +679,7 @@ $('#buy').onclick = async ()=>{
   if(S.busy || sheetOpen() || S.row >= hole().words.length) return; Snd.boot();
   const w = answer();
   if(S.revealed >= w.length) return;
-  S.strokes++; S.revealed++;
+  S.hs++; S.rowB++; S.revealed++;
   // buying a letter keeps whatever they'd already typed past it
   S.typed = S.typed.slice(1); S.pre = Math.min(S.pre, S.revealed);
   Snd.buy(); renderStrokes(true); renderBoard();
@@ -656,7 +691,7 @@ function submit(){
   if(S.busy) return;
   const w = answer(), guess = norm(entryStr());
   if(!guess || guess.length < w.length){ nudge(); return; }
-  S.strokes++; renderStrokes(true);
+  S.hs++; S.rowG++; renderStrokes(true);
   const ok = guess === w || (hole().alts?.[S.row]||[]).map(norm).includes(guess);
   if(ok) accept(false); else reject();
 }
@@ -686,7 +721,8 @@ async function accept(bought){
   await wait(320 + w.length*45);
   Snd.solved();
   await wait(300);
-  S.row++; S.revealed=1; clearEntry(); S.busy=false;
+  holeMarks.push({g:S.rowG, b:S.rowB});
+  S.row++; S.revealed=1; clearEntry(); S.rowG=0; S.rowB=0; S.busy=false;
   if(S.row >= hole().words.length){ endHole(); }
   else { hint.classList.remove('on'); renderBoard(); }
 }
@@ -715,8 +751,10 @@ paintSettings();
    ═══════════════════════════════════════════════════════════════ */
 async function endHole(){
   const h = hole(), p = par(h);
-  const used = S.strokes - S.holeScores.reduce((a,b)=>a+b,0);
+  const used = S.hs;
   S.holeScores.push(used);
+  S.marks.push(holeMarks);
+  holeMarks = [];
   const v = term(used, p);
   const box = $('#sheet-hole-in');
   box.innerHTML = `
@@ -747,10 +785,64 @@ async function endHole(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   SHARE CARD — emoji tell the story without spoiling any answers:
+   each square is one word you filled in, coloured by how it went.
+   ═══════════════════════════════════════════════════════════════ */
+const CROWN = d => d <= -3 ? '🏆' : d === -2 ? '🦅' : d === -1 ? '🐦' : d === 0 ? '⛳' : d <= 2 ? '😅' : '🫠';
+// 🟩 first guess · 🟨 needed another guess · 🟧 bought a letter · ⬛ bought the whole word
+const MARK = m => m.b > 0 ? (m.g === 0 ? '⬛' : '🟧') : (m.g <= 1 ? '🟩' : '🟨');
+
+function shareText(){
+  const c = course(), p = coursePar(c);
+  const total = S.holeScores.reduce((a,b)=>a+b,0), d = total - p;
+  const rel = d === 0 ? 'even par' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'} par`;
+  const pad = Math.max(...c.holes.map(h=>h.seed.length));
+  const rows = c.holes.map((h,i)=>
+    `${h.seed.padEnd(pad)}  ${(S.marks[i]||[]).map(MARK).join('')}`);
+  return [
+    `LINKS ⛳ ${c.name}`,
+    `${CROWN(d)} ${total} stroke${total===1?'':'s'} · ${rel}`,
+    '',
+    ...rows,
+    '',
+    'links.superfun.games'
+  ].join('\n');
+}
+
+function openShare(){
+  $('#share-prev').textContent = shareText();
+  const nat = $('#share-native');
+  nat.hidden = !navigator.share;
+  $('#sheet-share').classList.add('on');
+}
+
+$('#share-back').onclick = ()=>{ Snd.blip(); $('#sheet-share').classList.remove('on'); };
+$('#sheet-share').addEventListener('click', e=>{ if(e.target.id==='sheet-share') $('#sheet-share').classList.remove('on'); });
+
+$('#share-copy').onclick = async ()=>{
+  const btn = $('#share-copy'), txt = $('#share-prev').textContent;
+  try{
+    await navigator.clipboard.writeText(txt);
+    btn.textContent = 'Copied!'; btn.classList.add('ok'); Snd.solved();
+  }catch(err){
+    // clipboard blocked — select the text so it can be copied by hand
+    const r = document.createRange(); r.selectNodeContents($('#share-prev'));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    btn.textContent = 'Selected — press copy'; Snd.bonk();
+  }
+  setTimeout(()=>{ btn.textContent = 'Copy to clipboard'; btn.classList.remove('ok'); }, 2200);
+};
+
+$('#share-native').onclick = async ()=>{
+  try{ await navigator.share({ title:'Links', text: shareText() }); Snd.blip(); }
+  catch(err){ /* user dismissed the share sheet */ }
+};
+
+/* ═══════════════════════════════════════════════════════════════
    END OF COURSE
    ═══════════════════════════════════════════════════════════════ */
 async function endCourse(){
-  const c = course(), p = coursePar(c), total = S.strokes, d = total - p;
+  const c = course(), p = coursePar(c), total = S.holeScores.reduce((a,b)=>a+b,0), d = total - p;
   const prev = BEST.get(S.ci);
   BEST.set(S.ci, total);
   const box = $('#sheet-course-in');
@@ -776,11 +868,15 @@ async function endCourse(){
       </div>
     </div>
     ${prev!=null && total<prev ? `<p class="foot" style="padding:0 0 14px">New best — beat your ${prev}.</p>` : ''}
-    <div class="actions">
+    <div class="actions col">
+      <button class="btn" id="share">Share scorecard</button>
+    </div>
+    <div class="actions" style="padding-top:0">
       <button class="btn ghost" id="again">Replay</button>
-      <button class="btn" id="tocourses">Courses</button>
+      <button class="btn ghost" id="tocourses">Courses</button>
     </div>`;
   const once = (btn, fn) => { btn.onclick = ()=>{ if(btn.disabled) return; btn.disabled = true; Snd.blip(); $('#sheet-course').classList.remove('on'); fn(); }; };
+  $('#share').onclick = ()=>{ Snd.boot(); Snd.blip(); openShare(); };
   once($('#again'),     ()=> startCourse(S.ci));
   once($('#tocourses'), ()=>{ renderHome(); show('s-home'); });
   $('#sheet-course').classList.add('on');
