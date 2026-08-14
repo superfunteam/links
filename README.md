@@ -3,8 +3,9 @@
 Hit the links!
 
 A word game. Each hole gives you a **seed word** — its letters are the first letters of a
-chain, and every neighbouring pair forms a compound word or common phrase. The first word
-is free; you fill in the rest.
+chain, and every neighbouring pair joins up: sometimes a true compound word (`OVERHEAD`),
+sometimes a before-and-after pair (`PARTY ANIMAL`). The set uses both, in roughly even
+measure. The first word is free; you fill in the rest.
 
 ```
 SEED: SOFT
