@@ -1,0 +1,24 @@
+{
+  "name": "Links",
+  "short_name": "Links",
+  "description": "Every word links to the next. Play the chain, count your strokes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#17845A",
+  "theme_color": "#17845A",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

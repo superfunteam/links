@@ -3,13 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#FBFAF7">
+<meta name="theme-color" content="#17845A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Links">
 <title>Links — a word chain game</title>
 <meta name="description" content="Every word links to the next. Play the chain, count your strokes.">
+<link rel="canonical" href="https://links.superfun.games/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="favicon.png" as="image" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Flex:wght@400..1000&family=Google+Sans+Code:wght@400..700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⛳️</text></svg>">
+<link rel="icon" href="favicon.png" type="image/png" sizes="1254x1254">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://links.superfun.games/">
+<meta property="og:site_name" content="Links">
+<meta property="og:title" content="Links — a word chain game">
+<meta property="og:description" content="Every word links to the next. Play the chain, count your strokes.">
+<meta property="og:image" content="https://links.superfun.games/ogimage.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Links, a word chain golf game">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Links — a word chain game">
+<meta name="twitter:description" content="Every word links to the next. Play the chain, count your strokes.">
+<meta name="twitter:image" content="https://links.superfun.games/ogimage.png">
+<meta name="twitter:image:alt" content="Links, a word chain golf game">
 <style>
 /* ─────────────────────────────  tokens  ───────────────────────────── */
 :root{
@@ -89,6 +112,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:var(--red);color:#fff;border-radius:999px;padding:calc(.22em + 2px) .65em;
   white-space:nowrap
 }
+.how .pen{padding-block:calc(.22em + .5px)}
 .courses{display:grid;gap:10px;padding-bottom:34px}
 .course{
   position:relative;overflow:hidden;
@@ -105,7 +129,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pin{position:absolute;inset:0}
 .pin-pole{
   position:absolute;left:8px;top:calc(50% - 28px);bottom:0;width:3.5px;
-  background:#A39472
+  background:#CCB98E
 }
 .pin-flag{
   position:absolute;left:11px;top:50%;transform:translateY(-50%);
