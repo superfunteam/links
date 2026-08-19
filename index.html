@@ -63,18 +63,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .how h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px}
 .how-col:last-child h2{margin-bottom:5px}
-.demo{display:grid;gap:7px}
-.demo-row{display:flex;align-items:center;gap:10px;min-height:26px}
-.demo-tiles{display:flex;gap:3px;flex:none}
+.demo{display:grid;gap:8px}
+.demo-row{display:flex;align-items:center;gap:12px;min-height:31px}
+.demo-tiles{display:flex;gap:4px;flex:none}
 .demo .tile{
-  width:26px;height:26px;aspect-ratio:auto;border-radius:7px;font-size:13px;
+  width:31px;height:31px;aspect-ratio:auto;border-radius:8px;font-size:16px;
   background:var(--ink);border-color:var(--ink);color:var(--paper)
 }
 .demo .tile.ok{background:var(--green);border-color:var(--green);color:#fff}
 .demo .tile.typed{background:var(--card);border-color:var(--ink);color:var(--ink)}
 .demo-link{
-  font-style:normal;color:var(--muted);font-weight:600;font-size:13px;
-  letter-spacing:.01em;line-height:1;white-space:nowrap
+  font-style:normal;color:var(--ink);font-weight:600;font-size:16px;
+  letter-spacing:.01em;line-height:1;white-space:nowrap;text-transform:uppercase
 }
 .demo-link span{display:inline-block;animation:wordIn .42s var(--spring) backwards}
 .demo-link span + span{margin-left:.28em}
@@ -105,15 +105,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pin{position:absolute;inset:0}
 .pin-pole{
   position:absolute;left:8px;top:calc(50% - 28px);bottom:0;width:3.5px;
-  background:var(--ink)
+  background:#A39472
 }
 .pin-flag{
   position:absolute;left:11px;top:50%;transform:translateY(-50%);
-  min-width:54px;height:42px;padding:5px 18px 5px 7px;
+  min-width:54px;height:42px;padding:5px 16px 5px 8px;
   display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
   text-align:center;
   background:#8A8E93;color:#fff;
-  clip-path:polygon(0 0,calc(100% - 11px) 0,100% 50%,calc(100% - 11px) 100%,0 100%)
+  clip-path:polygon(0 0,100% 0,calc(100% - 11px) 50%,100% 100%,0 100%)
 }
 .pin-kicker{
   font-size:8px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;
@@ -123,7 +123,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:22px;
   line-height:.85;letter-spacing:-.04em;width:100%;text-align:center
 }
-.course.tee .pin-flag{background:var(--green)}
+.course.tee .pin-flag,.course.done .pin-flag{background:var(--green)}
+.course.birdie .pin-flag{background:goldenrod}
 .course-b{flex:1;min-width:0}
 .course-t{display:block;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .course-r{flex:none;text-align:center;min-width:44px;margin-right:0}
@@ -175,7 +176,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* Play is a fixed-height column: header / board / keyboard. Because the game
    ships its own keyboard, no OS keyboard ever opens and the layout never shifts. */
 #s-play.on{height:100dvh;max-height:100dvh}
-.play-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:6px 0}
+.play-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:6px 0;position:relative}
 
 /* Every row shares one column grid sized to the hole's longest word, so tiles are
    a uniform size and each word's first letter stacks into a column — that column
@@ -206,12 +207,30 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .row.shake{animation:shake .42s var(--ease)}
 @keyframes shake{10%,90%{transform:translateX(-3px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
 .row.shake .tile{border-color:var(--red);background:var(--red-soft)}
+.row.wiggle{animation:wiggle .48s var(--ease)}
+@keyframes wiggle{10%,90%{transform:rotate(-2deg)}20%,80%{transform:rotate(3deg)}30%,50%,70%{transform:rotate(-4deg)}40%,60%{transform:rotate(4deg)}}
 
 .linkhint{
   text-align:center;font-size:13px;color:var(--muted);font-weight:600;height:18px;margin-top:14px;
   opacity:0;transition:opacity .3s
 }
 .linkhint.on{opacity:1}
+.nuhuh{
+  position:absolute;left:50%;bottom:10px;z-index:4;
+  background:var(--ink);color:var(--paper);
+  font-size:13px;font-weight:700;letter-spacing:-.01em;
+  padding:8px 14px;border-radius:999px;white-space:nowrap;
+  box-shadow:0 3px 0 #000;pointer-events:none;
+  opacity:0;transform:translateX(-50%) translateY(8px)
+}
+.nuhuh.on{animation:toastPop 2.2s var(--ease) forwards}
+@keyframes toastPop{
+  0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.9)}
+  12%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1.05)}
+  20%{transform:translateX(-50%) translateY(0) scale(1)}
+  78%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.98)}
+}
 
 /* ─────────────────────────────  keyboard  ───────────────────────────── */
 .tray{flex:none;padding-bottom:max(8px,env(safe-area-inset-bottom))}
@@ -317,6 +336,37 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .verdict .sub{margin-top:8px;font-size:14.5px;color:var(--muted);font-weight:600}
 .verdict .sub b{color:var(--ink);font-weight:800}
 
+.cprog{position:relative;margin:0 22px 14px;height:56px}
+.cprog-cart{
+  position:absolute;top:0;width:34px;height:30px;margin-left:-17px;left:0;
+  z-index:2;transition:left 2.15s cubic-bezier(.4,.05,.3,1);
+  filter:drop-shadow(0 1px 0 var(--green-soft))
+}
+.cprog-cart svg{display:block;width:100%;height:100%}
+.cprog-cart.go{animation:putBob .26s ease-in-out infinite}
+@keyframes putBob{
+  0%,100%{transform:translateY(0) rotate(-2.5deg)}
+  40%{transform:translateY(-3px) rotate(2deg)}
+  70%{transform:translateY(1px) rotate(-1deg)}
+}
+.cprog-way{position:absolute;left:0;right:0;top:34px;height:18px}
+.cprog-rail{
+  position:absolute;left:0;right:0;top:7px;height:3px;border-radius:99px;background:var(--line)
+}
+.cprog-fill{
+  position:absolute;left:0;top:7px;height:3px;width:0;border-radius:99px;background:var(--green);
+  transition:width 2.15s cubic-bezier(.4,.05,.3,1)
+}
+.cprog-dots{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center}
+.cprog-dot{
+  width:15px;height:15px;border-radius:50%;flex:none;
+  background:var(--paper);border:2.5px solid var(--line-2);
+  box-shadow:0 0 0 4px var(--paper);position:relative;z-index:1
+}
+.cprog-dot.done{background:var(--green);border-color:var(--green)}
+.cprog-dot.gold{background:goldenrod;border-color:goldenrod}
+.cprog-dot.pop{animation:pop .48s var(--spring)}
+
 .chainout{display:grid;gap:6px;margin:16px 0 4px}
 .chainout .cr{
   display:flex;align-items:center;gap:9px;background:var(--card);border:2px solid var(--line);
@@ -382,7 +432,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="how-col">
         <h2>The rules</h2>
         <p>We give you every first letter, you solve the word chain. Each word links the one below: sometimes a compound word like <em>OVERHEAD</em>, sometimes a before-and-after pair like <em>PARTY ANIMAL</em>.</p>
-        <p>Guesses cost <b class="pen">1 stroke</b>, and you can buy a letter for <b class="pen">1 stroke</b>. Golf rules, low score wins.</p>
+        <p>Guesses cost <b class="pen">1 stroke</b>. A miss gifts you the next letter, and you can buy a letter for <b class="pen">1 stroke</b>. Golf rules, low score wins.</p>
       </div>
     </div>
 
@@ -414,6 +464,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="play-body">
       <div class="board" id="board"></div>
       <div class="linkhint" id="p-hint"></div>
+      <div class="nuhuh" id="p-nuhuh" aria-live="polite"></div>
     </div>
 
     <div class="tray">
@@ -479,6 +530,8 @@ const Snd = {
   blip(){ this.tone(720, .05, {type:'sine', vol:.09}); },
   del(){  this.tone(300, .06, {type:'sine', vol:.08}); },
   buy(){  this.tone(880,.05,{type:'triangle',vol:.12}); this.tone(1320,.07,{type:'triangle',vol:.09,at:.05}); },
+  gift(){ this.tone(523.25,.08,{type:'sine',vol:.1}); this.tone(783.99,.14,{type:'triangle',vol:.13,at:.07}); this.tone(1046.5,.18,{type:'sine',vol:.08,at:.14}); },
+  nope(){ this.tone(262,.08,{type:'sine',vol:.1}); this.tone(196,.16,{type:'triangle',vol:.11,at:.09,decay:.85}); },
   bonk(){ this.tone(190,.26,{type:'square',vol:.13,slide:96,decay:.9});
           this.tone(95,.3,{type:'sine',vol:.1,slide:60,decay:.9}); },
   pop(i){ this.tone(523.25*Math.pow(2,i/12), .1, {type:'triangle', vol:.13}); },
@@ -489,6 +542,7 @@ const Snd = {
     s.forEach((f,i)=> this.tone(f,.3,{type:'triangle',vol:.15,at:i*.1,decay:.8}));
     this.tone(261.63,.9,{type:'sine',vol:.09,at:.1,decay:.9});
   },
+  putt(){ this.tone(84,.07,{type:'sine',vol:.07}); this.tone(58,.09,{type:'triangle',vol:.05,at:.02,decay:.9}); },
   sad(){ [392,349.23,293.66].forEach((f,i)=> this.tone(f,.3,{type:'sine',vol:.12,at:i*.13,decay:.85})); }
 };
 
@@ -530,7 +584,7 @@ const BEST = {
 // `hs` is strokes on the CURRENT hole — the header shows this and it resets each
 // hole. `holeScores` accumulates finished holes; the course total is their sum.
 // `marks` records how each word was won, for the share card.
-let S = { ci:0, hi:0, row:1, revealed:1, typed:'', pre:0, hs:0, holeScores:[], marks:[], rowG:0, rowB:0, busy:false };
+let S = { ci:0, hi:0, row:1, revealed:1, typed:'', pre:0, hs:0, holeScores:[], marks:[], rowG:0, rowB:0, busy:false, tried:new Set() };
 let holeMarks = [];   // {g,b} per solved word on the hole in progress
 const entryStr = () => answer().slice(0, S.revealed) + S.typed;
 const clearEntry = () => { S.typed=''; S.pre=0; };
@@ -548,8 +602,8 @@ function renderHome(){
   const next = COURSES.findIndex((_,i)=> BEST.get(i)==null);
   COURSES.forEach((c,i)=>{
     const p = coursePar(c), best = BEST.get(i);
-    const b = el('button', 'course' + (best!=null?' done':'') + (i===next?' tee':''));
     const d = best!=null ? best - p : null;
+    const b = el('button', 'course' + (best!=null?' done':'') + (i===next?' tee':'') + (d!=null && d<0?' birdie':''));
     b.setAttribute('aria-label', best!=null
       ? `${c.name}, hole ${i+1}, ${best} strokes, par ${p}`
       : `${c.name}, hole ${i+1}, par ${p}`);
@@ -659,7 +713,7 @@ function startCourse(i){
 }
 function startHole(){
   S.row=1; S.revealed=1; clearEntry(); S.busy=false;
-  S.hs=0; S.rowG=0; S.rowB=0; holeMarks = [];
+  S.hs=0; S.rowG=0; S.rowB=0; S.tried=new Set(); holeMarks = [];
   const h = hole(), c = course();
   $('#p-course').textContent = c.name;
   $('#p-hole').textContent = `Hole ${S.hi+1} of ${c.holes.length}`;
@@ -707,7 +761,7 @@ function renderBoard(){
       const t = el('div','tile');
       if(done){ t.textContent = w[k]; }
       else if(i===S.row){
-        // index 0 is the free seed letter; gold is reserved for letters actually paid for
+        // index 0 is the free seed letter; gold is a letter gifted after a miss
         if(k < S.revealed){ t.className = k===0 ? 'tile freebie' : 'tile bought'; t.textContent = w[k]; }
         else if(k < shown.length){ t.className='tile typed'; t.textContent = shown[k]; }
         else if(k === shown.length){ t.className='tile cursor'; }
@@ -808,9 +862,10 @@ $('#buy').onclick = async ()=>{
   const w = answer();
   if(S.revealed >= w.length) return;
   S.hs++; S.rowB++; S.revealed++;
-  // buying a letter keeps whatever they'd already typed past it
   S.typed = S.typed.slice(1); S.pre = Math.min(S.pre, S.revealed);
   Snd.buy(); renderStrokes(true); renderBoard();
+  const bought = $('#board').children[S.row]?.querySelectorAll('.tile')[S.revealed-1];
+  if(bought){ bought.classList.remove('pop'); void bought.offsetWidth; bought.classList.add('pop'); }
   if(S.revealed >= w.length){ await wait(240); accept(true); }
 };
 
@@ -819,6 +874,8 @@ function submit(){
   if(S.busy) return;
   const w = answer(), guess = norm(entryStr());
   if(!guess || guess.length < w.length){ nudge(); return; }
+  if(S.tried.has(guess)){ alreadyTried(); return; }
+  S.tried.add(guess);
   S.hs++; S.rowG++; renderStrokes(true);
   const ok = guess === w || (hole().alts?.[S.row]||[]).map(norm).includes(guess);
   if(ok) accept(false); else reject();
@@ -828,10 +885,36 @@ function nudge(){
   row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake');
   Snd.bonk(); setTimeout(()=>row.classList.remove('shake'), 460);
 }
-function reject(){
+function alreadyTried(){
   const row = $('#board').children[S.row];
-  row.classList.add('shake'); Snd.bonk();
-  setTimeout(()=>{ row.classList.remove('shake'); clearEntry(); renderBoard(); }, 460);
+  row.classList.remove('wiggle'); void row.offsetWidth; row.classList.add('wiggle');
+  Snd.nope();
+  setTimeout(()=>row.classList.remove('wiggle'), 500);
+  const t = $('#p-nuhuh');
+  t.textContent = 'You already guessed this!';
+  t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+}
+async function reject(){
+  S.busy = true;
+  const row = $('#board').children[S.row];
+  row.classList.remove('shake'); void row.offsetWidth; row.classList.add('shake');
+  Snd.bonk();
+  await wait(520);
+  row.classList.remove('shake');
+  const w = answer();
+  if(S.revealed < w.length){
+    S.rowB++; S.revealed++;
+    clearEntry();
+    renderBoard();
+    const gifted = $('#board').children[S.row]?.querySelectorAll('.tile')[S.revealed-1];
+    if(gifted){ gifted.classList.remove('pop'); void gifted.offsetWidth; gifted.classList.add('pop'); }
+    Snd.gift();
+    await wait(380);
+    if(S.revealed >= w.length){ accept(true); return; }
+  } else {
+    clearEntry(); renderBoard(); accept(true); return;
+  }
+  S.busy = false; paintReady();
 }
 async function accept(bought){
   S.busy = true;
@@ -850,7 +933,7 @@ async function accept(bought){
   Snd.solved();
   await wait(300);
   holeMarks.push({g:S.rowG, b:S.rowB});
-  S.row++; S.revealed=1; clearEntry(); S.rowG=0; S.rowB=0; S.busy=false;
+  S.row++; S.revealed=1; clearEntry(); S.rowG=0; S.rowB=0; S.tried=new Set(); S.busy=false;
   if(S.row >= hole().words.length){ endHole(); }
   else { hint.classList.remove('on'); renderBoard(); }
 }
@@ -884,11 +967,28 @@ async function endHole(){
   S.marks.push(holeMarks);
   holeMarks = [];
   const v = term(used, p);
+  const holes = course().holes;
+  const nH = holes.length;
+  const at = S.hi, dest = at+1 < nH ? at+1 : at;
+  const x = i => (i / Math.max(1, nH-1)) * 100;
+  const hue = i => {
+    if(S.holeScores[i]==null) return '';
+    return S.holeScores[i] - par(holes[i]) <= -1 ? 'gold' : 'done';
+  };
+  const CART = `<svg viewBox="0 0 99 88" fill="none" aria-hidden="true"><g clip-path="url(#cartclip)"><path d="M97.4999 52.0466C97.2864 49.3122 95.2603 47.0778 92.5729 46.583L87.6458 45.6559L77.3854 8.86391H80.1614C81.3437 8.86391 82.4218 8.38995 83.1926 7.61391C83.9686 6.83787 84.4426 5.76498 84.4426 4.58271C84.4426 2.21818 82.5259 0.301514 80.1614 0.301514H4.66138C3.47909 0.301514 2.40098 0.775474 1.63018 1.55151C0.85414 2.32755 0.38018 3.40045 0.38018 4.58271C0.38018 6.94725 2.29685 8.86391 4.66138 8.86391H4.96346V44.8799C2.87493 46.0414 0.380127 48.3226 0.380127 50.9476V75.885H7.52079C7.45829 75.3485 7.43225 74.786 7.43225 74.2287C7.43225 65.385 14.6405 58.1767 23.4843 58.1767C32.328 58.1767 39.5363 65.385 39.5363 74.2287C39.5363 74.786 39.5154 75.3485 39.4477 75.885H62.2544C62.1919 75.3485 62.1658 74.786 62.1658 74.2287C62.1658 65.4943 69.2648 58.3687 77.9992 58.3687C86.7336 58.3687 93.8325 65.4885 93.8325 74.2287C93.8325 74.786 93.8117 75.3485 93.744 75.885C96.8013 75.8225 99.1658 73.1975 98.9314 70.1402L97.4999 52.0466ZM68.4319 42.083L67.8382 43.7081L62.333 41.5466L64.4684 37.0518C64.9788 35.9789 64.5205 34.6925 63.4476 34.1873C62.3695 33.6768 61.0883 34.1352 60.5831 35.2081L54.4372 48.1455C53.9268 49.2185 54.3851 50.5049 55.458 51.0101C55.7549 51.1507 56.0674 51.2184 56.3799 51.2184C57.1872 51.2184 57.958 50.7653 58.3278 49.9893L60.4892 45.4423L66.3695 47.7497L61.6455 60.6715H46.3069L42.3484 51.0986H42.3432C43.5672 50.1819 44.3692 48.7393 44.3692 47.0934C44.3692 44.3226 42.1244 42.0778 39.3536 42.0778H31.9682V30.7601C31.9682 27.9683 29.7026 25.7027 26.9108 25.7027H22.3744V44.0254L22.364 44.0202H12.2755L12.2547 8.86418H70.9053L80.822 44.3855L68.4319 42.083Z" fill="var(--green)"/><path d="M23.4841 61.4067C16.4059 61.4067 10.6611 67.1515 10.6611 74.2297C10.6611 81.3078 16.4059 87.0318 23.4841 87.0318C30.5622 87.0318 36.307 81.3078 36.307 74.2297C36.307 67.1515 30.5622 61.4067 23.4841 61.4067ZM23.4841 80.6414C19.9319 80.6414 17.0518 77.7821 17.0518 74.2299C17.0518 70.6778 19.9373 67.7977 23.4841 67.7977C27.0362 67.7977 29.9163 70.6831 29.9163 74.2299C29.9163 77.7821 27.0361 80.6414 23.4841 80.6414Z" fill="var(--ink)"/><path d="M78.0053 61.604C71.0365 61.604 65.396 67.2603 65.396 74.2343C65.396 81.1821 71.0315 86.8436 78.0053 86.8436C84.9741 86.8436 90.6147 81.1873 90.6147 74.2343C90.6147 67.2603 84.974 61.604 78.0053 61.604ZM78.0053 80.64C74.4532 80.64 71.5731 77.7807 71.5731 74.2285C71.5731 70.6764 74.4585 67.7963 78.0053 67.7963C81.5575 67.7963 84.4376 70.6817 84.4376 74.2285C84.4376 77.7807 81.5573 80.64 78.0053 80.64Z" fill="var(--ink)"/></g><defs><clipPath id="cartclip"><rect width="99" height="88" fill="white"/></clipPath></defs></svg>`;
   const box = $('#sheet-hole-in');
   box.innerHTML = `
     <div class="verdict">
+      <div class="cprog">
+        <div class="cprog-cart" id="cprog-cart" style="left:${x(at)}%">${CART}</div>
+        <div class="cprog-way">
+          <div class="cprog-rail"></div>
+          <div class="cprog-fill" id="cprog-fill" style="width:${x(at)}%"></div>
+          <div class="cprog-dots">${holes.map((_,i)=>`<span class="cprog-dot${i<at?' '+hue(i):''}${i===at?' wait':''}"></span>`).join('')}</div>
+        </div>
+      </div>
       <div class="term flex" style="color:${v.k==='b'?'var(--green)':v.k==='e'?'var(--gold)':v.k==='o'?'var(--red)':'var(--ink)'}">${v.t}</div>
-      <div class="sub">Hole ${S.hi+1} · par ${p} · <b>${used} stroke${used===1?'':'s'}</b></div>
+      <div class="sub">Hole ${S.hi+1} · Par ${p} · <b>${used} Stroke${used===1?'':'s'}</b></div>
     </div>
     <div class="chainout">${h.words.map((w,i)=>`
       <div class="cr" style="animation-delay:${260+i*110}ms">
@@ -910,6 +1010,21 @@ async function endHole(){
   used - p <= -1 ? Snd.win(1) : used === p ? Snd.solved() : Snd.tick(0);
   h.words.forEach((_,i)=> setTimeout(()=>Snd.tick(i), 300+i*110));
   if(used - p <= -1) confetti(v.k==='e' ? 46 : 26);
+  const now = box.querySelector('.cprog-dot.wait');
+  if(now){
+    await wait(280);
+    now.classList.remove('wait');
+    now.classList.add(hue(at), 'pop');
+  }
+  if(dest !== at){
+    await wait(1000);
+    const cart = $('#cprog-cart'), fill = $('#cprog-fill');
+    cart.classList.add('go');
+    cart.style.left = x(dest)+'%';
+    fill.style.width = x(dest)+'%';
+    for(let i=0;i<8;i++) setTimeout(()=>Snd.putt(), 80+i*240);
+    setTimeout(()=>cart.classList.remove('go'), 2200);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -917,7 +1032,7 @@ async function endHole(){
    each square is one word you filled in, coloured by how it went.
    ═══════════════════════════════════════════════════════════════ */
 const CROWN = d => d <= -3 ? '🏆' : d === -2 ? '🦅' : d === -1 ? '🐦' : d === 0 ? '⛳' : d <= 2 ? '😅' : '🫠';
-// 🟩 first guess · 🟨 needed another guess · 🟧 bought a letter · ⬛ bought the whole word
+// 🟩 first guess · 🟨 needed another guess · 🟧 gifted a letter after a miss · ⬛ gifted the whole word
 const MARK = m => m.b > 0 ? (m.g === 0 ? '⬛' : '🟧') : (m.g <= 1 ? '🟩' : '🟨');
 
 function shareText(){
