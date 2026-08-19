@@ -42,7 +42,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ─────────────────────────────  home  ───────────────────────────── */
-.hero{padding:52px 0 26px;text-align:center}
+.hero{padding:40px 0 26px;text-align:center}
+.mark-flag{
+  display:block;width:38px;height:38px;margin:0 auto 8px;color:var(--green);
+  animation:pinDrop .56s var(--spring) backwards
+}
+@keyframes pinDrop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
 .wordmark{
   font-family:"Google Sans Flex",sans-serif; font-weight:1000;
   font-size:clamp(58px,17vw,86px); letter-spacing:-.05em; line-height:.92;
@@ -52,40 +57,78 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes drop{from{opacity:0;transform:translateY(-22px) rotate(-7deg)}to{opacity:1;transform:none}}
 
 .how{
+  display:grid;gap:18px;
   background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);
-  padding:16px 18px;margin-bottom:26px;box-shadow:var(--chunk)
+  padding:16px 18px 18px;margin-bottom:26px;box-shadow:var(--chunk)
 }
 .how h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px}
-.demo{display:grid;gap:5px;margin-bottom:12px}
-.demo-row{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
-.demo-row b{
-  font-family:"Google Sans Flex",sans-serif;font-weight:900;width:26px;height:26px;flex:none;
-  display:grid;place-items:center;border-radius:8px;background:var(--ink);color:var(--paper);font-size:14px
+.how-col:last-child h2{margin-bottom:5px}
+.demo{display:grid;gap:7px}
+.demo-row{display:flex;align-items:center;gap:10px;min-height:26px}
+.demo-tiles{display:flex;gap:3px;flex:none}
+.demo .tile{
+  width:26px;height:26px;aspect-ratio:auto;border-radius:7px;font-size:13px;
+  background:var(--ink);border-color:var(--ink);color:var(--paper)
 }
-.demo-row i{font-style:normal;color:var(--muted);font-weight:500;font-size:13.5px;margin-left:2px}
-.how p{font-size:14px;color:var(--muted);line-height:1.5}
+.demo .tile.ok{background:var(--green);border-color:var(--green);color:#fff}
+.demo .tile.typed{background:var(--card);border-color:var(--ink);color:var(--ink)}
+.demo-link{
+  font-style:normal;color:var(--muted);font-weight:600;font-size:13px;
+  letter-spacing:.01em;line-height:1;white-space:nowrap
+}
+.demo-link span{display:inline-block;animation:wordIn .42s var(--spring) backwards}
+.demo-link span + span{margin-left:.28em}
+@keyframes wordIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.how p{font-size:13.5px;color:var(--muted);line-height:1.55}
+.how p + p{margin-top:10px}
 .how p em{font-style:normal;color:var(--ink);font-weight:700}
-
+.pen{
+  display:inline-flex;align-items:center;justify-content:center;
+  vertical-align:middle;position:relative;top:-.06em;
+  font-size:13px;font-weight:800;letter-spacing:.04em;line-height:1;
+  background:var(--red);color:#fff;border-radius:999px;padding:calc(.22em + 2px) .65em;
+  white-space:nowrap
+}
 .courses{display:grid;gap:10px;padding-bottom:34px}
 .course{
-  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
   background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);
-  padding:15px 16px;box-shadow:var(--chunk);transition:transform .16s var(--ease),box-shadow .16s var(--ease),border-color .16s
+  padding:16px 8px 16px 14px;box-shadow:var(--chunk);transition:transform .16s var(--ease),box-shadow .16s var(--ease),border-color .16s
 }
 .course:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--line-2);border-color:var(--line-2)}
 .course:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-2)}
 .course-n{
-  font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:15px;flex:none;
-  width:36px;height:36px;display:grid;place-items:center;border-radius:11px;
-  background:var(--green-soft);color:var(--green-2)
+  flex:none;width:72px;align-self:stretch;position:relative;
+  margin:-16px 0;pointer-events:none
 }
-.course.done .course-n{background:var(--green);color:#fff}
+.pin{position:absolute;inset:0}
+.pin-pole{
+  position:absolute;left:8px;top:calc(50% - 28px);bottom:0;width:3.5px;
+  background:var(--ink)
+}
+.pin-flag{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  min-width:54px;height:42px;padding:5px 18px 5px 7px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
+  text-align:center;
+  background:#8A8E93;color:#fff;
+  clip-path:polygon(0 0,calc(100% - 11px) 0,100% 50%,calc(100% - 11px) 100%,0 100%)
+}
+.pin-kicker{
+  font-size:8px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;
+  line-height:1;opacity:.82;width:100%;text-align:center
+}
+.pin-num{
+  font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:22px;
+  line-height:.85;letter-spacing:-.04em;width:100%;text-align:center
+}
+.course.tee .pin-flag{background:var(--green)}
 .course-b{flex:1;min-width:0}
 .course-t{display:block;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.course-s{display:block;font-size:12.5px;color:var(--muted);font-weight:500;margin-top:2px}
-.course-r{flex:none;text-align:right;min-width:58px}
-.course-r .sc{display:block;font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:20px;line-height:1}
-.course-r .lb{display:block;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.course-r{flex:none;text-align:center;min-width:44px;margin-right:0}
+.course-r .sc{display:block;font-family:"Google Sans Flex",sans-serif;font-weight:800;font-size:26px;line-height:.9;letter-spacing:-.03em}
+.course-r .lb{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:5px}
 .under{color:var(--green)} .overp{color:var(--red)}
 
 /* ─────────────────────────────  topbar  ───────────────────────────── */
@@ -177,10 +220,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border:2px solid var(--line-2);background:var(--card);border-radius:14px;
   padding:15px 14px;margin-bottom:20px;box-shadow:0 4px 0 var(--line-2);
   font-weight:700;font-size:15.5px;transition:transform .13s var(--ease),box-shadow .13s var(--ease)
-}
-.buybar .pen{
-  font-size:11px;font-weight:800;letter-spacing:.04em;
-  background:var(--red-soft);color:var(--red);border-radius:999px;padding:3px 9px
 }
 .buybar:active{transform:translateY(4px);box-shadow:none}
 .buybar:disabled{opacity:.4;pointer-events:none}
@@ -328,19 +367,23 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   <!-- ══════════════ HOME ══════════════ -->
   <section id="s-home" class="screen on">
     <div class="hero">
+      <svg class="mark-flag" viewBox="0 0 100 100" aria-hidden="true">
+        <path fill="currentColor" d="m79.688 59.469v-0.09375c0-5.1719-4.2031-9.375-9.375-9.375-4.2344 0-7.8125 2.8281-8.9844 6.6875-3.3594-0.28125-6.6562-0.4375-9.6406-0.4375h-7.8594c-1.0625 0-2.125 0.046875-3.2031 0.10938v-26.594c6.2656 0.34375 9.7656 1.9531 13.406 3.6719 4.0625 1.9219 8.2656 3.9062 16.25 4.0625h0.03125c0.40625 0 0.79688-0.15625 1.0938-0.45312 0.29688-0.28125 0.46875-0.6875 0.46875-1.1094v-23.438c0-0.84375-0.6875-1.5469-1.5312-1.5625-7.3125-0.14062-11.047-1.8906-14.984-3.7656-4.0625-1.9219-8.2656-3.9062-16.266-4.0469h-6.2812c-0.85938 0-1.5625 0.70312-1.5625 1.5625v53.047c-12.281 2.7812-25 9.6875-25 18.828 0 11.203 13.828 20.312 30.828 20.312 9.5938 0 18.453-2.8438 24.328-7.7969 6.8906-5.8281 14.625-10.25 22.969-13.109 6.1406-2.1094 9.375-4.9844 9.375-8.3281 0-1.2188 0-4.8594-14.062-8.1719zm-45.312-53.219h3.125v73.375c-1.0469 0.046875-2.0938 0.046875-3.125 0zm48.984 66.75c-8.7031 3-16.781 7.6094-23.984 13.703-5.2969 4.4688-13.422 7.0469-22.297 7.0469-15.281 0-27.703-7.7031-27.703-17.188 0-6.9688 10.719-12.969 21.875-15.625v6.5312c-6.4375 0.78125-12.5 3.3125-12.5 7.5312 0 4.5312 7 7.125 13.938 7.6875 1.1094 0.078125 2.2031 0.125 3.25 0.125s2.1406-0.046875 3.25-0.125c6.9375-0.5625 13.938-3.1562 13.938-7.6875 0-4.2188-6.0625-6.75-12.5-7.5312v-7.9688c1.0781-0.078125 2.1562-0.125 3.2031-0.125h7.8594c2.8594 0 6.0312 0.14062 9.2656 0.42188 0.21875 4.9688 4.3281 8.9531 9.3594 8.9531 4.0469 0 7.5-2.5938 8.8125-6.2031 9.3281 2.2188 11.5 4.4531 11.5 5.0938 0 1.7656-2.7812 3.8281-7.2656 5.3594z"/>
+      </svg>
       <div class="wordmark flex" id="wordmark"></div>
       <p class="tagline">Every word links to the next.</p>
     </div>
 
     <div class="how">
-      <h2>How it goes</h2>
-      <div class="demo">
-        <div class="demo-row"><b>S</b>SNAKE <i>— given</i></div>
-        <div class="demo-row"><b>O</b>OIL <i>— snake oil</i></div>
-        <div class="demo-row"><b>F</b>FIELD <i>— oil field</i></div>
-        <div class="demo-row"><b>T</b>TRIP <i>— field trip</i></div>
+      <div class="how-col">
+        <h2>How it goes</h2>
+        <div class="demo" id="demo" aria-hidden="true"></div>
       </div>
-      <p>The seed word <em>SOFT</em> gives you every first letter. Each word joins the one below it — sometimes a compound word like <em>OVERHEAD</em>, sometimes a before-and-after pair like <em>PARTY ANIMAL</em>. Guesses cost <em>1 stroke</em>, and you can buy a letter for <em>1 stroke</em>. Low score wins.</p>
+      <div class="how-col">
+        <h2>The rules</h2>
+        <p>We give you every first letter, you solve the word chain. Each word links the one below: sometimes a compound word like <em>OVERHEAD</em>, sometimes a before-and-after pair like <em>PARTY ANIMAL</em>.</p>
+        <p>Guesses cost <b class="pen">1 stroke</b>, and you can buy a letter for <b class="pen">1 stroke</b>. Golf rules, low score wins.</p>
+      </div>
     </div>
 
     <div class="courses" id="courses"></div>
@@ -502,22 +545,107 @@ $('#wordmark').innerHTML = [...'LINKS'].map((c,i)=>`<span style="animation-delay
 
 function renderHome(){
   const wrap = $('#courses'); wrap.innerHTML='';
+  const next = COURSES.findIndex((_,i)=> BEST.get(i)==null);
   COURSES.forEach((c,i)=>{
     const p = coursePar(c), best = BEST.get(i);
-    const b = el('button', 'course' + (best!=null?' done':''));
+    const b = el('button', 'course' + (best!=null?' done':'') + (i===next?' tee':''));
     const d = best!=null ? best - p : null;
+    b.setAttribute('aria-label', best!=null
+      ? `${c.name}, hole ${i+1}, ${best} strokes, par ${p}`
+      : `${c.name}, hole ${i+1}, par ${p}`);
     b.innerHTML = `
-      <span class="course-n flex">${i+1}</span>
+      <span class="course-n">
+        <span class="pin"><span class="pin-pole"></span><span class="pin-flag"><span class="pin-kicker">Hole</span><span class="pin-num flex">${i+1}</span></span></span>
+      </span>
       <span class="course-b">
         <span class="course-t">${c.name}</span>
-        <span class="course-s">${c.holes.map(h=>h.seed.length).join('·')} letters &nbsp;·&nbsp; par ${p}</span>
       </span>
       <span class="course-r">${ best!=null
-        ? `<span class="sc ${d<0?'under':d>0?'overp':''}">${rel(d)}</span><span class="lb">${best} strokes</span>`
-        : `<span class="sc" style="color:var(--line-2)">–</span><span class="lb">Play</span>` }</span>`;
+        ? `<span class="sc ${d<0?'under':d>0?'overp':''}">${rel(d)}</span><span class="lb">${best} · par ${p}</span>`
+        : `<span class="sc">${p}</span><span class="lb">Par</span>` }</span>`;
     b.onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i); };
     wrap.appendChild(b);
   });
+}
+
+const DEMO_CHAIN = [
+  { word:'SNAKE', given:true,  link:null },
+  { word:'OIL',   given:false, link:['snake','oil'] },
+  { word:'FIELD', given:false, link:['oil','field'] },
+  { word:'TRIP',  given:false, link:['field','trip'] }
+];
+let demoGen = 0;
+const demoRowEl = i => $('#demo').children[i];
+
+function mountDemo(done){
+  const root = $('#demo'); if(!root) return;
+  root.innerHTML = '';
+  DEMO_CHAIN.forEach((row,i)=>{
+    const wrap = el('div','demo-row');
+    const tiles = el('div','demo-tiles');
+    const n = done || i===0 ? row.word.length : 1;
+    const green = done || i===0;
+    for(let k=0;k<n;k++) tiles.appendChild(el('div','tile'+(green?' ok':''), row.word[k]));
+    wrap.appendChild(tiles);
+    const link = el('i','demo-link');
+    if(done && row.link){
+      row.link.forEach(wd=>{
+        const s = el('span','',wd);
+        s.style.animation = 'none';
+        link.appendChild(s);
+      });
+    }
+    wrap.appendChild(link);
+    root.appendChild(wrap);
+  });
+}
+
+function demoAddLetter(i, k){
+  const t = el('div','tile typed pop', DEMO_CHAIN[i].word[k]);
+  demoRowEl(i).querySelector('.demo-tiles').appendChild(t);
+}
+
+function demoGreen(i){
+  demoRowEl(i).querySelectorAll('.tile').forEach(t=>{
+    t.classList.remove('typed','pop');
+    void t.offsetWidth;
+    t.classList.add('ok','pop');
+  });
+}
+
+function demoAddWord(i, wd){
+  demoRowEl(i).querySelector('.demo-link').appendChild(el('span','',wd));
+}
+
+async function playIntroDemo(){
+  const gen = ++demoGen;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pause = ms => wait(reduce ? 0 : ms);
+  const alive = () => demoGen===gen;
+
+  if(reduce){ mountDemo(true); return; }
+
+  while(alive()){
+    mountDemo(false);
+    await pause(1000); if(!alive()) return;
+
+    for(let i=1;i<DEMO_CHAIN.length;i++){
+      const row = DEMO_CHAIN[i];
+      for(let k=1;k<row.word.length;k++){
+        demoAddLetter(i, k);
+        await pause(240); if(!alive()) return;
+      }
+      await pause(160); if(!alive()) return;
+      demoGreen(i);
+      await pause(280); if(!alive()) return;
+      for(const wd of row.link){
+        demoAddWord(i, wd);
+        await pause(340); if(!alive()) return;
+      }
+      await pause(480); if(!alive()) return;
+    }
+    await pause(1800);
+  }
 }
 
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); }
@@ -907,6 +1035,7 @@ function confetti(n){
 }
 
 renderHome();
+playIntroDemo();
 </script>
 </body>
 </html>
