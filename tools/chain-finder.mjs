@@ -55,14 +55,34 @@ try {
 } catch (e) { /* file optional */ }
 const score = w => linksOf(w).reduce((t, l) => t + (fam.get(l) ?? 4), 0) / (w.length - 1);
 
-// keep the single best-scoring chain per seed
-const best = new Map();
+// Keep the best few chains per seed rather than only one. A seed may return
+// after a long gap with a DIFFERENT chain, which is what makes two months of
+// daily puzzles reachable from a finite set of long-chain-friendly seeds.
+const PER_SEED = Number(process.env.PER_SEED || 4);
+const bySeed = new Map();
 for (const c of chains) {
   const sc = score(c.words);
-  const cur = best.get(c.seed);
-  if (!cur || sc > cur.sc) best.set(c.seed, { ...c, sc });
+  if (!bySeed.has(c.seed)) bySeed.set(c.seed, []);
+  bySeed.get(c.seed).push({ ...c, sc });
 }
-const picked = [...best.values()].sort((a, b) => b.sc - a.sc || a.seed.localeCompare(b.seed));
+const picked = [];
+for (const [seed, list] of bySeed) {
+  // Two chains for one seed have to be genuinely different puzzles. Differing
+  // only in the second word isn't enough — STORM/SCREEN-TIME-OUT-RIGHT-MIND and
+  // STORM/SEE-THROUGH-OUT-RIGHT-MIND share three answers and read as the same
+  // puzzle. Require them to overlap in at most one word.
+  const kept = [];
+  list.sort((a, b) => b.sc - a.sc);
+  for (const c of list) {
+    const words = new Set(c.words);
+    const tooSimilar = kept.some(k => k.words.filter(w => words.has(w)).length > 1);
+    if (tooSimilar) continue;
+    kept.push(c);
+    picked.push(c);
+    if (kept.length >= PER_SEED) break;
+  }
+}
+picked.sort((a, b) => b.sc - a.sc || a.seed.localeCompare(b.seed));
 
 const emit = process.argv.includes('--emit');
 if (emit) {
@@ -74,7 +94,7 @@ if (emit) {
   picked.forEach(c => by[c.words.length]++);
   console.log(`vocabulary: ${PAIRS.length} pairs, ${next.size} words that can start a link`);
   console.log(`chains found: ${chains.length}`);
-  console.log(`best chain per common seed: ${picked.length}`);
+  console.log(`kept (up to ${PER_SEED} per seed): ${picked.length}`);
   for (const n of [3, 4, 5]) console.log(`  ${n}-word: ${by[n]}`);
   const avg = picked.reduce((t, c) => t + c.sc, 0) / picked.length;
   console.log(`mean link familiarity: ${avg.toFixed(2)} / 5`);

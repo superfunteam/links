@@ -5,10 +5,14 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const HOLES_PER_DAY = 5;
-const COOLDOWN_DAYS = 5;          // a link may not return inside this window
-const MAX_DAYS = 21;               // keep the injected payload a sensible size
-// how many of the day's 5 holes are full-length (5-word) chains, by weekday
-const LONG_BY_WEEKDAY = { Mon: 1, Tue: 2, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 5 };
+const COOLDOWN_DAYS = 4;          // a link may not return inside this window
+const MAX_DAYS = 62;               // two months of daily courses
+const SEED_COOLDOWN = 28;          // a seed may return, but never inside a month
+// How many of the day's 5 holes are full-length (5-word) chains, by weekday.
+// The week still climbs to a heavier weekend, but the numbers are scaled to the
+// supply of five-word chains — those need four strong links in a row with every
+// initial fixed, so they are and will remain the scarce resource.
+const LONG_BY_WEEKDAY = { Mon: 1, Tue: 1, Wed: 1, Thu: 2, Fri: 2, Sat: 2, Sun: 2 };
 const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const data = JSON.parse(readFileSync('puzzles.json', 'utf8'));
@@ -32,8 +36,11 @@ holes.forEach((h, i) => {
     if (l.toLowerCase() !== expect) errors.push(`${where}: link "${l}" should read "${expect}"`);
   });
   if (h.links && h.links.length !== h.words.length - 1) errors.push(`${where}: expected ${h.words.length - 1} links`);
-  if (seen.has(h.seed)) errors.push(`seed ${h.seed} appears twice in the pool`);
-  seen.set(h.seed, i);
+    // A seed may offer several chains. The chain-finder already guarantees any
+    // two share at most one word, so only an outright identical chain is a bug.
+    const key = h.words.join(' ');
+    if (seen.has(key)) errors.push(`${where}: identical chain already in the pool`);
+    seen.set(key, i);
 });
 if (errors.length) { console.error('✗ puzzles.json failed validation:\n  ' + errors.join('\n  ')); process.exit(1); }
 
@@ -43,9 +50,15 @@ const linksOf = h => h.words.slice(1).map((_, i) => linkOf(h, i));
 
 const pool = { 3: [], 4: [], 5: [] };
 holes.forEach(h => pool[h.words.length].push(h));
-Object.values(pool).forEach(list => list.sort((a, b) => a.seed.localeCompare(b.seed)));
+// Sorting by seed would hand out ADEPT, ADOBE, ALLOT on day one and walk the
+// alphabet from there. Shuffle deterministically instead, so a build is
+// reproducible but a week's seeds don't look sorted.
+const hash = str => { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+Object.values(pool).forEach(list =>
+  list.sort((a, b) => hash(a.seed + a.words[1]) - hash(b.seed + b.words[1])));
 
 const lastUsed = new Map();        // link -> day index it last appeared on
+const seedUsed = new Map();        // seed -> day index it last appeared on
 const days = [];
 let dayIdx = 0, exhausted = false;
 
@@ -63,7 +76,7 @@ const dateOf = n => {
 while (!exhausted && dayIdx < MAX_DAYS) {
   const wd = weekdayOf(dayIdx);
   const wantLong = LONG_BY_WEEKDAY[wd];
-  const picked = [], usedToday = new Set();
+  const picked = [], usedToday = new Set(), usedSeedToday = new Set();
 
   const take = (len) => {
     for (let i = 0; i < pool[len].length; i++) {
@@ -71,8 +84,11 @@ while (!exhausted && dayIdx < MAX_DAYS) {
       const ls = linksOf(h);
       if (ls.some(l => usedToday.has(l))) continue;
       if (ls.some(l => lastUsed.has(l) && dayIdx - lastUsed.get(l) < COOLDOWN_DAYS)) continue;
+      if (seedUsed.has(h.seed) && dayIdx - seedUsed.get(h.seed) < SEED_COOLDOWN) continue;
+      if (usedSeedToday.has(h.seed)) continue;
       pool[len].splice(i, 1);
       ls.forEach(l => { usedToday.add(l); lastUsed.set(l, dayIdx); });
+      seedUsed.set(h.seed, dayIdx); usedSeedToday.add(h.seed);
       return h;
     }
     return null;

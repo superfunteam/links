@@ -103,9 +103,11 @@ midnight US Eastern so friends in different time zones compare the same puzzle. 
 are listed below it and stay playable. Your **first completed round** for a date is the one
 that counts; replays are welcome and clearly marked as not counting.
 
-Difficulty follows a weekly rhythm. The number of full-length five-word holes climbs through
-the week — 1 on Monday, 2 Tuesday and Wednesday, 3 Thursday, 4 Friday, 5 at the weekend —
-so par runs from 18 on a Monday to 30 on a Sunday.
+Difficulty follows a weekly rhythm: the number of full-length five-word holes climbs through
+the week, 1 early and 2 from Thursday on. Those quotas are set by what the vocabulary can
+actually supply — a five-word chain needs four strong links in a row with every initial fixed
+in advance, so they are and will remain the scarce resource. `build.mjs` flags any day it
+couldn't fill rather than pretending the day is complete.
 
 ## Editing puzzles
 
