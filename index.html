@@ -88,6 +88,73 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .course-r .lb{display:block;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
 .under{color:var(--green)} .overp{color:var(--red)}
 
+/* ─────────────────────────────  tabs  ───────────────────────────── */
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:var(--card);border-top:2px solid var(--line);
+  padding:6px 8px max(6px,env(safe-area-inset-bottom))
+}
+.tabs > *{max-width:186px;margin:0 auto}
+body.playing .tabs{display:none}
+.screen.tabbed{padding-bottom:96px}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;
+  border-radius:12px;color:var(--muted);font-weight:700;font-size:11.5px;letter-spacing:.02em;
+  transition:color .16s,background .16s
+}
+.tab svg{width:23px;height:23px}
+/* the highlight is a pill behind the icon, not the whole third of the bar */
+.tab.on{color:var(--green-2)}
+.tab.on svg{background:var(--green-soft);border-radius:999px;padding:3px 15px;box-sizing:content-box}
+.tab:active{transform:scale(.94)}
+
+/* ─────────────────────────────  today  ───────────────────────────── */
+.hero.sm{padding:26px 0 16px}
+.scr-t{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:34px;letter-spacing:-.03em}
+.sec-h{
+  font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  font-weight:800;margin:26px 0 11px
+}
+.hero-card{
+  background:var(--card);border:2px solid var(--ink);border-radius:var(--r-lg);
+  padding:20px 18px;box-shadow:0 5px 0 var(--ink);margin-bottom:22px;text-align:center
+}
+.hero-card.played{border-color:var(--green);box-shadow:0 5px 0 var(--green-2)}
+.hc-tag{
+  display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);font-weight:800;margin-bottom:6px
+}
+.hc-t{font-size:clamp(30px,9vw,40px);letter-spacing:-.035em;line-height:1.02;font-weight:1000}
+.hc-meta{font-size:13.5px;color:var(--muted);font-weight:600;margin-top:6px}
+.hc-score{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:14px 0 4px}
+.hc-rel{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:40px;line-height:1}
+.hc-str{font-size:14px;color:var(--muted);font-weight:700}
+.hc-btns{display:flex;gap:9px;margin-top:16px}
+.hc-btns .btn{flex:1}
+.btn.big{width:100%;margin-top:16px;font-size:17px;padding:17px 12px}
+
+/* ─────────────────────────────  club + you  ───────────────────────────── */
+.codecard{
+  background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);
+  padding:18px;box-shadow:var(--chunk);text-align:center;margin-bottom:16px
+}
+.cc-lab{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.cc-code{
+  display:block;font-weight:1000;font-size:clamp(44px,15vw,62px);letter-spacing:.14em;
+  line-height:1.15;margin-top:4px
+}
+.empty{text-align:center;padding:28px 18px;color:var(--muted)}
+.empty-i{font-size:44px;margin-bottom:8px}
+.empty h3{font-size:19px;color:var(--ink);font-weight:700;margin-bottom:6px}
+.empty p{font-size:14.5px;line-height:1.55;max-width:34ch;margin:0 auto;font-weight:500}
+.stats{display:flex;gap:9px;margin-bottom:16px}
+.stat{
+  flex:1;background:var(--card);border:2px solid var(--line);border-radius:16px;
+  padding:14px 8px;box-shadow:var(--chunk);text-align:center
+}
+.st-v{display:block;font-weight:1000;font-size:26px;line-height:1}
+.st-l{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:5px}
+
 /* ─────────────────────────────  topbar  ───────────────────────────── */
 .top{display:flex;align-items:center;gap:10px;padding:18px 0 6px;position:sticky;top:0;background:var(--paper);z-index:5}
 .icon-btn{
@@ -326,13 +393,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 <div class="app">
 
   <!-- ══════════════ HOME ══════════════ -->
-  <section id="s-home" class="screen on">
-    <div class="hero">
+  <!-- ══════════════ TODAY ══════════════ -->
+  <section id="s-today" class="screen on tabbed">
+    <div class="hero sm">
       <div class="wordmark flex" id="wordmark"></div>
-      <p class="tagline">Every word links to the next.</p>
+      <p class="tagline" id="today-date"></p>
     </div>
 
-    <div class="how">
+    <div id="today-card"></div>
+
+    <div class="how" id="how">
       <h2>How it goes</h2>
       <div class="demo">
         <div class="demo-row"><b>S</b>SNAKE <i>— given</i></div>
@@ -343,11 +413,24 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <p>The seed word <em>SOFT</em> gives you every first letter. Each word joins the one below it — sometimes a compound word like <em>OVERHEAD</em>, sometimes a before-and-after pair like <em>PARTY ANIMAL</em>. Guesses cost <em>1 stroke</em>, and you can buy a letter for <em>1 stroke</em>. Low score wins.</p>
     </div>
 
-    <div class="courses" id="courses"></div>
-    <p class="foot">10 courses, 3 holes each.</p>
+    <h2 class="sec-h" id="past-h">Past rounds</h2>
+    <div class="courses" id="past"></div>
   </section>
 
-  <!-- ══════════════ PLAY ══════════════ -->
+  <!-- ══════════════ CLUB ══════════════ -->
+  <section id="s-club" class="screen tabbed">
+    <div class="hero sm"><h1 class="scr-t flex">Links Club</h1>
+      <p class="tagline">Play alongside your friends.</p></div>
+    <div id="club-body"></div>
+  </section>
+
+  <!-- ══════════════ YOU ══════════════ -->
+  <section id="s-you" class="screen tabbed">
+    <div class="hero sm"><h1 class="scr-t flex">You</h1>
+      <p class="tagline">Your code and your record.</p></div>
+    <div id="you-body"></div>
+  </section>
+
   <section id="s-play" class="screen">
     <div class="top">
       <button class="icon-btn" id="back" aria-label="Back to courses">
@@ -382,6 +465,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   </section>
 </div>
 
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-scr="s-today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+    <span>Today</span>
+  </button>
+  <button class="tab" data-scr="s-club">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16.5 5.2a3.4 3.4 0 010 6.6M18 20a6.6 6.6 0 00-2.2-4.9"/></svg>
+    <span>Club</span>
+  </button>
+  <button class="tab" data-scr="s-you">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5a7.5 7.5 0 0115 0"/></svg>
+    <span>You</span>
+  </button>
+</nav>
+
 <!-- ══════════════ SHEETS ══════════════ -->
 <div class="sheet" id="sheet-set"><div class="sheet-in">
   <h2 class="set-h">Settings</h2>
@@ -411,8 +509,26 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* ═══════════════════════════════════════════════════════════════
    PUZZLE DATA  (base64 so a casual view-source doesn't spoil it)
    ═══════════════════════════════════════════════════════════════ */
-const PUZZLE_B64 = "W3sibmFtZSI6IkJhYnkgU3RlcHMiLCJob2xlcyI6W3sic2VlZCI6IkNBVCIsIndvcmRzIjpbIkNSQUIiLCJBUFBMRSIsIlRSRUUiXSwibGlua3MiOlsiY3JhYiBhcHBsZSIsImFwcGxlIHRyZWUiXX0seyJzZWVkIjoiRkFUIiwid29yZHMiOlsiRlJFU0giLCJBSVIiLCJUSU1FIl0sImxpbmtzIjpbImZyZXNoIGFpciIsImFpciB0aW1lIl19LHsic2VlZCI6IkZBUiIsIndvcmRzIjpbIkZJUkUiLCJBUk0iLCJSRVNUIl0sImxpbmtzIjpbImZpcmUgYXJtIiwiYXJtIHJlc3QiXX1dfSx7Im5hbWUiOiJFYXN5IE1vbmV5IiwiaG9sZXMiOlt7InNlZWQiOiJGTFkiLCJ3b3JkcyI6WyJGTEFTSCIsIkxJR0hUIiwiWUVBUiJdLCJsaW5rcyI6WyJmbGFzaCBsaWdodCIsImxpZ2h0IHllYXIiXX0seyJzZWVkIjoiT0ZGIiwid29yZHMiOlsiT1BFTiIsIkZJUkUiLCJGTFkiXSwibGlua3MiOlsib3BlbiBmaXJlIiwiZmlyZSBmbHkiXX0seyJzZWVkIjoiVFdPIiwid29yZHMiOlsiVEVBTSIsIldPUksiLCJPVVQiXSwibGlua3MiOlsidGVhbSB3b3JrIiwid29yayBvdXQiXX1dfSx7Im5hbWUiOiJDaGFpbiBSZWFjdGlvbiIsImhvbGVzIjpbeyJzZWVkIjoiUE9QIiwid29yZHMiOlsiUFVTSCIsIk9WRVIiLCJQQVNTIl0sImxpbmtzIjpbInB1c2ggb3ZlciIsIm92ZXIgcGFzcyJdfSx7InNlZWQiOiJET0ciLCJ3b3JkcyI6WyJEUk9QIiwiT1VUIiwiR09JTkciXSwibGlua3MiOlsiZHJvcCBvdXQiLCJvdXQgZ29pbmciXX0seyJzZWVkIjoiU0lUIiwid29yZHMiOlsiU0lHTiIsIklOIiwiVEFLRSJdLCJsaW5rcyI6WyJzaWduIGluIiwiaW4gdGFrZSJdfV19LHsibmFtZSI6Ik1pc3NpbmcgTGlua3MiLCJob2xlcyI6W3sic2VlZCI6Ik1VRCIsIndvcmRzIjpbIk1BS0UiLCJVUCIsIkRBVEUiXSwibGlua3MiOlsibWFrZSB1cCIsInVwIGRhdGUiXX0seyJzZWVkIjoiRElEIiwid29yZHMiOlsiRFJJVkUiLCJJTiIsIkRPT1IiXSwibGlua3MiOlsiZHJpdmUgaW4iLCJpbiBkb29yIl19LHsic2VlZCI6IkJVUyIsIndvcmRzIjpbIkJBQ0siLCJVUCIsIlNFVCJdLCJsaW5rcyI6WyJiYWNrIHVwIiwidXAgc2V0Il19XX0seyJuYW1lIjoiTG9vc2UgRW5kcyIsImhvbGVzIjpbeyJzZWVkIjoiU09GVCIsIndvcmRzIjpbIlNOQUtFIiwiT0lMIiwiRklFTEQiLCJUUklQIl0sImxpbmtzIjpbInNuYWtlIG9pbCIsIm9pbCBmaWVsZCIsImZpZWxkIHRyaXAiXX0seyJzZWVkIjoiQkxJUCIsIndvcmRzIjpbIkJBQ0siLCJMT0ciLCJJTiIsIlBVVCJdLCJsaW5rcyI6WyJiYWNrIGxvZyIsImxvZyBpbiIsImluIHB1dCJdfSx7InNlZWQiOiJTUFVSIiwid29yZHMiOlsiU0FGRVRZIiwiUElOIiwiVVAiLCJSSUdIVCJdLCJsaW5rcyI6WyJzYWZldHkgcGluIiwicGluIHVwIiwidXAgcmlnaHQiXX1dfSx7Im5hbWUiOiJEb3VibGUgVHJvdWJsZSIsImhvbGVzIjpbeyJzZWVkIjoiU0hVVCIsIndvcmRzIjpbIlNUUk9ORyIsIkhPTEQiLCJVUCIsIlRPV04iXSwibGlua3MiOlsic3Ryb25nIGhvbGQiLCJob2xkIHVwIiwidXAgdG93biJdfSx7InNlZWQiOiJCT0xUIiwid29yZHMiOlsiQk9JTCIsIk9WRVIiLCJMQVAiLCJUT1AiXSwibGlua3MiOlsiYm9pbCBvdmVyIiwib3ZlciBsYXAiLCJsYXAgdG9wIl19LHsic2VlZCI6IkZPUlQiLCJ3b3JkcyI6WyJGQUNFIiwiT0ZGIiwiUk9BRCIsIlRSSVAiXSwibGlua3MiOlsiZmFjZSBvZmYiLCJvZmYgcm9hZCIsInJvYWQgdHJpcCJdfV19LHsibmFtZSI6IlRoZSBEZWVwIEVuZCIsImhvbGVzIjpbeyJzZWVkIjoiUExVRyIsIndvcmRzIjpbIlBJUEUiLCJMSU5FIiwiVVAiLCJHUkFERSJdLCJsaW5rcyI6WyJwaXBlIGxpbmUiLCJsaW5lIHVwIiwidXAgZ3JhZGUiXX0seyJzZWVkIjoiTE9ORyIsIndvcmRzIjpbIkxFRlQiLCJPVkVSIiwiTklHSFQiLCJHT1dOIl0sImxpbmtzIjpbImxlZnQgb3ZlciIsIm92ZXIgbmlnaHQiLCJuaWdodCBnb3duIl19LHsic2VlZCI6IkhPU1QiLCJ3b3JkcyI6WyJIQU5HIiwiT1VUIiwiU0lERSIsIlRSQUNLIl0sImxpbmtzIjpbImhhbmcgb3V0Iiwib3V0IHNpZGUiLCJzaWRlIHRyYWNrIl19XX0seyJuYW1lIjoiVG9uZ3VlIFR3aXN0ZXIiLCJob2xlcyI6W3sic2VlZCI6IlNIT1AiLCJ3b3JkcyI6WyJTSE9SVCIsIkhBTkQiLCJPVVQiLCJQT1NUIl0sImxpbmtzIjpbInNob3J0IGhhbmQiLCJoYW5kIG91dCIsIm91dCBwb3N0Il19LHsic2VlZCI6IlNQT1QiLCJ3b3JkcyI6WyJTTUFMTCIsIlBSSU5UIiwiT1VUIiwiVEFLRSJdLCJsaW5rcyI6WyJzbWFsbCBwcmludCIsInByaW50IG91dCIsIm91dCB0YWtlIl19LHsic2VlZCI6IkRVU0siLCJ3b3JkcyI6WyJEUkVTUyIsIlVQIiwiU0lERSIsIktJQ0siXSwibGlua3MiOlsiZHJlc3MgdXAiLCJ1cCBzaWRlIiwic2lkZSBraWNrIl19XX0seyJuYW1lIjoiQnJhaW4gRnJlZXplIiwiaG9sZXMiOlt7InNlZWQiOiJDT0xPUiIsIndvcmRzIjpbIkNST1NTIiwiT1ZFUiIsIkxPT0siLCJPVVQiLCJSSUdIVCJdLCJsaW5rcyI6WyJjcm9zcyBvdmVyIiwib3ZlciBsb29rIiwibG9vayBvdXQiLCJvdXQgcmlnaHQiXX0seyJzZWVkIjoiRkxPU1MiLCJ3b3JkcyI6WyJGT1JLIiwiTElGVCIsIk9GRiIsIlNJREUiLCJTSE9XIl0sImxpbmtzIjpbImZvcmsgbGlmdCIsImxpZnQgb2ZmIiwib2ZmIHNpZGUiLCJzaWRlIHNob3ciXX0seyJzZWVkIjoiU0NPTEQiLCJ3b3JkcyI6WyJTSE9SVCIsIkNVVCIsIk9VVCIsIkxFVCIsIkRPV04iXSwibGlua3MiOlsic2hvcnQgY3V0IiwiY3V0IG91dCIsIm91dCBsZXQiLCJsZXQgZG93biJdfV19LHsibmFtZSI6IkdyYW5kIEZpbmFsZSIsImhvbGVzIjpbeyJzZWVkIjoiTUFNQk8iLCJ3b3JkcyI6WyJNSUQiLCJBSVIiLCJNQUlMIiwiQk9YIiwiT0ZGSUNFIl0sImxpbmtzIjpbIm1pZCBhaXIiLCJhaXIgbWFpbCIsIm1haWwgYm94IiwiYm94IG9mZmljZSJdfSx7InNlZWQiOiJQUk9XTCIsIndvcmRzIjpbIlBBWSIsIlJPTEwiLCJPVkVSIiwiV0VJR0hUIiwiTElGVEVSIl0sImxpbmtzIjpbInBheSByb2xsIiwicm9sbCBvdmVyIiwib3ZlciB3ZWlnaHQiLCJ3ZWlnaHQgbGlmdGVyIl19LHsic2VlZCI6Ik1PVE9SIiwid29yZHMiOlsiTUFLRSIsIk9WRVIiLCJUSU1FIiwiT1VUIiwiUkFHRSJdLCJsaW5rcyI6WyJtYWtlIG92ZXIiLCJvdmVyIHRpbWUiLCJ0aW1lIG91dCIsIm91dCByYWdlIl19XX1d";
-const COURSES = JSON.parse(decodeURIComponent(escape(atob(PUZZLE_B64))));
+const PUZZLE_B64 = "eyJzdGFydERhdGUiOiIyMDI2LTA4LTIyIiwiZGF5cyI6W3siZGF0ZSI6IjIwMjYtMDgtMjIiLCJuYW1lIjoiQmFieSBTdGVwcyIsImhvbGVzIjpbeyJzZWVkIjoiQURPQkUiLCJ3b3JkcyI6WyJBSVIiLCJEUk9QIiwiT1VUIiwiQlJFQUsiLCJFVkVOIl0sImxpbmtzIjpbImFpciBkcm9wIiwiZHJvcCBvdXQiLCJvdXQgYnJlYWsiLCJicmVhayBldmVuIl19LHsic2VlZCI6IkFMT0ZUIiwid29yZHMiOlsiQUlSIiwiTElORSIsIk9VVCIsIkZJRUxEIiwiVEVTVCJdLCJsaW5rcyI6WyJhaXIgbGluZSIsImxpbmUgb3V0Iiwib3V0IGZpZWxkIiwiZmllbGQgdGVzdCJdfSx7InNlZWQiOiJBUkRPUiIsIndvcmRzIjpbIkFDSUQiLCJSQUlOIiwiRFJPUCIsIk9GRiIsIlJBTVAiXSwibGlua3MiOlsiYWNpZCByYWluIiwicmFpbiBkcm9wIiwiZHJvcCBvZmYiLCJvZmYgcmFtcCJdfSx7InNlZWQiOiJCTElTUyIsIndvcmRzIjpbIkJBQ0siLCJMT0ciLCJJTiIsIlNJREUiLCJTSE9XIl0sImxpbmtzIjpbImJhY2sgbG9nIiwibG9nIGluIiwiaW4gc2lkZSIsInNpZGUgc2hvdyJdfSx7InNlZWQiOiJCTFVTSCIsIndvcmRzIjpbIkJBU0UiLCJMSU5FIiwiVVAiLCJTSURFIiwiSFVTVExFIl0sImxpbmtzIjpbImJhc2UgbGluZSIsImxpbmUgdXAiLCJ1cCBzaWRlIiwic2lkZSBodXN0bGUiXX1dfSx7ImRhdGUiOiIyMDI2LTA4LTIzIiwibmFtZSI6IkVhc3kgTW9uZXkiLCJob2xlcyI6W3sic2VlZCI6IkJPUk9OIiwid29yZHMiOlsiQkxBQ0siLCJPVVQiLCJSVU4iLCJPVkVSIiwiTklHSFQiXSwibGlua3MiOlsiYmxhY2sgb3V0Iiwib3V0IHJ1biIsInJ1biBvdmVyIiwib3ZlciBuaWdodCJdfSx7InNlZWQiOiJCT1NTWSIsIndvcmRzIjpbIkJPWCIsIk9GRklDRSIsIlNQQUNFIiwiU0hJUCIsIllBUkQiXSwibGlua3MiOlsiYm94IG9mZmljZSIsIm9mZmljZSBzcGFjZSIsInNwYWNlIHNoaXAiLCJzaGlwIHlhcmQiXX0seyJzZWVkIjoiQ0xPU0UiLCJ3b3JkcyI6WyJDSEFJUiIsIkxJRlQiLCJPRkYiLCJTSURFIiwiRUZGRUNUIl0sImxpbmtzIjpbImNoYWlyIGxpZnQiLCJsaWZ0IG9mZiIsIm9mZiBzaWRlIiwic2lkZSBlZmZlY3QiXX0seyJzZWVkIjoiQ09BU1QiLCJ3b3JkcyI6WyJDQVJSWSIsIk9OIiwiQUlSIiwiU0hPVyIsIlRJTUUiXSwibGlua3MiOlsiY2Fycnkgb24iLCJvbiBhaXIiLCJhaXIgc2hvdyIsInNob3cgdGltZSJdfSx7InNlZWQiOiJDT0xPUiIsIndvcmRzIjpbIkNST1NTIiwiT1ZFUiIsIkxPT0siLCJPVVQiLCJSSUdIVCJdLCJsaW5rcyI6WyJjcm9zcyBvdmVyIiwib3ZlciBsb29rIiwibG9vayBvdXQiLCJvdXQgcmlnaHQiXX1dfSx7ImRhdGUiOiIyMDI2LTA4LTI0IiwibmFtZSI6IkNoYWluIFJlYWN0aW9uIiwiaG9sZXMiOlt7InNlZWQiOiJBTEUiLCJ3b3JkcyI6WyJBSVIiLCJMSUZUIiwiRVIiXSwibGlua3MiOlsiYWlyIGxpZnQiLCJsaWZ0IGVyIl19LHsic2VlZCI6IkFSVCIsIndvcmRzIjpbIkFSTVMiLCJSQUNFIiwiVFJBQ0siXSwibGlua3MiOlsiYXJtcyByYWNlIiwicmFjZSB0cmFjayJdfSx7InNlZWQiOiJBU0giLCJ3b3JkcyI6WyJBUlQiLCJTQ0hPT0wiLCJIT1VTRSJdLCJsaW5rcyI6WyJhcnQgc2Nob29sIiwic2Nob29sIGhvdXNlIl19LHsic2VlZCI6IkFXRSIsIndvcmRzIjpbIkFSVCIsIldPUksiLCJFVEhJQyJdLCJsaW5rcyI6WyJhcnQgd29yayIsIndvcmsgZXRoaWMiXX0seyJzZWVkIjoiRElUQ0giLCJ3b3JkcyI6WyJEUlkiLCJJQ0UiLCJURUEiLCJDQUtFIiwiSE9MRSJdLCJsaW5rcyI6WyJkcnkgaWNlIiwiaWNlIHRlYSIsInRlYSBjYWtlIiwiY2FrZSBob2xlIl19XX0seyJkYXRlIjoiMjAyNi0wOC0yNSIsIm5hbWUiOiJNaXNzaW5nIExpbmtzIiwiaG9sZXMiOlt7InNlZWQiOiJCQVQiLCJ3b3JkcyI6WyJCQUQiLCJBUFBMRSIsIlRSRUUiXSwibGlua3MiOlsiYmFkIGFwcGxlIiwiYXBwbGUgdHJlZSJdfSx7InNlZWQiOiJCRUUiLCJ3b3JkcyI6WyJCTEFDSyIsIkVZRSIsIkVYQU0iXSwibGlua3MiOlsiYmxhY2sgZXllIiwiZXllIGV4YW0iXX0seyJzZWVkIjoiQkVUIiwid29yZHMiOlsiQk9PSyIsIkVORCIsIlRBQkxFIl0sImxpbmtzIjpbImJvb2sgZW5kIiwiZW5kIHRhYmxlIl19LHsic2VlZCI6IkRST0xMIiwid29yZHMiOlsiRFJVTSIsIlJPTEwiLCJPVkVSIiwiTEFORCIsIkxBRFkiXSwibGlua3MiOlsiZHJ1bSByb2xsIiwicm9sbCBvdmVyIiwib3ZlciBsYW5kIiwibGFuZCBsYWR5Il19LHsic2VlZCI6IkVESUNUIiwid29yZHMiOlsiRVlFIiwiRFJPUCIsIklOIiwiQ09NRSIsIlRIUk9VR0giXSwibGlua3MiOlsiZXllIGRyb3AiLCJkcm9wIGluIiwiaW4gY29tZSIsImNvbWUgdGhyb3VnaCJdfV19LHsiZGF0ZSI6IjIwMjYtMDgtMjYiLCJuYW1lIjoiTG9vc2UgRW5kcyIsImhvbGVzIjpbeyJzZWVkIjoiQklCIiwid29yZHMiOlsiQkxBQ0siLCJJQ0UiLCJCT1giXSwibGlua3MiOlsiYmxhY2sgaWNlIiwiaWNlIGJveCJdfSx7InNlZWQiOiJCSUQiLCJ3b3JkcyI6WyJCUkVBSyIsIklOIiwiREVQVEgiXSwibGlua3MiOlsiYnJlYWsgaW4iLCJpbiBkZXB0aCJdfSx7InNlZWQiOiJCVUQiLCJ3b3JkcyI6WyJCUkVBSyIsIlVQIiwiREFURSJdLCJsaW5rcyI6WyJicmVhayB1cCIsInVwIGRhdGUiXX0seyJzZWVkIjoiRlVST1IiLCJ3b3JkcyI6WyJGQUNFIiwiVVAiLCJSSUdIVCIsIk9OIiwiUkFNUCJdLCJsaW5rcyI6WyJmYWNlIHVwIiwidXAgcmlnaHQiLCJyaWdodCBvbiIsIm9uIHJhbXAiXX0seyJzZWVkIjoiR09ETFkiLCJ3b3JkcyI6WyJHRVQiLCJPRkYiLCJEQVkiLCJMSUdIVCIsIllFQVIiXSwibGlua3MiOlsiZ2V0IG9mZiIsIm9mZiBkYXkiLCJkYXkgbGlnaHQiLCJsaWdodCB5ZWFyIl19XX0seyJkYXRlIjoiMjAyNi0wOC0yNyIsIm5hbWUiOiJEb3VibGUgVHJvdWJsZSIsImhvbGVzIjpbeyJzZWVkIjoiQVJDIiwid29yZHMiOlsiQUNJRCIsIlJBSU4iLCJDSEVDSyJdLCJsaW5rcyI6WyJhY2lkIHJhaW4iLCJyYWluIGNoZWNrIl19LHsic2VlZCI6IkJVUyIsIndvcmRzIjpbIkJBQ0siLCJVUCIsIlNFVCJdLCJsaW5rcyI6WyJiYWNrIHVwIiwidXAgc2V0Il19LHsic2VlZCI6IkNPTE9OIiwid29yZHMiOlsiQ0FMTCIsIk9GRiIsIkxJTkUiLCJPVVQiLCJOVU1CRVIiXSwibGlua3MiOlsiY2FsbCBvZmYiLCJvZmYgbGluZSIsImxpbmUgb3V0Iiwib3V0IG51bWJlciJdfSx7InNlZWQiOiJGTFVTSCIsIndvcmRzIjpbIkZBTEwiLCJMSU5FIiwiVVAiLCJTSURFIiwiSFVTVExFIl0sImxpbmtzIjpbImZhbGwgbGluZSIsImxpbmUgdXAiLCJ1cCBzaWRlIiwic2lkZSBodXN0bGUiXX0seyJzZWVkIjoiSE9CQlkiLCJ3b3JkcyI6WyJIQU5EIiwiT1VUIiwiQkFDSyIsIkJPTkUiLCJZQVJEIl0sImxpbmtzIjpbImhhbmQgb3V0Iiwib3V0IGJhY2siLCJiYWNrIGJvbmUiLCJib25lIHlhcmQiXX1dfSx7ImRhdGUiOiIyMDI2LTA4LTI4IiwibmFtZSI6IlRoZSBEZWVwIEVuZCIsImhvbGVzIjpbeyJzZWVkIjoiQUNNRSIsIndvcmRzIjpbIkFSTSIsIkNIQUlSIiwiTUFOIiwiRUFURVIiXSwibGlua3MiOlsiYXJtIGNoYWlyIiwiY2hhaXIgbWFuIiwibWFuIGVhdGVyIl19LHsic2VlZCI6IkNPQ09BIiwid29yZHMiOlsiQ0FMTCIsIk9VVCIsIkNPTUUiLCJPTiIsIkFJUiJdLCJsaW5rcyI6WyJjYWxsIG91dCIsIm91dCBjb21lIiwiY29tZSBvbiIsIm9uIGFpciJdfSx7InNlZWQiOiJDT05DSCIsIndvcmRzIjpbIkNBUlJZIiwiT1ZFUiIsIk5JR0hUIiwiQ0xVQiIsIkhPVVNFIl0sImxpbmtzIjpbImNhcnJ5IG92ZXIiLCJvdmVyIG5pZ2h0IiwibmlnaHQgY2x1YiIsImNsdWIgaG91c2UiXX0seyJzZWVkIjoiQ1JPU1MiLCJ3b3JkcyI6WyJDSElDS0VOIiwiUlVOIiwiT0ZGIiwiU0lERSIsIlNIT1ciXSwibGlua3MiOlsiY2hpY2tlbiBydW4iLCJydW4gb2ZmIiwib2ZmIHNpZGUiLCJzaWRlIHNob3ciXX0seyJzZWVkIjoiSE9SU0UiLCJ3b3JkcyI6WyJIQU5EIiwiT0ZGIiwiUk9BRCIsIlNJREUiLCJFRkZFQ1QiXSwibGlua3MiOlsiaGFuZCBvZmYiLCJvZmYgcm9hZCIsInJvYWQgc2lkZSIsInNpZGUgZWZmZWN0Il19XX0seyJkYXRlIjoiMjAyNi0wOC0yOSIsIm5hbWUiOiJUb25ndWUgVHdpc3RlciIsImhvbGVzIjpbeyJzZWVkIjoiRElUVE8iLCJ3b3JkcyI6WyJEUlkiLCJJQ0UiLCJURUEiLCJUSU1FIiwiT1VUIl0sImxpbmtzIjpbImRyeSBpY2UiLCJpY2UgdGVhIiwidGVhIHRpbWUiLCJ0aW1lIG91dCJdfSx7InNlZWQiOiJNQU1CTyIsIndvcmRzIjpbIk1JRCIsIkFJUiIsIk1BSUwiLCJCT1giLCJPRkZJQ0UiXSwibGlua3MiOlsibWlkIGFpciIsImFpciBtYWlsIiwibWFpbCBib3giLCJib3ggb2ZmaWNlIl19LHsic2VlZCI6Ik1JU0VSIiwid29yZHMiOlsiTU9WRSIsIklOIiwiU0lERSIsIkVZRSIsIlJPTEwiXSwibGlua3MiOlsibW92ZSBpbiIsImluIHNpZGUiLCJzaWRlIGV5ZSIsImV5ZSByb2xsIl19LHsic2VlZCI6Ik1PVElGIiwid29yZHMiOlsiTUFLRSIsIk9WRVIiLCJUQUtFIiwiSU4iLCJGSUVMRCJdLCJsaW5rcyI6WyJtYWtlIG92ZXIiLCJvdmVyIHRha2UiLCJ0YWtlIGluIiwiaW4gZmllbGQiXX0seyJzZWVkIjoiT0xERVIiLCJ3b3JkcyI6WyJPVkVSIiwiTEFQIiwiRE9HIiwiRUFSIiwiUklORyJdLCJsaW5rcyI6WyJvdmVyIGxhcCIsImxhcCBkb2ciLCJkb2cgZWFyIiwiZWFyIHJpbmciXX1dfSx7ImRhdGUiOiIyMDI2LTA4LTMwIiwibmFtZSI6IkJyYWluIEZyZWV6ZSIsImhvbGVzIjpbeyJzZWVkIjoiUFJPQkUiLCJ3b3JkcyI6WyJQQVkiLCJST0xMIiwiT1VUIiwiQlJFQUsiLCJFVkVOIl0sImxpbmtzIjpbInBheSByb2xsIiwicm9sbCBvdXQiLCJvdXQgYnJlYWsiLCJicmVhayBldmVuIl19LHsic2VlZCI6IlJFQ0FQIiwid29yZHMiOlsiUkVEIiwiRVlFIiwiQ0FORFkiLCJBUFBMRSIsIlBJRSJdLCJsaW5rcyI6WyJyZWQgZXllIiwiZXllIGNhbmR5IiwiY2FuZHkgYXBwbGUiLCJhcHBsZSBwaWUiXX0seyJzZWVkIjoiU0NPTEQiLCJ3b3JkcyI6WyJTSE9SVCIsIkNVVCIsIk9VVCIsIkxFVCIsIkRPV04iXSwibGlua3MiOlsic2hvcnQgY3V0IiwiY3V0IG91dCIsIm91dCBsZXQiLCJsZXQgZG93biJdfSx7InNlZWQiOiJTQ09XTCIsIndvcmRzIjpbIlNIT1JUIiwiQ0hBTkdFIiwiT1ZFUiIsIldPUksiLCJMT0FEIl0sImxpbmtzIjpbInNob3J0IGNoYW5nZSIsImNoYW5nZSBvdmVyIiwib3ZlciB3b3JrIiwid29yayBsb2FkIl19LHsic2VlZCI6IlNLSUxMIiwid29yZHMiOlsiU0lERSIsIktJQ0siLCJJTiIsIkxBTkQiLCJMQURZIl0sImxpbmtzIjpbInNpZGUga2ljayIsImtpY2sgaW4iLCJpbiBsYW5kIiwibGFuZCBsYWR5Il19XX0seyJkYXRlIjoiMjAyNi0wOC0zMSIsIm5hbWUiOiJHcmFuZCBGaW5hbGUiLCJob2xlcyI6W3sic2VlZCI6IkJFRCIsIndvcmRzIjpbIkJMQUNLIiwiRVlFIiwiRFJPUCJdLCJsaW5rcyI6WyJibGFjayBleWUiLCJleWUgZHJvcCJdfSx7InNlZWQiOiJCT0ciLCJ3b3JkcyI6WyJCTEFDSyIsIk9VVCIsIkdPSU5HIl0sImxpbmtzIjpbImJsYWNrIG91dCIsIm91dCBnb2luZyJdfSx7InNlZWQiOiJCVUciLCJ3b3JkcyI6WyJCUkVBSyIsIlVQIiwiR1JBREUiXSwibGlua3MiOlsiYnJlYWsgdXAiLCJ1cCBncmFkZSJdfSx7InNlZWQiOiJDQVQiLCJ3b3JkcyI6WyJDUkFCIiwiQVBQTEUiLCJUUkVFIl0sImxpbmtzIjpbImNyYWIgYXBwbGUiLCJhcHBsZSB0cmVlIl19LHsic2VlZCI6Ik9DQ1VSIiwid29yZHMiOlsiT0ZGSUNFIiwiQ0hBSVIiLCJDT1ZFUiIsIlVQIiwiUklHSFQiXSwibGlua3MiOlsib2ZmaWNlIGNoYWlyIiwiY2hhaXIgY292ZXIiLCJjb3ZlciB1cCIsInVwIHJpZ2h0Il19XX0seyJkYXRlIjoiMjAyNi0wOS0wMSIsIm5hbWUiOiJXYXJtIEZyb250IiwiaG9sZXMiOlt7InNlZWQiOiJBUk0iLCJ3b3JkcyI6WyJBQ0lEIiwiUkFJTiIsIk1BS0VSIl0sImxpbmtzIjpbImFjaWQgcmFpbiIsInJhaW4gbWFrZXIiXX0seyJzZWVkIjoiQ1VCIiwid29yZHMiOlsiQ0FUQ0giLCJVUCIsIkJFQVQiXSwibGlua3MiOlsiY2F0Y2ggdXAiLCJ1cCBiZWF0Il19LHsic2VlZCI6IkRBQiIsIndvcmRzIjpbIkRFQUQiLCJBSVIiLCJCQUciXSwibGlua3MiOlsiZGVhZCBhaXIiLCJhaXIgYmFnIl19LHsic2VlZCI6IkZMT1JBIiwid29yZHMiOlsiRkFMTCIsIkxJTkUiLCJPVVQiLCJSVU4iLCJBUk9VTkQiXSwibGlua3MiOlsiZmFsbCBsaW5lIiwibGluZSBvdXQiLCJvdXQgcnVuIiwicnVuIGFyb3VuZCJdfSx7InNlZWQiOiJQTFVTSCIsIndvcmRzIjpbIlBBUlRZIiwiTElORSIsIlVQIiwiU0lERSIsIkhVU1RMRSJdLCJsaW5rcyI6WyJwYXJ0eSBsaW5lIiwibGluZSB1cCIsInVwIHNpZGUiLCJzaWRlIGh1c3RsZSJdfV19LHsiZGF0ZSI6IjIwMjYtMDktMDIiLCJuYW1lIjoiUXVpY2sgU3R1ZHkiLCJob2xlcyI6W3sic2VlZCI6IkNPQiIsIndvcmRzIjpbIkNBTEwiLCJPVVQiLCJCQUNLIl0sImxpbmtzIjpbImNhbGwgb3V0Iiwib3V0IGJhY2siXX0seyJzZWVkIjoiRElEIiwid29yZHMiOlsiRFJJVkUiLCJJTiIsIkRPT1IiXSwibGlua3MiOlsiZHJpdmUgaW4iLCJpbiBkb29yIl19LHsic2VlZCI6IkRJTSIsIndvcmRzIjpbIkRJRyIsIklOIiwiTUFURSJdLCJsaW5rcyI6WyJkaWcgaW4iLCJpbiBtYXRlIl19LHsic2VlZCI6IkZMT1NTIiwid29yZHMiOlsiRk9SSyIsIkxJRlQiLCJPRkYiLCJTSURFIiwiU0hPVyJdLCJsaW5rcyI6WyJmb3JrIGxpZnQiLCJsaWZ0IG9mZiIsIm9mZiBzaWRlIiwic2lkZSBzaG93Il19LHsic2VlZCI6IkhPTk9SIiwid29yZHMiOlsiSEFORCIsIk9WRVIiLCJOSUdIVCIsIk9VVCIsIlJBR0UiXSwibGlua3MiOlsiaGFuZCBvdmVyIiwib3ZlciBuaWdodCIsIm5pZ2h0IG91dCIsIm91dCByYWdlIl19XX0seyJkYXRlIjoiMjAyNi0wOS0wMyIsIm5hbWUiOiJTZWNvbmQgV2luZCIsImhvbGVzIjpbeyJzZWVkIjoiQklUIiwid29yZHMiOlsiQkxBQ0siLCJJQ0UiLCJURUEiXSwibGlua3MiOlsiYmxhY2sgaWNlIiwiaWNlIHRlYSJdfSx7InNlZWQiOiJESVAiLCJ3b3JkcyI6WyJEUlkiLCJJQ0UiLCJQQUNLIl0sImxpbmtzIjpbImRyeSBpY2UiLCJpY2UgcGFjayJdfSx7InNlZWQiOiJLT0FMQSIsIndvcmRzIjpbIktFRVAiLCJPTiIsIkFJUiIsIkxJTkUiLCJBR0UiXSwibGlua3MiOlsia2VlcCBvbiIsIm9uIGFpciIsImFpciBsaW5lIiwibGluZSBhZ2UiXX0seyJzZWVkIjoiUEhPVE8iLCJ3b3JkcyI6WyJQSU4iLCJIRUFEIiwiT04iLCJUSU1FIiwiT1VUIl0sImxpbmtzIjpbInBpbiBoZWFkIiwiaGVhZCBvbiIsIm9uIHRpbWUiLCJ0aW1lIG91dCJdfSx7InNlZWQiOiJTSEFERSIsIndvcmRzIjpbIlNXRUVUIiwiSEVBUlQiLCJBVFRBQ0siLCJET0ciLCJFQVIiXSwibGlua3MiOlsic3dlZXQgaGVhcnQiLCJoZWFydCBhdHRhY2siLCJhdHRhY2sgZG9nIiwiZG9nIGVhciJdfV19LHsiZGF0ZSI6IjIwMjYtMDktMDQiLCJuYW1lIjoiRmFpciBHYW1lIiwiaG9sZXMiOlt7InNlZWQiOiJBQkVUIiwid29yZHMiOlsiQVVESU8iLCJCT09LIiwiRU5EIiwiVEFCTEUiXSwibGlua3MiOlsiYXVkaW8gYm9vayIsImJvb2sgZW5kIiwiZW5kIHRhYmxlIl19LHsic2VlZCI6IkNST1dEIiwid29yZHMiOlsiQ0hJQ0tFTiIsIlJVTiIsIk9WRVIiLCJXT1JLIiwiREFZIl0sImxpbmtzIjpbImNoaWNrZW4gcnVuIiwicnVuIG92ZXIiLCJvdmVyIHdvcmsiLCJ3b3JrIGRheSJdfSx7InNlZWQiOiJQUk9QUyIsIndvcmRzIjpbIlBBWSIsIlJPTEwiLCJPVVQiLCJQT1NUIiwiU0NSSVBUIl0sImxpbmtzIjpbInBheSByb2xsIiwicm9sbCBvdXQiLCJvdXQgcG9zdCIsInBvc3Qgc2NyaXB0Il19LHsic2VlZCI6IlNIT1JUIiwid29yZHMiOlsiU0VDT05EIiwiSEFORCIsIk9GRiIsIlJPQUQiLCJUUklQIl0sImxpbmtzIjpbInNlY29uZCBoYW5kIiwiaGFuZCBvZmYiLCJvZmYgcm9hZCIsInJvYWQgdHJpcCJdfSx7InNlZWQiOiJURVBJRCIsIndvcmRzIjpbIlRJTiIsIkVBUiIsIlBMVUciLCJJTiIsIkRFUFRIIl0sImxpbmtzIjpbInRpbiBlYXIiLCJlYXIgcGx1ZyIsInBsdWcgaW4iLCJpbiBkZXB0aCJdfV19LHsiZGF0ZSI6IjIwMjYtMDktMDUiLCJuYW1lIjoiV2lsZCBDYXJkIiwiaG9sZXMiOlt7InNlZWQiOiJBUkNIIiwid29yZHMiOlsiQVJNUyIsIlJBQ0UiLCJDQVIiLCJIT1JOIl0sImxpbmtzIjpbImFybXMgcmFjZSIsInJhY2UgY2FyIiwiY2FyIGhvcm4iXX0seyJzZWVkIjoiQkFUSCIsIndvcmRzIjpbIkJBRCIsIkFQUExFIiwiVFJFRSIsIkhPVVNFIl0sImxpbmtzIjpbImJhZCBhcHBsZSIsImFwcGxlIHRyZWUiLCJ0cmVlIGhvdXNlIl19LHsic2VlZCI6IkJJTEwiLCJ3b3JkcyI6WyJCUkVBSyIsIklOIiwiTEFORCIsIkxBRFkiXSwibGlua3MiOlsiYnJlYWsgaW4iLCJpbiBsYW5kIiwibGFuZCBsYWR5Il19LHsic2VlZCI6IlRVVE9SIiwid29yZHMiOlsiVEFLRSIsIlVQIiwiVFVSTiIsIk9GRiIsIlJBTVAiXSwibGlua3MiOlsidGFrZSB1cCIsInVwIHR1cm4iLCJ0dXJuIG9mZiIsIm9mZiByYW1wIl19LHsic2VlZCI6IldJU0VSIiwid29yZHMiOlsiV0VJR0giLCJJTiIsIlNJREUiLCJFWUUiLCJST0xMIl0sImxpbmtzIjpbIndlaWdoIGluIiwiaW4gc2lkZSIsInNpZGUgZXllIiwiZXllIHJvbGwiXX1dfSx7ImRhdGUiOiIyMDI2LTA5LTA2IiwibmFtZSI6IkJyaWdodCBTaWRlIiwiaG9sZXMiOlt7InNlZWQiOiJCTElQIiwid29yZHMiOlsiQkFDSyIsIkxPRyIsIklOIiwiUFVUIl0sImxpbmtzIjpbImJhY2sgbG9nIiwibG9nIGluIiwiaW4gcHV0Il19LHsic2VlZCI6IkJPTEQiLCJ3b3JkcyI6WyJCTEFDSyIsIk9VVCIsIkxJTkUiLCJEQU5DRSJdLCJsaW5rcyI6WyJibGFjayBvdXQiLCJvdXQgbGluZSIsImxpbmUgZGFuY2UiXX0seyJzZWVkIjoiR0xPQkUiLCJ3b3JkcyI6WyJHT0FMIiwiTElORSIsIk9VVCIsIkJSRUFLIiwiRVZFTiJdLCJsaW5rcyI6WyJnb2FsIGxpbmUiLCJsaW5lIG91dCIsIm91dCBicmVhayIsImJyZWFrIGV2ZW4iXX0seyJzZWVkIjoiU0xVU0giLCJ3b3JkcyI6WyJTSURFIiwiTElORSIsIlVQIiwiU1RBR0UiLCJIQU5EIl0sImxpbmtzIjpbInNpZGUgbGluZSIsImxpbmUgdXAiLCJ1cCBzdGFnZSIsInN0YWdlIGhhbmQiXX0seyJzZWVkIjoiU1dPUkQiLCJ3b3JkcyI6WyJTQ0hPT0wiLCJXT1JLIiwiT1VUIiwiUlVOIiwiRE9XTiJdLCJsaW5rcyI6WyJzY2hvb2wgd29yayIsIndvcmsgb3V0Iiwib3V0IHJ1biIsInJ1biBkb3duIl19XX0seyJkYXRlIjoiMjAyNi0wOS0wNyIsIm5hbWUiOiJGcmVlIFJlaW4iLCJob2xlcyI6W3sic2VlZCI6IkJFRyIsIndvcmRzIjpbIkJMQUNLIiwiRVlFIiwiR0xBU1MiXSwibGlua3MiOlsiYmxhY2sgZXllIiwiZXllIGdsYXNzIl19LHsic2VlZCI6IkJVVCIsIndvcmRzIjpbIkJSRUFLIiwiVVAiLCJUSUdIVCJdLCJsaW5rcyI6WyJicmVhayB1cCIsInVwIHRpZ2h0Il19LHsic2VlZCI6IkNBUCIsIndvcmRzIjpbIkNBTkRZIiwiQVBQTEUiLCJQSUUiXSwibGlua3MiOlsiY2FuZHkgYXBwbGUiLCJhcHBsZSBwaWUiXX0seyJzZWVkIjoiQ09EIiwid29yZHMiOlsiQ0FMTCIsIk9VVCIsIkRPT1IiXSwibGlua3MiOlsiY2FsbCBvdXQiLCJvdXQgZG9vciJdfSx7InNlZWQiOiJEQUQiLCJ3b3JkcyI6WyJERUFEIiwiQUlSIiwiRFJPUCJdLCJsaW5rcyI6WyJkZWFkIGFpciIsImFpciBkcm9wIl19XX0seyJkYXRlIjoiMjAyNi0wOS0wOCIsIm5hbWUiOiJIb21lIFN0cmV0Y2giLCJob2xlcyI6W3sic2VlZCI6IkRFVyIsIndvcmRzIjpbIkRPRyIsIkVBUiIsIldBWCJdLCJsaW5rcyI6WyJkb2cgZWFyIiwiZWFyIHdheCJdfSx7InNlZWQiOiJET0MiLCJ3b3JkcyI6WyJEUk9QIiwiT1VUIiwiQ0FTVCJdLCJsaW5rcyI6WyJkcm9wIG91dCIsIm91dCBjYXN0Il19LHsic2VlZCI6IkRPVCIsIndvcmRzIjpbIkRBWSIsIk9GRiIsIlRSQUNLIl0sImxpbmtzIjpbImRheSBvZmYiLCJvZmYgdHJhY2siXX0seyJzZWVkIjoiTU9UT1IiLCJ3b3JkcyI6WyJNQUtFIiwiT1ZFUiIsIlRJTUUiLCJPVVQiLCJSQUdFIl0sImxpbmtzIjpbIm1ha2Ugb3ZlciIsIm92ZXIgdGltZSIsInRpbWUgb3V0Iiwib3V0IHJhZ2UiXX0seyJzZWVkIjoiUk9BU1QiLCJ3b3JkcyI6WyJSSUdIVCIsIk9OIiwiQUlSIiwiU0hPVyIsIlRJTUUiXSwibGlua3MiOlsicmlnaHQgb24iLCJvbiBhaXIiLCJhaXIgc2hvdyIsInNob3cgdGltZSJdfV19LHsiZGF0ZSI6IjIwMjYtMDktMDkiLCJuYW1lIjoiRnVsbCBDaXJjbGUiLCJob2xlcyI6W3sic2VlZCI6IkRVQiIsIndvcmRzIjpbIkRJQUwiLCJVUCIsIkJFQVQiXSwibGlua3MiOlsiZGlhbCB1cCIsInVwIGJlYXQiXX0seyJzZWVkIjoiRUJCIiwid29yZHMiOlsiRVlFIiwiQkFMTCIsIkJPWSJdLCJsaW5rcyI6WyJleWUgYmFsbCIsImJhbGwgYm95Il19LHsic2VlZCI6IkVFTCIsIndvcmRzIjpbIkVBR0xFIiwiRVlFIiwiTElORVIiXSwibGlua3MiOlsiZWFnbGUgZXllIiwiZXllIGxpbmVyIl19LHsic2VlZCI6IkRST1NTIiwid29yZHMiOlsiRFJVTSIsIlJPTEwiLCJPVVQiLCJTSURFIiwiU0hPVyJdLCJsaW5rcyI6WyJkcnVtIHJvbGwiLCJyb2xsIG91dCIsIm91dCBzaWRlIiwic2lkZSBzaG93Il19LHsic2VlZCI6IlBST05HIiwid29yZHMiOlsiUEFZIiwiUk9MTCIsIk9WRVIiLCJOSUdIVCIsIkdPV04iXSwibGlua3MiOlsicGF5IHJvbGwiLCJyb2xsIG92ZXIiLCJvdmVyIG5pZ2h0IiwibmlnaHQgZ293biJdfV19LHsiZGF0ZSI6IjIwMjYtMDktMTAiLCJuYW1lIjoiVXBoaWxsIENsaW1iIiwiaG9sZXMiOlt7InNlZWQiOiJFTVUiLCJ3b3JkcyI6WyJFQVIiLCJNQVJLIiwiVVAiXSwibGlua3MiOlsiZWFyIG1hcmsiLCJtYXJrIHVwIl19LHsic2VlZCI6IkZBUiIsIndvcmRzIjpbIkZJUkUiLCJBUk0iLCJSRVNUIl0sImxpbmtzIjpbImZpcmUgYXJtIiwiYXJtIHJlc3QiXX0seyJzZWVkIjoiRlVTRUQiLCJ3b3JkcyI6WyJGQUNFIiwiVVAiLCJTSURFIiwiRVlFIiwiRFJPUCJdLCJsaW5rcyI6WyJmYWNlIHVwIiwidXAgc2lkZSIsInNpZGUgZXllIiwiZXllIGRyb3AiXX0seyJzZWVkIjoiU1BPUlQiLCJ3b3JkcyI6WyJTQ0hPT0wiLCJQTEFZIiwiT0ZGIiwiUk9BRCIsIlRSSVAiXSwibGlua3MiOlsic2Nob29sIHBsYXkiLCJwbGF5IG9mZiIsIm9mZiByb2FkIiwicm9hZCB0cmlwIl19LHsic2VlZCI6IlRFUlNFIiwid29yZHMiOlsiVElOIiwiRUFSIiwiUklORyIsIlNJREUiLCJFRkZFQ1QiXSwibGlua3MiOlsidGluIGVhciIsImVhciByaW5nIiwicmluZyBzaWRlIiwic2lkZSBlZmZlY3QiXX1dfSx7ImRhdGUiOiIyMDI2LTA5LTExIiwibmFtZSI6IlNoYXJwIFR1cm4iLCJob2xlcyI6W3sic2VlZCI6IkFMTVMiLCJ3b3JkcyI6WyJBSVIiLCJMSU5FIiwiTUFOIiwiU0xBVUdIVEVSIl0sImxpbmtzIjpbImFpciBsaW5lIiwibGluZSBtYW4iLCJtYW4gc2xhdWdodGVyIl19LHsic2VlZCI6IkJBVFMiLCJ3b3JkcyI6WyJCQUQiLCJBUFBMRSIsIlRSRUUiLCJTVEFORCJdLCJsaW5rcyI6WyJiYWQgYXBwbGUiLCJhcHBsZSB0cmVlIiwidHJlZSBzdGFuZCJdfSx7InNlZWQiOiJCTFVSIiwid29yZHMiOlsiQkFTRSIsIkxJTkUiLCJVUCIsIlJJR0hUIl0sImxpbmtzIjpbImJhc2UgbGluZSIsImxpbmUgdXAiLCJ1cCByaWdodCJdfSx7InNlZWQiOiJMT0JCWSIsIndvcmRzIjpbIkxJTkUiLCJPVVQiLCJCQUNLIiwiQk9ORSIsIllBUkQiXSwibGlua3MiOlsibGluZSBvdXQiLCJvdXQgYmFjayIsImJhY2sgYm9uZSIsImJvbmUgeWFyZCJdfSx7InNlZWQiOiJTTk9SVCIsIndvcmRzIjpbIlNDSE9PTCIsIk5JR0hUIiwiT1VUIiwiUlVOIiwiVEhST1VHSCJdLCJsaW5rcyI6WyJzY2hvb2wgbmlnaHQiLCJuaWdodCBvdXQiLCJvdXQgcnVuIiwicnVuIHRocm91Z2giXX1dfV19";
+const PAYLOAD = JSON.parse(decodeURIComponent(escape(atob(PUZZLE_B64))));
+const DAYS = PAYLOAD.days;
+
+/* ── the calendar ──────────────────────────────────────────────────────────
+   Everyone plays the same course, so the day flips at midnight US Eastern
+   rather than each player's local midnight — otherwise friends in different
+   time zones would be comparing different puzzles. */
+const ET = d => new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York',
+  year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+const todayKey  = () => ET(new Date());
+const playable  = () => { const k = todayKey(); return DAYS.filter(d => d.date <= k); };
+// -1 means the calendar has run out rather than "show the last day we had",
+// which would quietly serve a stale course as if it were today's.
+const todayIdx  = () => DAYS.findIndex(d => d.date === todayKey());
+const prettyDay = key => {
+  const [y,m,dd] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m-1, dd)).toLocaleDateString('en-US',
+    { timeZone:'UTC', weekday:'long', month:'long', day:'numeric' });
+};
 
 /* ═══════════════════════════════════════════════════════════════
    SOUND — everything synthesized, no asset files
@@ -473,10 +589,34 @@ function term(strokes, p){
 }
 const rel = d => d===0 ? 'E' : (d>0 ? `+${d}` : `${d}`);
 
-const BEST = {
-  all(){ try{ return JSON.parse(localStorage.getItem('links.best')||'{}'); }catch(e){ return {}; } },
-  get(i){ return this.all()[i]; },
-  set(i,v){ const a=this.all(); if(a[i]==null||v<a[i]){ a[i]=v; localStorage.setItem('links.best',JSON.stringify(a)); } }
+// One round per day counts — the first one finished. Replays are welcome but
+// never overwrite it, so a friends' scorecard can't be ground down.
+const ROUNDS = {
+  all(){ try{ return JSON.parse(localStorage.getItem('links.rounds')||'{}'); }catch(e){ return {}; } },
+  get(date){ return this.all()[date]; },
+  save(date, r){
+    const a = this.all();
+    if(a[date]) return false;
+    a[date] = r; localStorage.setItem('links.rounds', JSON.stringify(a));
+    return true;
+  }
+};
+
+// A player is identified by a 4-character code they can read aloud over the
+// phone, so I and O and the digits they're mistaken for are left out.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ME = {
+  get code(){
+    let c = localStorage.getItem('links.code');
+    if(!/^[A-Z0-9]{4}$/.test(c || '')){
+      const r = crypto.getRandomValues(new Uint8Array(4));
+      c = [...r].map(n => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
+      localStorage.setItem('links.code', c);
+    }
+    return c;
+  },
+  get name(){ return localStorage.getItem('links.name') || ''; },
+  set name(v){ localStorage.setItem('links.name', v); }
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -487,46 +627,160 @@ const BEST = {
 // `hs` is strokes on the CURRENT hole — the header shows this and it resets each
 // hole. `holeScores` accumulates finished holes; the course total is their sum.
 // `marks` records how each word was won, for the share card.
-let S = { ci:0, hi:0, row:1, revealed:1, typed:'', pre:0, hs:0, holeScores:[], marks:[], rowG:0, rowB:0, busy:false };
+let S = { ci:0, practice:false, hi:0, row:1, revealed:1, typed:'', pre:0, hs:0, holeScores:[], marks:[], rowG:0, rowB:0, busy:false };
 let holeMarks = [];   // {g,b} per solved word on the hole in progress
 const entryStr = () => answer().slice(0, S.revealed) + S.typed;
 const clearEntry = () => { S.typed=''; S.pre=0; };
-const course = () => COURSES[S.ci];
+const course = () => DAYS[S.ci];   // S.ci is the day index
 const hole   = () => course().holes[S.hi];
 const answer = () => hole().words[S.row];
 
 /* ═══════════════════════════════════════════════════════════════
-   HOME
+   TODAY · CLUB · YOU
    ═══════════════════════════════════════════════════════════════ */
 $('#wordmark').innerHTML = [...'LINKS'].map((c,i)=>`<span style="animation-delay:${i*60}ms">${c}</span>`).join('');
 
-function renderHome(){
-  const wrap = $('#courses'); wrap.innerHTML='';
-  COURSES.forEach((c,i)=>{
-    const p = coursePar(c), best = BEST.get(i);
-    const b = el('button', 'course' + (best!=null?' done':''));
-    const d = best!=null ? best - p : null;
+const dayPar = d => d.holes.reduce((s,h)=>s+par(h),0);
+
+function renderToday(){
+  const i = todayIdx();
+  if(i < 0){                       // no course dated today
+    $('#today-date').textContent = prettyDay(todayKey());
+    $('#today-card').innerHTML = `
+      <div class="hero-card">
+        <span class="hc-tag">Today</span>
+        <h2 class="hc-t flex">Clubhouse closed</h2>
+        <div class="hc-meta">No round today — play any past round below.</div>
+      </div>`;
+    $('#how').style.display = Object.keys(ROUNDS.all()).length ? 'none' : '';
+    renderPast();
+    return;
+  }
+  const d = DAYS[i], p = dayPar(d), r = ROUNDS.get(d.date);
+  $('#today-date').textContent = prettyDay(d.date);
+  const diff = r ? r.strokes - p : null;
+
+  $('#today-card').innerHTML = `
+    <div class="hero-card ${r?'played':''}">
+      <span class="hc-tag">${r ? 'Today · complete' : "Today's course"}</span>
+      <h2 class="hc-t flex">${d.name}</h2>
+      <div class="hc-meta">${d.holes.length} holes · par ${p}</div>
+      ${ r ? `
+        <div class="hc-score">
+          <span class="hc-rel ${diff<0?'under':diff>0?'overp':''}">${rel(diff)}</span>
+          <span class="hc-str">${r.strokes} strokes</span>
+        </div>
+        <div class="hc-btns">
+          <button class="btn ghost" id="t-share">Share</button>
+          <button class="btn ghost" id="t-replay">Replay<small>doesn't count</small></button>
+        </div>`
+      : `<button class="btn big" id="t-play">Play today's round</button>` }
+    </div>`;
+
+  if(r){
+    $('#t-replay').onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i, true); };
+    $('#t-share').onclick  = ()=>{ Snd.boot(); Snd.blip(); openShare(d, r); };
+  } else {
+    $('#t-play').onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i, false); };
+  }
+  $('#how').style.display = Object.keys(ROUNDS.all()).length ? 'none' : '';
+  renderPast();
+}
+
+function renderPast(){
+  const wrap = $('#past'); wrap.innerHTML='';
+  const k = todayKey();
+  const list = playable().filter(d => d.date !== k).reverse();
+  $('#past-h').style.display = list.length ? '' : 'none';
+  list.forEach(d=>{
+    const i = DAYS.indexOf(d), p = dayPar(d), r = ROUNDS.get(d.date);
+    const diff = r ? r.strokes - p : null;
+    const b = el('button', 'course' + (r?' done':''));
     b.innerHTML = `
-      <span class="course-n flex">${i+1}</span>
+      <span class="course-n flex">${d.date.slice(8)}</span>
       <span class="course-b">
-        <span class="course-t">${c.name}</span>
-        <span class="course-s">${c.holes.map(h=>h.seed.length).join('·')} letters &nbsp;·&nbsp; par ${p}</span>
+        <span class="course-t">${d.name}</span>
+        <span class="course-s">${prettyDay(d.date).replace(/,.*/,'')} &nbsp;·&nbsp; par ${p}</span>
       </span>
-      <span class="course-r">${ best!=null
-        ? `<span class="sc ${d<0?'under':d>0?'overp':''}">${rel(d)}</span><span class="lb">${best} strokes</span>`
+      <span class="course-r">${ r
+        ? `<span class="sc ${diff<0?'under':diff>0?'overp':''}">${rel(diff)}</span><span class="lb">${r.strokes} strokes</span>`
         : `<span class="sc" style="color:var(--line-2)">–</span><span class="lb">Play</span>` }</span>`;
-    b.onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i); };
+    b.onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i, !!r); };
     wrap.appendChild(b);
   });
 }
 
-function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); }
+/* ── Club — the server side of this arrives in the next phase, so for now it
+      hands out your code and explains what it's for. ── */
+function renderClub(){
+  $('#club-body').innerHTML = `
+    <div class="codecard">
+      <span class="cc-lab">Your friend code</span>
+      <span class="cc-code flex">${ME.code}</span>
+      <div class="hc-btns">
+        <button class="btn ghost" id="cc-copy">Copy</button>
+        <button class="btn ghost" id="cc-share" ${navigator.share?'':'hidden'}>Share</button>
+      </div>
+    </div>
+    <div class="empty">
+      <div class="empty-i">⛳</div>
+      <h3>Your club is empty</h3>
+      <p>Send your code to a friend and you'll both see each other's round every day — strokes, pars and who's still to play.</p>
+    </div>`;
+  const msg = `Play Links with me! My friend code is ${ME.code} — links.superfun.games`;
+  $('#cc-copy').onclick = async ()=>{
+    const b = $('#cc-copy');
+    try{ await navigator.clipboard.writeText(ME.code); b.textContent='Copied!'; Snd.solved(); }
+    catch(e){ b.textContent='Press and hold to copy'; Snd.bonk(); }
+    setTimeout(()=>b.textContent='Copy', 2000);
+  };
+  if(navigator.share) $('#cc-share').onclick = ()=> navigator.share({text:msg}).catch(()=>{});
+}
+
+function renderYou(){
+  const rounds = ROUNDS.all(), keys = Object.keys(rounds).sort();
+  const played = keys.length;
+  const diffs = keys.map(k=>{ const d = DAYS.find(x=>x.date===k); return d ? rounds[k].strokes - dayPar(d) : 0; });
+  const best = diffs.length ? Math.min(...diffs) : null;
+  const avg  = diffs.length ? (diffs.reduce((a,b)=>a+b,0)/diffs.length) : null;
+  $('#you-body').innerHTML = `
+    <div class="codecard">
+      <span class="cc-lab">Your friend code</span>
+      <span class="cc-code flex">${ME.code}</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="st-v flex">${played}</span><span class="st-l">Rounds</span></div>
+      <div class="stat"><span class="st-v flex">${best==null?'–':rel(best)}</span><span class="st-l">Best</span></div>
+      <div class="stat"><span class="st-v flex">${avg==null?'–':(avg>0?'+':'')+avg.toFixed(1)}</span><span class="st-l">Average</span></div>
+    </div>
+    <button class="opt" id="you-set">
+      <span class="opt-b"><span class="opt-t">Settings</span><span class="opt-d">Sound and master mode</span></span>
+    </button>`;
+  $('#you-set').onclick = ()=>{ Snd.boot(); Snd.blip(); paintSettings(); $('#sheet-set').classList.add('on'); };
+}
+
+/* ── tabs ── */
+const TAB_RENDER = { 's-today': renderToday, 's-club': renderClub, 's-you': renderYou };
+function goTab(id){
+  TAB_RENDER[id]?.();
+  show(id);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.scr===id));
+}
+$('#tabs').addEventListener('click', e=>{
+  const b = e.target.closest('.tab'); if(!b) return;
+  Snd.boot(); Snd.blip(); goTab(b.dataset.scr);
+});
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
+  document.body.classList.toggle('playing', id === 's-play');
+}
 
 /* ═══════════════════════════════════════════════════════════════
    PLAY
    ═══════════════════════════════════════════════════════════════ */
-function startCourse(i){
-  S.ci=i; S.hi=0; S.hs=0; S.holeScores=[]; S.marks=[];
+function startCourse(i, practice){
+  S.ci=i; S.practice=!!practice; S.hi=0; S.hs=0; S.holeScores=[]; S.marks=[];
   startHole(); show('s-play');
 }
 function startHole(){
@@ -727,7 +981,7 @@ async function accept(bought){
   else { hint.classList.remove('on'); renderBoard(); }
 }
 
-$('#back').onclick = ()=>{ Snd.blip(); renderHome(); show('s-home'); };
+$('#back').onclick = ()=>{ Snd.blip(); goTab('s-today'); };
 function paintSettings(){
   $('#opt-snd').classList.toggle('on', Snd.on);
   $('#opt-master').classList.toggle('on', MASTER.on);
@@ -792,16 +1046,15 @@ const CROWN = d => d <= -3 ? '🏆' : d === -2 ? '🦅' : d === -1 ? '🐦' : d 
 // 🟩 first guess · 🟨 needed another guess · 🟧 bought a letter · ⬛ bought the whole word
 const MARK = m => m.b > 0 ? (m.g === 0 ? '⬛' : '🟧') : (m.g <= 1 ? '🟩' : '🟨');
 
-function shareText(){
-  const c = course(), p = coursePar(c);
-  const total = S.holeScores.reduce((a,b)=>a+b,0), d = total - p;
-  const rel = d === 0 ? 'even par' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'} par`;
+function shareText(c, r){
+  const p = r.par, total = r.strokes, d = total - p;
+  const relTxt = d === 0 ? 'even par' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'} par`;
   const pad = Math.max(...c.holes.map(h=>h.seed.length));
   const rows = c.holes.map((h,i)=>
-    `${h.seed.padEnd(pad)}  ${(S.marks[i]||[]).map(MARK).join('')}`);
+    `${h.seed.padEnd(pad)}  ${(r.marks[i]||[]).map(MARK).join('')}`);
   return [
     `LINKS ⛳ ${c.name}`,
-    `${CROWN(d)} ${total} stroke${total===1?'':'s'} · ${rel}`,
+    `${CROWN(d)} ${total} stroke${total===1?'':'s'} · ${relTxt}`,
     '',
     ...rows,
     '',
@@ -809,8 +1062,10 @@ function shareText(){
   ].join('\n');
 }
 
-function openShare(){
-  $('#share-prev').textContent = shareText();
+let shareCtx = null;
+function openShare(c, r){
+  shareCtx = { c, r };
+  $('#share-prev').textContent = shareText(c, r);
   const nat = $('#share-native');
   nat.hidden = !navigator.share;
   $('#sheet-share').classList.add('on');
@@ -834,7 +1089,7 @@ $('#share-copy').onclick = async ()=>{
 };
 
 $('#share-native').onclick = async ()=>{
-  try{ await navigator.share({ title:'Links', text: shareText() }); Snd.blip(); }
+  try{ await navigator.share({ title:'Links', text: shareText(shareCtx.c, shareCtx.r) }); Snd.blip(); }
   catch(err){ /* user dismissed the share sheet */ }
 };
 
@@ -843,8 +1098,9 @@ $('#share-native').onclick = async ()=>{
    ═══════════════════════════════════════════════════════════════ */
 async function endCourse(){
   const c = course(), p = coursePar(c), total = S.holeScores.reduce((a,b)=>a+b,0), d = total - p;
-  const prev = BEST.get(S.ci);
-  BEST.set(S.ci, total);
+  const counted = !S.practice && ROUNDS.save(c.date, {
+    strokes: total, par: p, holeScores: S.holeScores.slice(), marks: S.marks.map(m=>m.slice())
+  });
   const box = $('#sheet-course-in');
   box.innerHTML = `
     <div class="verdict">
@@ -867,18 +1123,18 @@ async function endCourse(){
         <span class="num">${p}</span><span class="num">${total}</span>
       </div>
     </div>
-    ${prev!=null && total<prev ? `<p class="foot" style="padding:0 0 14px">New best — beat your ${prev}.</p>` : ''}
+    ${counted ? '' : `<p class="foot" style="padding:0 0 14px">Practice round — your counting score for ${c.name} still stands.</p>`}
     <div class="actions col">
       <button class="btn" id="share">Share scorecard</button>
     </div>
     <div class="actions" style="padding-top:0">
       <button class="btn ghost" id="again">Replay</button>
-      <button class="btn ghost" id="tocourses">Courses</button>
+      <button class="btn ghost" id="tocourses">Done</button>
     </div>`;
   const once = (btn, fn) => { btn.onclick = ()=>{ if(btn.disabled) return; btn.disabled = true; Snd.blip(); $('#sheet-course').classList.remove('on'); fn(); }; };
-  $('#share').onclick = ()=>{ Snd.boot(); Snd.blip(); openShare(); };
-  once($('#again'),     ()=> startCourse(S.ci));
-  once($('#tocourses'), ()=>{ renderHome(); show('s-home'); });
+  $('#share').onclick = ()=>{ Snd.boot(); Snd.blip(); openShare(c, {strokes:total, par:p, holeScores:S.holeScores, marks:S.marks}); };
+  once($('#again'),     ()=> startCourse(S.ci, true));
+  once($('#tocourses'), ()=>{ goTab('s-today'); });
   $('#sheet-course').classList.add('on');
   c.holes.forEach((_,i)=> setTimeout(()=>Snd.tick(i*2), 400+i*300));
   await wait(400 + c.holes.length*300);
@@ -906,7 +1162,7 @@ function confetti(n){
   setTimeout(()=>box.remove(), 3600);
 }
 
-renderHome();
+goTab('s-today');
 </script>
 </body>
 </html>

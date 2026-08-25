@@ -1,64 +1,126 @@
 #!/usr/bin/env node
-// Injects puzzles.json into index.html as base64, so view-source doesn't spoil answers.
+// Validates the hole pool, schedules it into daily 5-hole courses, and injects
+// the result into index.html as base64 so view-source doesn't spoil answers.
 // Usage: node build.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const puzzles = JSON.parse(readFileSync('puzzles.json', 'utf8'));
+const HOLES_PER_DAY = 5;
+const COOLDOWN_DAYS = 5;          // a link may not return inside this window
+const MAX_DAYS = 21;               // keep the injected payload a sensible size
+// how many of the day's 5 holes are full-length (5-word) chains, by weekday
+const LONG_BY_WEEKDAY = { Mon: 1, Tue: 2, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 5 };
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-// ── validate before shipping ──────────────────────────────────────────
-let errors = [];
-puzzles.forEach((c, ci) => {
-  if (!c.name) errors.push(`course ${ci}: missing name`);
-  if (!Array.isArray(c.holes) || c.holes.length !== 3) errors.push(`${c.name}: needs exactly 3 holes`);
-  (c.holes || []).forEach((h, hi) => {
-    const where = `${c.name} hole ${hi + 1} (${h.seed})`;
-    if (!/^[A-Z]{3,5}$/.test(h.seed)) errors.push(`${where}: seed must be 3-5 uppercase letters`);
-    if (h.words.length !== h.seed.length) errors.push(`${where}: ${h.words.length} words for a ${h.seed.length}-letter seed`);
-    h.words.forEach((w, i) => {
-      if (!/^[A-Z]+$/.test(w)) errors.push(`${where}: "${w}" must be A-Z only`);
-      if (w[0] !== h.seed[i]) errors.push(`${where}: "${w}" should start with "${h.seed[i]}"`);
-    });
-    if (h.links && h.links.length !== h.words.length - 1) errors.push(`${where}: expected ${h.words.length - 1} links, got ${h.links.length}`);
-    (h.links || []).forEach((l, i) => {
-      const expect = `${h.words[i]} ${h.words[i + 1]}`.toLowerCase();
-      if (l.toLowerCase() !== expect) errors.push(`${where}: link "${l}" should read "${expect}"`);
-    });
-    if (new Set(h.words).size !== h.words.length) errors.push(`${where}: repeats a word within the chain`);
-    Object.entries(h.alts || {}).forEach(([k, list]) => {
-      const idx = Number(k);
-      if (!(idx > 0 && idx < h.words.length)) errors.push(`${where}: alt index ${k} out of range`);
-      list.forEach(a => {
-        if (a[0] !== h.seed[idx]) errors.push(`${where}: alt "${a}" should start with "${h.seed[idx]}"`);
-      });
-    });
+const data = JSON.parse(readFileSync('puzzles.json', 'utf8'));
+const { startDate, courseNames, holes } = data;
+
+// ── validate the pool ─────────────────────────────────────────────────────
+const errors = [];
+if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate || '')) errors.push('startDate must be YYYY-MM-DD');
+const seen = new Map();
+holes.forEach((h, i) => {
+  const where = `hole ${i} (${h.seed})`;
+  if (!/^[A-Z]{3,5}$/.test(h.seed)) errors.push(`${where}: seed must be 3-5 uppercase letters`);
+  if (h.words.length !== h.seed.length) errors.push(`${where}: ${h.words.length} words for a ${h.seed.length}-letter seed`);
+  h.words.forEach((w, k) => {
+    if (!/^[A-Z]+$/.test(w)) errors.push(`${where}: "${w}" must be A-Z only`);
+    if (w[0] !== h.seed[k]) errors.push(`${where}: "${w}" should start with "${h.seed[k]}"`);
   });
+  if (new Set(h.words).size !== h.words.length) errors.push(`${where}: repeats a word within the chain`);
+  (h.links || []).forEach((l, k) => {
+    const expect = `${h.words[k]} ${h.words[k + 1]}`.toLowerCase();
+    if (l.toLowerCase() !== expect) errors.push(`${where}: link "${l}" should read "${expect}"`);
+  });
+  if (h.links && h.links.length !== h.words.length - 1) errors.push(`${where}: expected ${h.words.length - 1} links`);
+  if (seen.has(h.seed)) errors.push(`seed ${h.seed} appears twice in the pool`);
+  seen.set(h.seed, i);
 });
-// a link or a seed appearing twice across the set makes the game feel repetitive
-const seenSeed = new Map(), seenLink = new Map();
-puzzles.forEach(c => c.holes.forEach(h => {
-  if (seenSeed.has(h.seed)) errors.push(`seed ${h.seed} reused (${seenSeed.get(h.seed)} and ${c.name})`);
-  seenSeed.set(h.seed, c.name);
-  h.words.slice(1).forEach((w, i) => {
-    const pair = `${h.words[i]} ${w}`;
-    if (seenLink.has(pair)) errors.push(`link "${pair.toLowerCase()}" reused (${seenLink.get(pair)} and ${c.name}/${h.seed})`);
-    seenLink.set(pair, `${c.name}/${h.seed}`);
-  });
-}));
-
 if (errors.length) { console.error('✗ puzzles.json failed validation:\n  ' + errors.join('\n  ')); process.exit(1); }
 
-// ── inject ────────────────────────────────────────────────────────────
-const b64 = Buffer.from(JSON.stringify(puzzles), 'utf8').toString('base64');
+// ── schedule the pool into days ───────────────────────────────────────────
+const linkOf = (h, i) => `${h.words[i]} ${h.words[i + 1]}`.toLowerCase();
+const linksOf = h => h.words.slice(1).map((_, i) => linkOf(h, i));
+
+const pool = { 3: [], 4: [], 5: [] };
+holes.forEach(h => pool[h.words.length].push(h));
+Object.values(pool).forEach(list => list.sort((a, b) => a.seed.localeCompare(b.seed)));
+
+const lastUsed = new Map();        // link -> day index it last appeared on
+const days = [];
+let dayIdx = 0, exhausted = false;
+
+const weekdayOf = n => {
+  const d = new Date(startDate + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return WD[d.getUTCDay()];
+};
+const dateOf = n => {
+  const d = new Date(startDate + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+while (!exhausted && dayIdx < MAX_DAYS) {
+  const wd = weekdayOf(dayIdx);
+  const wantLong = LONG_BY_WEEKDAY[wd];
+  const picked = [], usedToday = new Set();
+
+  const take = (len) => {
+    for (let i = 0; i < pool[len].length; i++) {
+      const h = pool[len][i];
+      const ls = linksOf(h);
+      if (ls.some(l => usedToday.has(l))) continue;
+      if (ls.some(l => lastUsed.has(l) && dayIdx - lastUsed.get(l) < COOLDOWN_DAYS)) continue;
+      pool[len].splice(i, 1);
+      ls.forEach(l => { usedToday.add(l); lastUsed.set(l, dayIdx); });
+      return h;
+    }
+    return null;
+  };
+
+  for (let i = 0; i < wantLong; i++) { const h = take(5); if (h) picked.push(h); }
+  // fill the rest with shorter chains, preferring 3s early in the week
+  const shortOrder = wantLong >= 4 ? [4, 3] : [3, 4];
+  while (picked.length < HOLES_PER_DAY) {
+    let h = null;
+    for (const len of shortOrder) { h = take(len); if (h) break; }
+    if (!h) h = take(5);
+    if (!h) break;
+    picked.push(h);
+  }
+
+  if (picked.length < HOLES_PER_DAY) {           // pool spent — stop cleanly
+    picked.forEach(h => pool[h.words.length].push(h));
+    exhausted = true;
+    break;
+  }
+  picked.sort((a, b) => a.words.length - b.words.length);   // ramp within the day
+  days.push({
+    date: dateOf(dayIdx),
+    name: courseNames[dayIdx % courseNames.length],
+    holes: picked
+  });
+  dayIdx++;
+}
+
+// ── report + inject ───────────────────────────────────────────────────────
+const parOf = h => { const b = h.words.length - 1; return b + (b >= 4 ? 2 : 1); };
+const payload = { startDate, days };
+const b64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64');
+
 let html = readFileSync('index.html', 'utf8');
 const slot = /const PUZZLE_B64 = "[^"]*";/;
-// test for the slot rather than for a changed string — rebuilding unchanged data is a no-op, not a failure
 if (!slot.test(html)) { console.error('✗ could not find PUZZLE_B64 in index.html'); process.exit(1); }
-html = html.replace(slot, `const PUZZLE_B64 = "${b64}";`);
+writeFileSync('index.html', html.replace(slot, `const PUZZLE_B64 = "${b64}";`));
 
-const holes = puzzles.flatMap(c => c.holes);
-html = html.replace(/<p class="foot">[^<]*<\/p>/,
-  `<p class="foot">${puzzles.length} courses, ${puzzles[0].holes.length} holes each.</p>`);
-
-writeFileSync('index.html', html);
-const totalPar = holes.reduce((s, h) => { const b = h.words.length - 1; return s + b + (b >= 4 ? 2 : 1); }, 0);
-console.log(`✓ ${puzzles.length} courses · ${holes.length} holes · total par ${totalPar} · ${b64.length} bytes injected`);
+const leftover = pool[3].length + pool[4].length + pool[5].length;
+console.log(`✓ ${days.length} days scheduled from ${holes.length} holes (${leftover} left over: ${pool[3].length}×3 ${pool[4].length}×4 ${pool[5].length}×5)`);
+days.forEach((d, i) => {
+  const wd = weekdayOf(i), want = LONG_BY_WEEKDAY[wd];
+  const got = d.holes.filter(h => h.words.length === 5).length;
+  const flag = got === want ? ' ' : '!';
+  console.log(`  ${flag} ${d.date} ${wd}  ${d.name.padEnd(16)} par ${String(d.holes.reduce((s,h)=>s+parOf(h),0)).padStart(3)}  long ${got}/${want}  ${d.holes.map(h=>h.seed).join(' ')}`);
+});
+const short = days.filter((d,i)=>d.holes.filter(h=>h.words.length===5).length !== LONG_BY_WEEKDAY[weekdayOf(i)]).length;
+if (short) console.log(`\n⚠ ${short} day(s) marked ! could not meet the weekday long-chain quota — pool needs more 5-word chains`);
+console.log(`\n${b64.length} bytes injected`);

@@ -44,14 +44,26 @@ It's one self-contained `index.html` with no build step and no dependencies — 
 serve the folder:
 
 ```bash
-python3 -m http.server 4321
+python3 -m http.server 4399
 ```
 
 Deployed on Netlify by publishing the repo root.
 
+## Daily format
+
+The main screen is **today's course** — five holes, the same for everyone, flipping at
+midnight US Eastern so friends in different time zones compare the same puzzle. Past rounds
+are listed below it and stay playable. Your **first completed round** for a date is the one
+that counts; replays are welcome and clearly marked as not counting.
+
+Difficulty follows a weekly rhythm. The number of full-length five-word holes climbs through
+the week — 1 on Monday, 2 Tuesday and Wednesday, 3 Thursday, 4 Friday, 5 at the weekend —
+so par runs from 18 on a Monday to 30 on a Sunday.
+
 ## Editing puzzles
 
-`puzzles.json` is the source of truth. After editing it, re-inject it into the page:
+`puzzles.json` holds a flat pool of chains plus a `startDate`; `build.mjs` schedules the
+pool into daily courses under the weekly rhythm and injects the result:
 
 ```bash
 node build.mjs
@@ -59,19 +71,25 @@ node build.mjs
 
 `build.mjs` validates before writing and refuses to ship a broken set — it checks that each
 chain's initials spell its seed, that every word starts with the right letter, that the
-`links` text matches the words, and that no seed or link is reused anywhere in the set.
+`links` text matches the words, and that no seed is reused. When scheduling it enforces that
+no link repeats within a day and none returns inside `COOLDOWN_DAYS`. Days that can't meet
+their weekday quota of long chains are flagged with `!` in the build output rather than
+passed off as complete.
 The puzzle data is base64'd into the page so a casual view-source doesn't spoil answers.
 That's obfuscation, not security.
 
 ## Finding new chains
 
 Authoring these by hand is hard: each word has to link backwards *and* forwards *and* start
-with a letter fixed by the seed. `tools/chain-finder.mjs` searches a curated graph of
-compound phrases for every valid chain whose initials spell a real dictionary word.
+with a letter fixed by the seed. `tools/chain-finder.mjs` searches the phrase graph in
+`tools/pairs.txt` (2,856 pairs) for every valid chain whose initials spell a seed from
+`tools/seeds.txt` — a hand-checked allowlist of words people actually know, because the
+system dictionary is a 1934 Webster's full of entries like HOWFF and SPOSH. It keeps the
+best-scoring chain per seed, ranked by how familiar the links are.
 
 ```bash
 node tools/chain-finder.mjs
 ```
 
-Add pairs to its `PAIRS` list to widen the search. It only proposes candidates — the results
+Add pairs to `tools/pairs.txt` to widen the search. It only proposes candidates — the results
 still need a human to throw out the ones nobody actually says.
