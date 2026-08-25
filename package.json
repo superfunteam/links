@@ -1,15 +1,15 @@
 {
-  "name": "remote-control-60c521",
+  "name": "links",
   "version": "1.0.0",
-  "description": "Hit the links!",
-  "main": "index.js",
+  "description": "Links — a daily word-chain golf game",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node build.mjs && node tools/stage.mjs",
+    "dev": "netlify dev",
+    "chains": "node tools/chain-finder.mjs"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "@netlify/database": "^2.0.0"
-  }
+  },
+  "private": true
 }
