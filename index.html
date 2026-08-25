@@ -953,9 +953,22 @@ function renderPast(){
   list.forEach(d=>{
     const i = DAYS.indexOf(d), p = dayPar(d), r = ROUNDS.get(d.date);
     const diff = r ? r.strokes - p : null;
-    const b = el('button', 'course' + (r?' done':''));
+    // The flag carries the date rather than a hole number — in a daily game each
+    // card is a day. Green once played, gold for a round under par.
+    const b = el('button', 'course' + (r ? ' done' : '') + (diff != null && diff < 0 ? ' birdie' : ''));
+    const [yy, mm, dd] = d.date.split('-');
+    const month = new Date(Date.UTC(+yy, +mm - 1, +dd))
+      .toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' }).toUpperCase();
     b.innerHTML = `
-      <span class="course-n flex">${d.date.slice(8)}</span>
+      <span class="course-n">
+        <span class="pin">
+          <span class="pin-pole"></span>
+          <span class="pin-flag">
+            <span class="pin-kicker">${month}</span>
+            <span class="pin-num flex">${+dd}</span>
+          </span>
+        </span>
+      </span>
       <span class="course-b">
         <span class="course-t">${d.name}</span>
         <span class="course-s">${prettyDay(d.date).replace(/,.*/,'')} &nbsp;·&nbsp; par ${p}</span>
