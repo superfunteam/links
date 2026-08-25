@@ -223,6 +223,52 @@ body.playing .tabs{display:none}
 .st-v{display:block;font-weight:1000;font-size:26px;line-height:1}
 .st-l{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:5px}
 
+/* ─────────────────────────────  club  ───────────────────────────── */
+.addcard{
+  background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);
+  padding:16px;box-shadow:var(--chunk);margin-bottom:16px
+}
+.addrow{display:flex;gap:9px;margin-top:8px}
+.addrow .btn{flex:none;padding:13px 18px}
+.codein,.textin{
+  flex:1;min-width:0;border:2px solid var(--line-2);border-radius:12px;
+  padding:12px 14px;font-size:17px;font-weight:700;background:var(--paper);color:var(--ink)
+}
+.codein{font-family:"Google Sans Flex",sans-serif;font-weight:900;letter-spacing:.22em;text-transform:uppercase;text-align:center}
+.codein:focus,.textin:focus{outline:none;border-color:var(--ink)}
+.addmsg{font-size:13px;color:var(--muted);font-weight:600;margin-top:9px;min-height:1em}
+.addnote{font-size:13.5px;color:var(--muted);font-weight:500;line-height:1.5;margin-top:6px}
+.addnote b{color:var(--ink);font-weight:700}
+
+.card.board{margin-bottom:16px}
+.crow{
+  display:flex;align-items:center;gap:12px;padding:13px 14px;
+  border-top:2px solid var(--line)
+}
+.crow:first-of-type{border-top:none}
+.crow.me{background:var(--green-soft)}
+.cr-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.cr-name{font-weight:700;font-size:16px;letter-spacing:-.01em}
+.cr-score{flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.cr-score b{font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:20px;line-height:1}
+.cr-score small{font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+.nudge{
+  flex:none;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.02em;
+  border:2px solid var(--ink);background:var(--ink);color:var(--paper);
+  border-radius:999px;padding:8px 16px;box-shadow:0 3px 0 #000
+}
+.nudge:active{transform:translateY(3px);box-shadow:none}
+.nudge.go{background:var(--green);border-color:var(--green);box-shadow:0 3px 0 var(--green-2)}
+.cr-score b.pending{color:var(--line-2)}
+
+/* seven-day form, newest on the right; bars grow with distance from par */
+.form{display:flex;align-items:flex-end;gap:3px;height:18px}
+.fb{display:block;width:7px;border-radius:2px;background:var(--line);height:5px}
+.fb.none{height:3px;background:var(--line);opacity:.6}
+.fb.under{background:var(--green)}
+.fb.even{background:var(--line-2)}
+.fb.over{background:var(--red)}
+
 /* ─────────────────────────────  topbar  ───────────────────────────── */
 .top{display:flex;align-items:center;gap:10px;padding:18px 0 6px;position:sticky;top:0;background:var(--paper);z-index:5}
 .icon-btn{
@@ -720,21 +766,24 @@ const ROUNDS = {
 };
 
 // A player is identified by a 4-character code they can read aloud over the
-// phone, so I and O and the digits they're mistaken for are left out.
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+// phone. The SERVER issues it — a device that picked its own could squat the
+// namespace or land on someone else's account. The code is public and only
+// addresses a player; writes are proved by the device token beside it.
 const ME = {
-  get code(){
-    let c = localStorage.getItem('links.code');
-    if(!/^[A-Z0-9]{4}$/.test(c || '')){
-      const r = crypto.getRandomValues(new Uint8Array(4));
-      c = [...r].map(n => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
-      localStorage.setItem('links.code', c);
-    }
-    return c;
+  get code(){ return localStorage.getItem('links.code') || null; },
+  get token(){ return localStorage.getItem('links.token') || null; },
+  adopt(code, token){
+    if(code) localStorage.setItem('links.code', code);
+    if(token) localStorage.setItem('links.token', token);
   },
   get name(){ return localStorage.getItem('links.name') || ''; },
   set name(v){ localStorage.setItem('links.name', v); }
 };
+
+// Anything a friend typed is rendered on your screen, so it never goes into
+// markup unescaped.
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
+  c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
 /* ═══════════════════════════════════════════════════════════════
    STATE
@@ -751,6 +800,89 @@ const clearEntry = () => { S.typed=''; S.pre=0; };
 const course = () => DAYS[S.ci];   // S.ci is the day index
 const hole   = () => course().holes[S.hi];
 const answer = () => hole().words[S.row];
+
+/* ═══════════════════════════════════════════════════════════════
+   NETWORK — the game never waits on it. Every call is fired in the
+   background; if it fails, play carries on and we try again later.
+   ═══════════════════════════════════════════════════════════════ */
+const NET = {
+  club: null,            // last club payload the server gave us
+  day: null,             // the server's date for that payload
+  at: 0,                 // when we last heard from it
+  busy: false,
+  state: 'idle',         // idle | syncing | ok | offline
+  listeners: new Set(),
+
+  on(fn){ this.listeners.add(fn); },
+  emit(){ this.listeners.forEach(fn => { try{ fn(); }catch(e){} }); },
+
+  async post(path, body, ms = 7000){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try{
+      const headers = { 'content-type': 'application/json' };
+      if(ME.token) headers.authorization = 'Bearer ' + ME.token;
+      const res = await fetch('/api' + path, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: ctrl.signal
+      });
+      const data = await res.json().catch(() => null);
+      return { ok: res.ok && data?.ok, status: res.status, data };
+    }catch(err){
+      return { ok: false, status: 0, data: null, offline: true };
+    }finally{ clearTimeout(timer); }
+  },
+
+  // Every local round goes up each time. The server is first-write-wins, so
+  // resending is harmless and it means there's no fragile outbox to keep.
+  payload(){
+    const rounds = ROUNDS.all();
+    return {
+      name: ME.name || null,
+      rounds: Object.entries(rounds).slice(-60).map(([date, r]) => ({
+        date, strokes: r.strokes, par: r.par, marks: r.marks || []
+      }))
+    };
+  },
+
+  // First launch has no account yet. Registering is the only call the client
+  // makes before it has a token, and failing it just means trying again later —
+  // the game is perfectly playable without one.
+  async register(){
+    if(ME.token) return true;
+    const res = await this.post('/register', { name: ME.name || null });
+    if(res.ok){ ME.adopt(res.data.player.code, res.data.token); return true; }
+    return false;
+  },
+
+  async sync(force){
+    if(this.busy) return;
+    if(!force && Date.now() - this.at < 20000) return;
+    this.busy = true; this.state = 'syncing'; this.emit();
+    if(!ME.token && !(await this.register())){
+      this.busy = false; this.state = 'offline'; this.emit(); return;
+    }
+    const res = await this.post('/sync', this.payload());
+    this.busy = false;
+    if(res.ok){
+      this.club = res.data.club; this.day = res.data.today; this.at = Date.now(); this.state = 'ok';
+      try{ localStorage.setItem('links.club', JSON.stringify({ at: this.at, day: this.day, club: this.club })); }catch(e){}
+    } else {
+      this.state = res.offline ? 'offline' : 'error';
+    }
+    this.emit();
+  },
+
+  restore(){
+    try{
+      const raw = JSON.parse(localStorage.getItem('links.club') || 'null');
+      if(raw && Array.isArray(raw.club)){ this.club = raw.club; this.at = raw.at || 0; this.day = raw.day || null; }
+    }catch(e){}
+  }
+};
+NET.restore();
 
 /* ═══════════════════════════════════════════════════════════════
    TODAY · CLUB · YOU
@@ -918,59 +1050,257 @@ async function playIntroDemo(){
 
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); }
 
-/* ── Club — the server side of this arrives in the next phase, so for now it
-      hands out your code and explains what it's for. ── */
+/* ── Club ── */
+const NUDGES = [
+  "Today's course is done and I'm still standing. Your turn whenever you're ready: links.superfun.games",
+  "Five holes, no walking required. I'll be waiting at the clubhouse: links.superfun.games",
+  "I played today's round. The leaderboard looks a little lonely without you: links.superfun.games",
+  "Fair warning, hole 3 nearly got me. See if it treats you kinder: links.superfun.games",
+  "Posted my score for the day. No pressure. Well, a little pressure: links.superfun.games",
+  "Done in under ten minutes with my coffee. You have no excuse: links.superfun.games",
+  "I found today's words. Now I need someone to complain to about them: links.superfun.games",
+  "Round's in the books. Come find out if you can beat it: links.superfun.games",
+  "New course up today and it's a good one. Give it a go: links.superfun.games",
+  "Played mine, thought of you. Five holes, then brag to me ⛳ links.superfun.games"
+];
+
+// Opens the phone's SMS composer with a message ready; the sender picks who
+// gets it, so we never have to ask anyone for a friend's phone number.
+function nudgeHref(){
+  const body = encodeURIComponent(NUDGES[Math.floor(Math.random() * NUDGES.length)]);
+  const ios = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+  return `sms:${ios ? '&' : '?'}body=${body}`;
+}
+
+const relOf = r => r.strokes - r.par;
+
+// A seven-day trend, newest on the right. Bars sit below the line for under par.
+function formBars(rounds){
+  const byDate = Object.fromEntries(rounds.map(r => [r.date, r]));
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(ET(d));
+  }
+  return `<span class="form">${days.map(dt => {
+    const r = byDate[dt];
+    if(!r) return `<i class="fb none" title="${dt}: not played"></i>`;
+    const d = relOf(r);
+    const cls = d < 0 ? 'under' : d > 0 ? 'over' : 'even';
+    const h = Math.min(16, 5 + Math.abs(d) * 2.4);
+    return `<i class="fb ${cls}" style="height:${h}px" title="${dt}: ${rel(d)}"></i>`;
+  }).join('')}</span>`;
+}
+
 function renderClub(){
-  $('#club-body').innerHTML = `
+  const box = $('#club-body');
+  const club = NET.club;
+  const today = todayKey();
+
+  const codeCard = `
     <div class="codecard">
       <span class="cc-lab">Your friend code</span>
-      <span class="cc-code flex">${ME.code}</span>
-      <div class="hc-btns">
+      <span class="cc-code flex">${ME.code || '····'}</span>
+      ${ ME.code ? `<div class="hc-btns">
         <button class="btn ghost" id="cc-copy">Copy</button>
-        <button class="btn ghost" id="cc-share" ${navigator.share?'':'hidden'}>Share</button>
-      </div>
-    </div>
-    <div class="empty">
-      <div class="empty-i">⛳</div>
-      <h3>Your club is empty</h3>
-      <p>Send your code to a friend and you'll both see each other's round every day — strokes, pars and who's still to play.</p>
+        <button class="btn ghost" id="cc-share"${navigator.share ? '' : ' hidden'}>Share</button>
+      </div>` : `<p class="addnote">Getting your code from the clubhouse…</p>` }
     </div>`;
+
+  const addCard = `
+    <div class="addcard">
+      <label class="cc-lab" for="add-code">Add a friend by their code</label>
+      <div class="addrow">
+        <input id="add-code" class="codein flex" maxlength="4" autocomplete="off"
+               autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="A1B2">
+        <button class="btn" id="add-go">Add</button>
+      </div>
+      <p class="addmsg" id="add-msg"></p>
+    </div>`;
+
+  const friends = (club || []).filter(p => !p.isMe);
+  let board;
+  if(!club){
+    board = `<div class="empty"><div class="empty-i">⛳</div><h3>Getting your club…</h3>
+             <p>One moment while we catch up with the clubhouse.</p></div>`;
+  } else if(!friends.length){
+    board = `<div class="empty"><div class="empty-i">⛳</div><h3>Your club is empty</h3>
+             <p>Send your code to a friend and you'll both see each other's round every day.</p></div>`;
+  } else {
+    const fresh = NET.day === today;   // yesterday's cache can't speak for today
+    const row = p => {
+      const r = fresh ? (p.rounds || []).find(x => x.date === today) : null;
+      const name = esc(p.name || (p.isMe ? 'You' : p.code));
+      const d = r ? relOf(r) : null;
+      return `<div class="crow${p.isMe ? ' me' : ''}">
+        <span class="cr-who"><span class="cr-name">${name}</span>${formBars(p.rounds || [])}</span>
+        ${ r
+          ? `<span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes}</small></span>`
+          : !fresh
+            ? `<span class="cr-score"><b class="pending">·</b></span>`
+            : p.isMe
+              ? `<button class="nudge go" data-play="1">Play</button>`
+              : `<a class="nudge" href="${nudgeHref()}">Nudge</a>` }
+      </div>`;
+    };
+    board = `<div class="card board">
+      <h3><span>Today</span><span>${DAYS[todayIdx()]?.name || ''}</span></h3>
+      ${[...club].sort((a,b)=>{
+          const ra = (a.rounds||[]).find(x=>x.date===today), rb = (b.rounds||[]).find(x=>x.date===today);
+          if(ra && rb) return relOf(ra) - relOf(rb);
+          if(ra) return -1; if(rb) return 1;
+          return (a.name||a.code).localeCompare(b.name||b.code);
+        }).map(row).join('')}
+    </div>`;
+  }
+
+  const stale = NET.state === 'offline' && NET.at
+    ? `<p class="foot">Showing the last scores we saw — you're offline.</p>` : '';
+
+  box.innerHTML = codeCard + addCard + board + stale;
+
   const msg = `Play Links with me! My friend code is ${ME.code} — links.superfun.games`;
-  $('#cc-copy').onclick = async ()=>{
+  if($('#cc-copy')) $('#cc-copy').onclick = async ()=>{
     const b = $('#cc-copy');
-    try{ await navigator.clipboard.writeText(ME.code); b.textContent='Copied!'; Snd.solved(); }
-    catch(e){ b.textContent='Press and hold to copy'; Snd.bonk(); }
-    setTimeout(()=>b.textContent='Copy', 2000);
+    try{ await navigator.clipboard.writeText(ME.code); b.textContent = 'Copied!'; Snd.solved(); }
+    catch(e){ b.textContent = 'Press and hold to copy'; Snd.bonk(); }
+    setTimeout(()=> b.textContent = 'Copy', 2000);
   };
-  if(navigator.share) $('#cc-share').onclick = ()=> navigator.share({text:msg}).catch(()=>{});
+  if(navigator.share && $('#cc-share')) $('#cc-share').onclick = ()=> navigator.share({ text: msg }).catch(()=>{});
+
+  const go = async ()=>{
+    const input = $('#add-code'), out = $('#add-msg');
+    const code = (input.value || '').toUpperCase().trim();
+    if(code.length !== 4){ out.textContent = 'A code is 4 letters and numbers.'; Snd.bonk(); return; }
+    out.textContent = 'Adding…';
+    const res = await NET.post('/friend', { friendCode: code });
+    if(res.ok){
+      NET.club = res.data.club; NET.at = Date.now();
+      Snd.solved(); renderClub();
+      $('#add-msg').textContent = 'Added ' + (res.data.added.name || res.data.added.code) + '!';
+    } else {
+      out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
+                                    : (res.data?.error || 'That did not work.');
+      Snd.bonk();
+    }
+  };
+  const playBtn = box.querySelector('[data-play]');
+  if(playBtn) playBtn.onclick = ()=>{ Snd.boot(); Snd.blip(); goTab('s-today'); };
+  $('#add-go').onclick = ()=>{ Snd.boot(); go(); };
+  $('#add-code').addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+  $('#add-code').addEventListener('input', e=>{ e.target.value = e.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g,''); });
 }
 
 function renderYou(){
   const rounds = ROUNDS.all(), keys = Object.keys(rounds).sort();
-  const played = keys.length;
-  const diffs = keys.map(k=>{ const d = DAYS.find(x=>x.date===k); return d ? rounds[k].strokes - dayPar(d) : 0; });
+  const diffs = keys.map(k => { const d = DAYS.find(x => x.date === k); return d ? rounds[k].strokes - dayPar(d) : 0; });
   const best = diffs.length ? Math.min(...diffs) : null;
-  const avg  = diffs.length ? (diffs.reduce((a,b)=>a+b,0)/diffs.length) : null;
+  const avg  = diffs.length ? diffs.reduce((a,b)=>a+b,0) / diffs.length : null;
+  const claimed = !!localStorage.getItem('links.email');
+
   $('#you-body').innerHTML = `
     <div class="codecard">
       <span class="cc-lab">Your friend code</span>
-      <span class="cc-code flex">${ME.code}</span>
+      <span class="cc-code flex">${ME.code || '····'}</span>
     </div>
+
     <div class="stats">
-      <div class="stat"><span class="st-v flex">${played}</span><span class="st-l">Rounds</span></div>
+      <div class="stat"><span class="st-v flex">${keys.length}</span><span class="st-l">Rounds</span></div>
       <div class="stat"><span class="st-v flex">${best==null?'–':rel(best)}</span><span class="st-l">Best</span></div>
       <div class="stat"><span class="st-v flex">${avg==null?'–':(avg>0?'+':'')+avg.toFixed(1)}</span><span class="st-l">Average</span></div>
     </div>
+
+    <div class="addcard">
+      <label class="cc-lab" for="you-name">Your name</label>
+      <div class="addrow">
+        <input id="you-name" class="textin" maxlength="24" placeholder="What friends call you" value="${(ME.name||'').replace(/"/g,'&quot;')}">
+        <button class="btn" id="name-go">Save</button>
+      </div>
+      <p class="addmsg" id="name-msg"></p>
+    </div>
+
+    <div class="addcard">
+      <span class="cc-lab">${claimed ? 'Your account' : 'Keep your account'}</span>
+      ${ claimed
+        ? `<p class="addnote">Saved to <b>${esc(localStorage.getItem('links.email'))}</b>. On another device, sign in with that email and the code <b>${esc(ME.code)}</b>.</p>`
+        : `<p class="addnote">Add your email and you can pick this account back up on another device using your code.</p>
+           <div class="addrow">
+             <input id="you-email" class="textin" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
+             <button class="btn" id="email-go">Save</button>
+           </div>` }
+      <p class="addmsg" id="email-msg"></p>
+    </div>
+
+    <div class="addcard">
+      <span class="cc-lab">Already have an account?</span>
+      <p class="addnote">Sign in with the email you saved and your 4-character code.</p>
+      <div class="addrow">
+        <input id="in-email" class="textin" type="email" inputmode="email" placeholder="you@example.com">
+      </div>
+      <div class="addrow" style="margin-top:8px">
+        <input id="in-code" class="codein flex" maxlength="4" placeholder="A1B2" autocapitalize="characters" spellcheck="false">
+        <button class="btn" id="in-go">Sign in</button>
+      </div>
+      <p class="addmsg" id="in-msg"></p>
+    </div>
+
     <button class="opt" id="you-set">
       <span class="opt-b"><span class="opt-t">Settings</span><span class="opt-d">Sound and master mode</span></span>
     </button>`;
+
   $('#you-set').onclick = ()=>{ Snd.boot(); Snd.blip(); paintSettings(); $('#sheet-set').classList.add('on'); };
+
+  $('#name-go').onclick = async ()=>{
+    Snd.boot();
+    ME.name = ($('#you-name').value || '').trim().slice(0,24);
+    $('#name-msg').textContent = 'Saved.';
+    Snd.blip(); NET.sync(true);
+  };
+
+  if(!claimed) $('#email-go').onclick = async ()=>{
+    Snd.boot();
+    const email = ($('#you-email').value || '').trim();
+    const out = $('#email-msg');
+    if(!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(email)){ out.textContent = "That email doesn't look right."; Snd.bonk(); return; }
+    out.textContent = 'Saving…';
+    const res = await NET.post('/claim', { email, name: ME.name || null });
+    if(res.ok){ localStorage.setItem('links.email', email); Snd.solved(); renderYou(); }
+    else { out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
+                                         : (res.data?.error || 'That did not work.'); Snd.bonk(); }
+  };
+
+  $('#in-go').onclick = async ()=>{
+    Snd.boot();
+    const email = ($('#in-email').value || '').trim();
+    const code  = ($('#in-code').value || '').toUpperCase().trim();
+    const out = $('#in-msg');
+    if(!email || code.length !== 4){ out.textContent = 'Enter your email and your 4-character code.'; Snd.bonk(); return; }
+    out.textContent = 'Signing in…';
+    const res = await NET.post('/signin', { email, code });
+    if(!res.ok){
+      out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
+                                    : (res.data?.error || 'That did not work.');
+      Snd.bonk(); return;
+    }
+    // Adopt the account on this device: take its code, name and history.
+    ME.adopt(res.data.player.code, res.data.token);
+    localStorage.setItem('links.email', email);
+    if(res.data.player.name) ME.name = res.data.player.name;
+    const local = ROUNDS.all();
+    for(const r of res.data.rounds || []) if(!local[r.date]) local[r.date] = { strokes: r.strokes, par: r.par, marks: [] };
+    localStorage.setItem('links.rounds', JSON.stringify(local));
+    NET.club = res.data.club; NET.at = Date.now();
+    Snd.win(1); renderYou(); renderToday();
+    $('#in-msg').textContent = 'Signed in as ' + (res.data.player.name || res.data.player.code) + '.';
+  };
 }
 
 /* ── tabs ── */
 const TAB_RENDER = { 's-today': renderToday, 's-club': renderClub, 's-you': renderYou };
+NET.on(()=>{ if($('#s-club').classList.contains('on')) renderClub(); });
 function goTab(id){
   TAB_RENDER[id]?.();
+  if(id === 's-club') NET.sync();
   show(id);
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.scr===id));
 }
@@ -1370,6 +1700,7 @@ async function endCourse(){
   const counted = !S.practice && ROUNDS.save(c.date, {
     strokes: total, par: p, holeScores: S.holeScores.slice(), marks: S.marks.map(m=>m.slice())
   });
+  if(counted) NET.sync(true);          // fire and forget — the card shows regardless
   const box = $('#sheet-course-in');
   box.innerHTML = `
     <div class="verdict">
@@ -1432,6 +1763,16 @@ function confetti(n){
 }
 
 goTab('s-today');
+// Catch up with the server after the first paint, never before it.
+// requestIdleCallback is missing on iOS before 16.4 — and an iPhone 7 can't go
+// past iOS 15 — so a bare reference here would throw and silently kill sync on
+// exactly the older devices this game is for.
+try {
+  const idle = window.requestIdleCallback
+    ? cb => window.requestIdleCallback(cb, { timeout: 2000 })
+    : cb => setTimeout(cb, 400);
+  idle(() => NET.sync(true));
+} catch (e) { setTimeout(() => NET.sync(true), 400); }
 </script>
 </body>
 </html>
