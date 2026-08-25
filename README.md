@@ -38,7 +38,54 @@ up. Finishing a course offers a share card — a Wordle-style emoji grid where e
 one word you filled in: 🟩 first guess, 🟨 needed another, 🟧 bought a letter, ⬛ bought the
 whole word. It never shows an answer.
 
+## Friends play
+
+The **Club** tab shows today's round for you and everyone in your club, a seven-day form
+trend each, and a **Nudge** for anyone who hasn't played — which opens the phone's SMS
+composer with one of ten canned messages ready, so nobody has to hand over a phone number.
+
+Every device gets a 4-character friend code from an alphabet with no I, O, 0 or 1, so it
+survives being read aloud over the phone. **That code is public** — you give it to friends so
+they can add you. It therefore *addresses* a player and never *authenticates* one: writes
+carry a 128-bit device token whose SHA-256 is all the server stores. Without that split,
+anyone you had ever given your code to could file a round as you, and because the first
+round of the day is the one that counts, it would stick.
+
+Adding a friend is mutual and stored as a single row in a canonical order, so "A adds B" and
+"B adds A" are the same fact and can't disagree.
+
+Add an email under **You** and you can pick the account back up on another device with that
+email plus your code. This is deliberately light: the code is public, so the email is the
+only real secret. Sign-in is throttled per email in a rolling window and answers identically
+whether the email is unknown, the code is wrong, or you're being throttled.
+
+Play never waits on the network. Rounds are stored locally and the whole local history is
+re-sent on each sync; the `(player, date)` primary key makes that idempotent, so there is no
+outbox to lose or corrupt.
+
+## Backend
+
+Netlify DB (Postgres) behind Netlify Functions, routed at `/api/*`:
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/register` | Mint a player, a server-chosen code, and a device token |
+| `POST /api/sync` | Hand over held rounds, get the club board back |
+| `POST /api/friend` | Add a friend by their public code |
+| `POST /api/claim` | Attach an email to this account |
+| `POST /api/signin` | Adopt the account on another device |
+| `GET /api/health` | Confirms a function can reach the database |
+
+Schema lives in `netlify/database/migrations/` and is applied automatically on deploy. Run
+the whole stack locally — static site, functions and a real local Postgres — with:
+
+```bash
+netlify dev
+```
+
 ## Running it
+
+
 
 It's one self-contained `index.html` with no build step and no dependencies — open it, or
 serve the folder:
