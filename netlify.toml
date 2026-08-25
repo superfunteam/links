@@ -1,0 +1,18 @@
+# The site is published from public/, which is assembled by tools/stage.mjs.
+# Publishing the repo root would expose puzzles.json — every answer, in plaintext.
+[build]
+  command = "node build.mjs && node tools/stage.mjs"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Friendlier URLs for the API
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
