@@ -198,13 +198,16 @@ while (!exhausted && dateOf(dayIdx) <= endDate) {
 
   const wd = weekdayOf(dayIdx);
   const wantLong = LONG_BY_WEEKDAY[wd];
-  const picked = [], usedToday = new Set(), usedSeedToday = new Set();
+  const picked = [], usedToday = new Set(), usedSeedToday = new Set(), usedWordsToday = new Set();
 
   const take = (len) => {
     for (let i = 0; i < pool[len].length; i++) {
       const h = pool[len][i];
       const ls = linksOf(h);
       if (ls.some(l => usedToday.has(l))) continue;
+      // no word twice in one day's five holes — solving OUT in two chains in
+      // one sitting reads as repetition even when every link is distinct
+      if (h.words.some(w => usedWordsToday.has(w))) continue;
       if (ls.some(l => lastUsed.has(l) && dayIdx - lastUsed.get(l) < COOLDOWN_DAYS)) continue;
       if (seedUsed.has(h.seed) && dayIdx - seedUsed.get(h.seed) < SEED_COOLDOWN) continue;
       if (usedSeedToday.has(h.seed)) continue;
@@ -217,6 +220,7 @@ while (!exhausted && dateOf(dayIdx) <= endDate) {
       if (echoes) continue;
       pool[len].splice(i, 1);
       ls.forEach(l => { usedToday.add(l); lastUsed.set(l, dayIdx); });
+      h.words.forEach(w => usedWordsToday.add(w));
       seedUsed.set(h.seed, dayIdx); usedSeedToday.add(h.seed);
       recent.push({ day: dayIdx, words: wordSet });
       return h;
@@ -264,6 +268,7 @@ if (!slot.test(html)) { console.error('✗ could not find PUZZLE_B64 in index.ht
 writeFileSync('index.html', html.replace(slot, `const PUZZLE_B64 = "${b64}";`));
 
 // freeze every newly scheduled day so the next build can't move it
+if (process.env.SKIP_FREEZE) { writeFreeze = null; console.log('db: SKIP_FREEZE set — read-only build'); }
 if (writeFreeze) {
   try {
     const saved = await writeFreeze(days.filter(d => !d.frozen));
