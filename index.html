@@ -218,25 +218,40 @@ body.playing .tabs{display:none}
 .setname:active{transform:scale(.94)}
 .hero-card{
   position:relative;overflow:hidden;text-align:center;margin-bottom:22px;
-  background:linear-gradient(180deg,var(--paper-2) 0%,var(--card) 60%);
-  border:1.5px solid var(--line);border-radius:var(--r-xl);
-  padding:26px 20px 22px;
-  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 12px 34px rgba(21,26,23,.10), 0 2px 6px rgba(21,26,23,.05)
+  background:radial-gradient(120% 130% at 50% 0%, var(--g-700) 0%, var(--g-800) 55%, var(--g-900) 100%);
+  border:none;border-radius:var(--r-xl);
+  padding:26px 20px 24px;color:#EAF3EE;
+  box-shadow:0 1px 0 rgba(255,255,255,.10) inset, 0 14px 36px rgba(10,58,40,.30), 0 2px 6px rgba(10,58,40,.20)
 }
 
 .hc-tag{
   display:inline-block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--g-700);font-weight:800;margin-bottom:10px;
-  background:var(--g-050);border:1px solid var(--g-100);border-radius:999px;padding:4px 12px
+  color:var(--g-300);font-weight:800;margin-bottom:10px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;padding:4px 12px
 }
-.hc-t{font-size:clamp(31px,9.2vw,42px);letter-spacing:-.04em;line-height:1.0;font-weight:1000;
-  background:linear-gradient(175deg,var(--ink),var(--ink-soft));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hc-meta{font-size:13.5px;color:var(--muted);font-weight:600;margin-top:8px;letter-spacing:.01em}
+/* solid white, and enough leading that descenders aren't clipped — the old
+   background-clip:text at line-height 1.0 was cutting the tail off a g */
+.hc-t{
+  font-size:clamp(31px,9.2vw,42px);letter-spacing:-.035em;line-height:1.16;
+  font-weight:1000;color:#fff;padding-bottom:2px
+}
+.hc-meta{font-size:13.5px;color:rgba(234,243,238,.70);font-weight:600;margin-top:6px;letter-spacing:.01em}
 .hc-score{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:14px 0 4px}
-.hc-rel{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:44px;line-height:1;letter-spacing:-.04em}
-.hc-str{font-size:14px;color:var(--muted);font-weight:700}
-.hc-btns{display:flex;gap:9px;margin-top:16px}
-.hc-btns .btn{flex:1}
+.hc-rel{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:44px;line-height:1.1;letter-spacing:-.04em;color:#fff}
+.hero-card .under{color:#8FE3BC} .hero-card .overp{color:#F2A79B}
+.hc-str{font-size:14px;color:rgba(234,243,238,.70);font-weight:700}
+.hc-btns{display:flex;flex-direction:column;gap:9px;margin-top:18px}
+.hc-btns .btn{width:100%;flex:none}
+/* on the green card the primary action inverts to white */
+.hero-card .btn{background:#fff;color:var(--g-800);box-shadow:0 3px 0 rgba(0,0,0,.26), 0 10px 24px rgba(0,0,0,.20)}
+.hero-card .btn:hover{background:#F4FBF7}
+.hero-card .btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.26)}
+.hero-card .btn.ghost{
+  background:transparent;border:1.5px solid rgba(255,255,255,.26);color:rgba(234,243,238,.92);box-shadow:none
+}
+.hero-card .btn.ghost:active{background:rgba(255,255,255,.08);transform:translateY(2px)}
+.hero-card .btn small{opacity:.7}
 .btn.big{width:100%;margin-top:16px;font-size:17px;padding:17px 12px}
 
 /* ─────────────────────────────  club + you  ───────────────────────────── */
@@ -338,6 +353,22 @@ body.playing .tabs{display:none}
 .gscore.under{color:var(--g-700)} .gscore.overp{color:var(--red)} .gscore.even{color:var(--muted)}
 .gdot{display:block;width:5px;height:5px;border-radius:50%;background:var(--line-2);margin:0 auto}
 .gridhint{font-size:12px;color:var(--muted);font-weight:600;text-align:center;margin-top:10px}
+
+/* one dot per hole on the club's today card */
+.dots{display:flex;gap:5px;margin-top:7px}
+.dot{
+  display:block;width:9px;height:9px;border-radius:50%;background:var(--line-2);
+  animation:popIn .34s var(--spring) backwards
+}
+.dot.gold{background:var(--gold)}
+.dot.green{background:var(--g-600)}
+.dot.red{background:var(--red)}
+.dot.none{background:transparent;border:1.5px solid var(--line-2)}
+.dot:nth-child(2){animation-delay:.04s} .dot:nth-child(3){animation-delay:.08s}
+.dot:nth-child(4){animation-delay:.12s} .dot:nth-child(5){animation-delay:.16s}
+
+/* the scorecard needs air before the code card underneath it */
+.gridhint{margin-bottom:34px}
 
 /* ─────────────────────────────  hole by hole  ───────────────────────────── */
 .holes{display:grid;gap:9px}
@@ -1307,13 +1338,16 @@ function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.t
 
 const CROWN_SVG = `<svg class="crown" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M200-160v-80h560v80H200Zm0-140-51-321q-2 0-4.5.5t-4.5.5q-25 0-42.5-17.5T80-680q0-25 17.5-42.5T140-740q25 0 42.5 17.5T200-680q0 7-1.5 13t-3.5 11l125 56 125-171q-11-8-18-21t-7-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820q0 15-7 28t-18 21l125 171 125-56q-2-5-3.5-11t-1.5-13q0-25 17.5-42.5T820-740q25 0 42.5 17.5T880-680q0 25-17.5 42.5T820-620q-2 0-4.5-.5t-4.5-.5l-51 321H200Z"/></svg>`;
 
-/* Who won a given day: fewest strokes against par, and nobody wins alone if
-   it's tied — a shared best shows a crown on every player who managed it. */
+/* A crown has to be earned outright. Nobody gets one if fewer than two people
+   have played — you can't beat an empty field — and a tie crowns nobody, since
+   a shared best isn't a win. */
 function winnersOn(club, date){
-  let best = Infinity;
   const played = (club || []).map(p => ({ p, r: (p.rounds || []).find(x => x.date === date) }))
                              .filter(x => x.r);
-  played.forEach(({ r }) => { const d = r.strokes - r.par; if(d < best) best = d; });
+  if(played.length < 2) return new Set();
+  const scores = played.map(({ r }) => r.strokes - r.par);
+  const best = Math.min(...scores);
+  if(scores.filter(d => d === best).length > 1) return new Set();
   return new Set(played.filter(({ r }) => r.strokes - r.par === best).map(({ p }) => p.code));
 }
 
@@ -1321,6 +1355,20 @@ function winnersOn(club, date){
 // bought letter cost exactly one.
 const holeStrokes = holeMarks =>
   (holeMarks || []).reduce((t, m) => t + (m.g || 0) + (m.b || 0), 0);
+
+/* One dot per hole: gold under par, green on par, red over. Reads at a glance
+   as the shape of someone's round rather than just its total. */
+function holeDots(day, round){
+  if(!day || !round || !round.marks) return '';
+  return `<span class="dots">${day.holes.map((h, i) => {
+    const marks = round.marks[i];
+    if(!marks || !marks.length) return `<i class="dot none"></i>`;
+    const d = holeStrokes(marks) - par(h);
+    const cls = d < 0 ? 'gold' : d === 0 ? 'green' : 'red';
+    const label = d < 0 ? 'birdie' : d === 0 ? 'par' : (d === 1 ? 'bogey' : '+' + d);
+    return `<i class="dot ${cls}" title="${h.seed}: ${label}"></i>`;
+  }).join('')}</span>`;
+}
 
 /* A quiet nod to how the round landed against the club. Your own score stays
    the headline; this sits underneath and only appears if someone else played. */
@@ -1580,6 +1628,7 @@ function renderClub(){
       return `<div class="crow stagger${p.isMe?' me':''}" style="--i:${idx}">
         <span class="cr-who">
           <span class="cr-name">${won ? CROWN_SVG : ''}${name}${p.isMe && !ME.name ? ' <button class="setname" data-setname="1">add your name</button>' : ''}</span>
+          ${r ? holeDots(DAYS[todayIdx()], r) : ''}
         </span>
         ${ r
           ? `<span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes} strokes</small></span>`
@@ -1633,7 +1682,7 @@ function renderClub(){
         <h3><span>Today</span><span>${DAYS[todayIdx()]?.name || ''}</span></h3>
         ${todayRows}
       </div>
-      <h2 class="sec-h">The last fortnight</h2>
+      <h2 class="sec-h">Club Scorecard</h2>
       ${grid}`;
   }
 
