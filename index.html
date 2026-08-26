@@ -257,6 +257,16 @@ body.playing .tabs{display:none}
   padding:18px;box-shadow:var(--chunk);text-align:center;margin-bottom:16px
 }
 .cc-lab{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.cc-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.cc-copy{
+  border:1.5px solid var(--line-2);background:var(--card);color:var(--muted);
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;cursor:pointer;
+  transition:color var(--t-fast),border-color var(--t-fast),transform var(--t-fast)
+}
+.cc-copy svg{width:19px;height:19px}
+.cc-copy:hover{color:var(--g-700);border-color:var(--g-300)}
+.cc-copy:active{transform:scale(.92)}
+.cc-copy.did{color:#fff;background:var(--g-600);border-color:var(--g-600)}
 .cc-code{
   display:block;font-weight:1000;font-size:clamp(44px,15vw,62px);letter-spacing:.14em;
   line-height:1.15;margin-top:4px;color:var(--g-700)
@@ -1541,6 +1551,28 @@ function openDay(date){
 }
 $('#sheet-day').addEventListener('click', e=>{ if(e.target.id==='sheet-day') $('#sheet-day').classList.remove('on'); });
 
+/* Ten ways to hand a friend your code. Every one carries the code in words
+   AND as a link, so the recipient can just tap it and land in the club. */
+const INVITES = [
+  "I'm playing Links, a daily word puzzle scored like golf. My friend code is {C} — tap to join my club: {U}",
+  "Five holes, one coffee, every morning. Play Links with me — my code is {C}. {U}",
+  "I need somebody to beat at Links. Code {C} gets you into my club: {U}",
+  "New daily habit: Links. Word chains, golf scoring, five minutes. Join me with code {C} — {U}",
+  "You do the crossword, I do Links. Come see whose morning puzzle is better. Code {C}: {U}",
+  "My club has an open spot with your name on it. Links, code {C} — {U}",
+  "Fair warning: I've been practicing. Join my Links club with code {C} and catch up: {U}",
+  "It's like Wordle went golfing. Play Links with me — code {C}. {U}",
+  "One tap and we're on the same scorecard every day. Links code {C}: {U}",
+  "Grandma-approved, coffee-compatible, five holes a day. Join my Links club: code {C} — {U}"
+];
+const inviteMsg = () => {
+  const t = INVITES[Math.floor(Math.random() * INVITES.length)];
+  return t.replaceAll('{C}', ME.code).replaceAll('{U}', 'https://links.superfun.games/' + ME.code);
+};
+
+const COPY_SVG  = `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Z"/></svg>`;
+const CHECK_SVG = `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>`;
+
 /* ── Who you are ───────────────────────────────────────────────────────────
    Friends see a name on the scorecard, so we ask for one before the first
    time you hand your code out — that's the moment it starts to matter. */
@@ -1639,10 +1671,12 @@ function renderClub(){
   const codeCard = `
     <div class="codecard">
       <span class="cc-lab">Your friend code</span>
-      <span class="cc-code flex">${ME.code || '····'}</span>
+      <span class="cc-row">
+        <span class="cc-code flex">${ME.code || '····'}</span>
+        ${ME.code ? `<button class="cc-copy" id="cc-copy" aria-label="Copy code">${COPY_SVG}</button>` : ''}
+      </span>
       ${ ME.code ? `<div class="hc-btns">
-        <button class="btn ghost" id="cc-copy">Copy</button>
-        <button class="btn ghost" id="cc-share"${navigator.share ? '' : ' hidden'}>Share</button>
+        <button class="btn" id="cc-share">Invite a friend</button>
       </div>` : `<p class="addnote">Getting your code from the clubhouse…</p>` }
     </div>`;
 
@@ -1749,7 +1783,6 @@ function renderClub(){
   box.innerHTML = friends.length ? (board + codeCard + addCard + stale)
                                  : (codeCard + addCard + board + stale);
 
-  const shareMsg = ()=> `Play Links with me! My friend code is ${ME.code} — links.superfun.games`;
   const withIntro = async fn => {
     Snd.boot();
     if(needsIntro()){ const saved = await openMe('share'); if(!saved) return; }
@@ -1758,12 +1791,20 @@ function renderClub(){
   if($('#cc-copy')) $('#cc-copy').onclick = ()=> withIntro(async ()=>{
     const b = $('#cc-copy');
     NET.ping('share_code');
-    try{ await navigator.clipboard.writeText(ME.code); b.textContent = 'Copied!'; b.classList.add('ok'); Snd.solved(); }
-    catch(e){ b.textContent = 'Press and hold to copy'; Snd.bonk(); }
-    setTimeout(()=>{ b.textContent = 'Copy'; b.classList.remove('ok'); }, 2000);
+    try{ await navigator.clipboard.writeText(ME.code); b.innerHTML = CHECK_SVG; b.classList.add('did'); Snd.solved(); }
+    catch(e){ Snd.bonk(); }
+    setTimeout(()=>{ b.innerHTML = COPY_SVG; b.classList.remove('did'); }, 1800);
   });
-  if(navigator.share && $('#cc-share'))
-    $('#cc-share').onclick = ()=> withIntro(()=>{ NET.ping('share_code'); navigator.share({ text: shareMsg() }).catch(()=>{}); });
+  if($('#cc-share')) $('#cc-share').onclick = ()=> withIntro(async ()=>{
+    NET.ping('share_code');
+    const msg = inviteMsg();
+    if(navigator.share){ navigator.share({ text: msg }).catch(()=>{}); return; }
+    // no share sheet on this device — put the whole invite on the clipboard
+    const b = $('#cc-share');
+    try{ await navigator.clipboard.writeText(msg); b.textContent = 'Invite copied — paste it anywhere'; Snd.solved(); }
+    catch(e){ b.textContent = 'Could not copy'; Snd.bonk(); }
+    setTimeout(()=> b.textContent = 'Invite a friend', 2400);
+  });
 
   const nameBtn = box.querySelector('[data-setname]');
   if(nameBtn) nameBtn.onclick = e=>{ e.stopPropagation(); Snd.boot(); Snd.blip(); openMe('club'); };
@@ -2404,6 +2445,14 @@ function confetti(n){
   setTimeout(()=>box.remove(), 3600);
 }
 
+// A join link carries a friend code in the path. Remember it, clean the URL,
+// and add the friend once we have an account to add them to.
+let inviteCode = null;
+try {
+  const m = location.pathname.match(/^\/([A-HJ-NP-Z2-9]{4})$/i);
+  if (m) { inviteCode = m[1].toUpperCase(); history.replaceState(null, '', '/'); }
+} catch (e) {}
+
 goTab('s-today');
 // one "open" beacon per day — the backroom's DAU
 try {
@@ -2416,12 +2465,30 @@ try {
 // requestIdleCallback is missing on iOS before 16.4 — and an iPhone 7 can't go
 // past iOS 15 — so a bare reference here would throw and silently kill sync on
 // exactly the older devices this game is for.
+const afterBoot = async () => {
+  await NET.sync(true);
+  if (inviteCode && ME.token && inviteCode !== ME.code) {
+    const code = inviteCode; inviteCode = null;
+    goTab('s-club');
+    const res = await NET.post('/friend', { friendCode: code });
+    if (res.ok) {
+      NET.club = res.data.club; NET.at = Date.now();
+      renderClub(); Snd.solved();
+      const out = $('#add-msg');
+      if (out) out.textContent = 'Added ' + (res.data.added.name || res.data.added.code) + ' — you are in their club!';
+    } else {
+      const input = $('#add-code'), out = $('#add-msg');
+      if (input) input.value = code;
+      if (out) out.textContent = res.data?.error || 'That invite code did not work — try Add.';
+    }
+  }
+};
 try {
   const idle = window.requestIdleCallback
     ? cb => window.requestIdleCallback(cb, { timeout: 2000 })
     : cb => setTimeout(cb, 400);
-  idle(() => NET.sync(true));
-} catch (e) { setTimeout(() => NET.sync(true), 400); }
+  idle(afterBoot);
+} catch (e) { setTimeout(afterBoot, 400); }
 </script>
 </body>
 </html>

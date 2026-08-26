@@ -16,3 +16,10 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Join links: links.superfun.games/AB12 opens the app with the code prefilled.
+# A non-forced rewrite, so real files (/backroom, assets) are served first.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
