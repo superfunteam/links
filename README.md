@@ -93,6 +93,28 @@ the whole stack locally — static site, functions and a real local Postgres —
 netlify dev
 ```
 
+## The backroom
+
+`links.superfun.games/backroom` is the admin — password `superfunlinks`, checked server-side
+on every request. Four surfaces: **Overview** (players, rounds, shares, nudges, a 14-day
+plays chart, completion rate), **Calendar** (every scheduled day with plays and average vs
+par; tap a day for hole-by-hole difficulty and every round played), **Pool** (drafts,
+upcoming days, and the unscheduled reserve), and an **Editor** that validates a new chain's
+shape and checks each link against the vocabulary — known links show green, new ones yellow
+so you say them out loud before saving.
+
+New puzzles flow: Editor → drafts table → **Publish** button → Netlify build hook → the
+build pulls approved drafts into the pool and reschedules. The game itself never changes
+shape — it still ships the whole calendar in the page.
+
+The scheduler freezes every published day into a `schedule_days` table at build time and
+replays frozen days verbatim on later builds, so adding a draft can never reshuffle a date
+somebody already played. The calendar rolls: each build schedules out to 24 days past today.
+
+The game reports lightweight events — opens, round starts, practice starts, scorecard and
+code shares, nudges, drill-downs — through a fire-and-forget beacon that gameplay never
+waits on. Losing an event is always better than slowing the game.
+
 ## Running it
 
 

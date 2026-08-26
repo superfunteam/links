@@ -2,11 +2,13 @@
 // Validates the hole pool, schedules it into daily 5-hole courses, and injects
 // the result into index.html as base64 so view-source doesn't spoil answers.
 // Usage: node build.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const HOLES_PER_DAY = 5;
 const COOLDOWN_DAYS = 3;          // a link may not return inside this window
-const MAX_DAYS = 32;               // two months of daily courses
+// The calendar rolls: it always reaches 24 days past today (US Eastern), so a
+// rebuild — including one triggered from the backroom — keeps the horizon full.
+const HORIZON_AHEAD = 24;
 const SEED_COOLDOWN = 28;          // a seed may return, but never inside a month
 const ECHO_WINDOW = 10;            // days within which two chains may not rhyme
 const ECHO_SHARE = 3;              // ...meaning share this many words or more
@@ -46,6 +48,36 @@ holes.forEach((h, i) => {
 });
 if (errors.length) { console.error('✗ puzzles.json failed validation:\n  ' + errors.join('\n  ')); process.exit(1); }
 
+// ── the database, when reachable, contributes two things ──────────────────
+// 1. approved drafts from the backroom editor join the pool
+// 2. schedule_days freezes what already shipped, so history can't reshuffle
+let sql = null;
+const frozen = new Map();          // date -> {name, holes}
+const DB_URL = process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || null;
+if (DB_URL) {
+  try {
+    const { getDatabase } = await import('@netlify/database');
+    sql = getDatabase({ connectionString: DB_URL }).sql;
+    const drafts = await sql`select id, seed, words, links from drafts where status = 'approved'`;
+    let added = 0;
+    for (const d of drafts) {
+      const key = d.words.join(' ');
+      if (seen.has(key)) continue;
+      seen.set(key, -1);
+      holes.push({ seed: d.seed, words: d.words, links: d.links });
+      added++;
+    }
+    const rows = await sql`select day::text as day, name, holes from schedule_days order by day`;
+    rows.forEach(r => frozen.set(r.day, { name: r.name, holes: r.holes }));
+    console.log(`db: ${added} draft(s) joined the pool · ${rows.length} day(s) frozen`);
+  } catch (err) {
+    console.log(`db: unreachable (${err.message.slice(0, 60)}) — building from the repo pool alone`);
+    sql = null;
+  }
+} else {
+  console.log('db: no connection string — building from the repo pool alone');
+}
+
 // ── schedule the pool into days ───────────────────────────────────────────
 const linkOf = (h, i) => `${h.words[i]} ${h.words[i + 1]}`.toLowerCase();
 const linksOf = h => h.words.slice(1).map((_, i) => linkOf(h, i));
@@ -76,7 +108,36 @@ const dateOf = n => {
   return d.toISOString().slice(0, 10);
 };
 
-while (!exhausted && dayIdx < MAX_DAYS) {
+const todayET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York',
+  year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const end = new Date(todayET + 'T12:00:00Z');
+end.setUTCDate(end.getUTCDate() + HORIZON_AHEAD);
+const endDate = end.toISOString().slice(0, 10);
+
+// remember which pool entry each chain key points at, so frozen days can
+// reclaim their holes from the pool and feed the cooldown state
+const byKey = new Map();
+holes.forEach(h => byKey.set(h.words.join(' '), h));
+
+while (!exhausted && dateOf(dayIdx) <= endDate) {
+  const date = dateOf(dayIdx);
+
+  // a day that already shipped is replayed into the schedule verbatim
+  if (frozen.has(date)) {
+    const f = frozen.get(date);
+    f.holes.forEach(h => {
+      const ls = linksOf(h);
+      ls.forEach(l => lastUsed.set(l, dayIdx));
+      seedUsed.set(h.seed, dayIdx);
+      recent.push({ day: dayIdx, words: new Set(h.words) });
+      const live = byKey.get(h.words.join(' '));
+      if (live) { const list = pool[h.words.length]; const at = list.indexOf(live); if (at >= 0) list.splice(at, 1); }
+    });
+    days.push({ date, name: f.name, holes: f.holes, frozen: true });
+    dayIdx++;
+    continue;
+  }
+
   const wd = weekdayOf(dayIdx);
   const wantLong = LONG_BY_WEEKDAY[wd];
   const picked = [], usedToday = new Set(), usedSeedToday = new Set();
@@ -132,7 +193,7 @@ while (!exhausted && dayIdx < MAX_DAYS) {
 
 // ── report + inject ───────────────────────────────────────────────────────
 const parOf = h => { const b = h.words.length - 1; return b + (b >= 4 ? 2 : 1); };
-const payload = { startDate, days };
+const payload = { startDate, days: days.map(d => ({ date: d.date, name: d.name, holes: d.holes })) };
 const b64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64');
 
 let html = readFileSync('index.html', 'utf8');
@@ -140,14 +201,40 @@ const slot = /const PUZZLE_B64 = "[^"]*";/;
 if (!slot.test(html)) { console.error('✗ could not find PUZZLE_B64 in index.html'); process.exit(1); }
 writeFileSync('index.html', html.replace(slot, `const PUZZLE_B64 = "${b64}";`));
 
+// freeze every newly scheduled day so the next build can't move it
+if (sql) {
+  try {
+    let saved = 0;
+    for (const d of days) {
+      if (d.frozen) continue;
+      const res = await sql`
+        insert into schedule_days (day, name, holes)
+        values (${d.date}::date, ${d.name}, ${JSON.stringify(d.holes)}::jsonb)
+        on conflict (day) do nothing returning day`;
+      if (res.length) saved++;
+    }
+    console.log(`db: froze ${saved} new day(s)`);
+  } catch (err) { console.log(`db: could not freeze days (${err.message.slice(0, 60)})`); }
+}
+
+// modules the backroom function imports — generated, never hand-edited
+mkdirSync('netlify/lib', { recursive: true });
+const leftovers = [...pool[3], ...pool[4], ...pool[5]];
+writeFileSync('netlify/lib/scheduledata.mjs',
+  '// generated by build.mjs — do not edit\n' +
+  'export const SCHEDULE = ' + JSON.stringify({ builtAt: new Date().toISOString(), days, leftovers }) + ';\n');
+writeFileSync('netlify/lib/pairsdata.mjs',
+  '// generated by build.mjs — do not edit\n' +
+  'export const PAIRS_TEXT = ' + JSON.stringify(readFileSync('tools/pairs.txt', 'utf8')) + ';\n');
+
 const leftover = pool[3].length + pool[4].length + pool[5].length;
 console.log(`✓ ${days.length} days scheduled from ${holes.length} holes (${leftover} left over: ${pool[3].length}×3 ${pool[4].length}×4 ${pool[5].length}×5)`);
 days.forEach((d, i) => {
   const wd = weekdayOf(i), want = LONG_BY_WEEKDAY[wd];
   const got = d.holes.filter(h => h.words.length === 5).length;
-  const flag = got === want ? ' ' : '!';
+  const flag = d.frozen ? '❄' : got === want ? ' ' : '!';
   console.log(`  ${flag} ${d.date} ${wd}  ${d.name.padEnd(16)} par ${String(d.holes.reduce((s,h)=>s+parOf(h),0)).padStart(3)}  long ${got}/${want}  ${d.holes.map(h=>h.seed).join(' ')}`);
 });
-const short = days.filter((d,i)=>d.holes.filter(h=>h.words.length===5).length !== LONG_BY_WEEKDAY[weekdayOf(i)]).length;
+const short = days.filter((d,i)=>!d.frozen && d.holes.filter(h=>h.words.length===5).length !== LONG_BY_WEEKDAY[weekdayOf(i)]).length;
 if (short) console.log(`\n⚠ ${short} day(s) marked ! could not meet the weekday long-chain quota — pool needs more 5-word chains`);
 console.log(`\n${b64.length} bytes injected`);

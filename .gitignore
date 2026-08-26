@@ -6,3 +6,5 @@
 node_modules/
 public/
 deno.lock
+netlify/lib/scheduledata.mjs
+netlify/lib/pairsdata.mjs

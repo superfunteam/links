@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Links Backroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Flex:wght@400..1000&family=Google+Sans+Code:wght@400..700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🗄️</text></svg>">
+<style>
+:root{
+  --paper:#F7F5EF; --card:#FFF; --ink:#151A17; --muted:#6E7772;
+  --line:#E7E3D9; --line-2:#D8D2C5;
+  --g-700:#136A48; --g-600:#17845A; --g-100:#E2F0E8; --g-050:#F1F7F3;
+  --gold:#B8871F; --gold-soft:#FAF1DC; --red:#BB4536; --red-soft:#FAEAE6;
+  --r:12px; --r-lg:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.45 "Google Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.flex{font-family:"Google Sans Flex",sans-serif}
+.mono{font-family:"Google Sans Code",monospace}
+.wrap{max-width:1060px;margin:0 auto;padding:22px 20px 80px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:26px;letter-spacing:-.03em}
+h1 span{color:var(--g-600)}
+.spacer{flex:1}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{
+  font:inherit;font-weight:700;font-size:13.5px;border:1.5px solid var(--line-2);
+  background:var(--card);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer
+}
+nav button.on{background:var(--g-600);border-color:var(--g-600);color:#fff}
+.pub{
+  font:inherit;font-weight:700;font-size:13.5px;border:none;cursor:pointer;
+  background:var(--ink);color:#fff;border-radius:999px;padding:9px 18px
+}
+.pub:disabled{opacity:.5}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:16px;margin-bottom:14px}
+h2{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:14px;text-align:center}
+.tile b{display:block;font-family:"Google Sans Flex",sans-serif;font-weight:1000;font-size:26px;color:var(--g-700)}
+.tile i{font-style:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1.5px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line)}
+tr:hover td{background:var(--g-050)}
+tr.clickable{cursor:pointer}
+.num{text-align:right;font-family:"Google Sans Flex",sans-serif;font-weight:800}
+.under{color:var(--g-700)} .over{color:var(--red)}
+.pill{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:999px;padding:3px 9px}
+.pill.g{background:var(--g-100);color:var(--g-700)} .pill.y{background:var(--gold-soft);color:var(--gold)}
+.pill.r{background:var(--red-soft);color:var(--red)} .pill.n{background:var(--line);color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:4px;height:90px;padding:6px 2px 0}
+.bar{flex:1;background:var(--g-600);border-radius:4px 4px 0 0;min-height:3px;position:relative}
+.bar i{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:800;color:var(--muted)}
+.bar u{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);text-decoration:none;font-size:9px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:700}
+.chip b{color:var(--g-700)}
+input,button.act{font:inherit}
+input{border:1.5px solid var(--line-2);border-radius:10px;padding:10px 12px;background:var(--paper);font-weight:700}
+input:focus{outline:none;border-color:var(--g-600)}
+.seedin{width:130px;text-transform:uppercase;letter-spacing:.18em;font-family:"Google Sans Flex",sans-serif;font-weight:900;text-align:center}
+.wordrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.wordrow input{width:150px;text-transform:uppercase;font-weight:800}
+.wordrow .lead{display:grid;place-items:center;width:34px;height:41px;border-radius:9px;background:var(--ink);color:#fff;font-family:"Google Sans Flex",sans-serif;font-weight:900}
+button.act{border:none;cursor:pointer;background:var(--g-600);color:#fff;font-weight:700;border-radius:10px;padding:10px 18px}
+button.act.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line-2)}
+button.act.danger{background:var(--red)}
+.msg{font-size:13px;font-weight:600;color:var(--muted);margin-top:10px;white-space:pre-line}
+.msg.err{color:var(--red)}
+.linkcheck{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.gate{max-width:360px;margin:16vh auto;text-align:center}
+.gate input{width:100%;text-align:center;margin:14px 0}
+dialog{border:none;border-radius:var(--r-lg);padding:20px;max-width:640px;width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(21,26,23,.5)}
+.words-inline{font-size:12px;color:var(--muted)}
+.hidden{display:none}
+@media (max-width:640px){ .wordrow input{width:120px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="gate" id="gate">
+    <h1>Links <span>Backroom</span></h1>
+    <input id="pw" type="password" placeholder="password" autocomplete="current-password">
+    <button class="act" id="go" style="width:100%">Enter</button>
+    <p class="msg" id="gate-msg"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <h1>Links <span>Backroom</span></h1>
+      <div class="spacer"></div>
+      <nav>
+        <button data-v="overview" class="on">Overview</button>
+        <button data-v="calendar">Calendar</button>
+        <button data-v="pool">Pool</button>
+        <button data-v="editor">Editor</button>
+      </nav>
+      <button class="pub" id="publish">Publish ↻</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+
+<dialog id="dlg"><div id="dlg-in"></div></dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rel = d => d === 0 ? 'E' : d > 0 ? '+' + (Math.round(d*100)/100) : String(Math.round(d*100)/100);
+const cls = d => d < 0 ? 'under' : d > 0 ? 'over' : '';
+
+async function api(op, extra){
+  const res = await fetch('/api/backroom', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-key': sessionStorage.getItem('br.key') || '' },
+    body: JSON.stringify({ op, ...(extra || {}) })
+  });
+  return { status: res.status, data: await res.json().catch(() => null) };
+}
+
+/* ── gate ── */
+$('#go').onclick = async () => {
+  sessionStorage.setItem('br.key', $('#pw').value.trim());
+  const r = await api('overview');
+  if (r.status === 401) { $('#gate-msg').textContent = 'Not it.'; $('#gate-msg').className = 'msg err'; return; }
+  boot(r.data);
+};
+$('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('#go').click(); });
+
+function boot(overview){
+  $('#gate').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  renderOverview(overview);
+}
+(async () => {
+  if (sessionStorage.getItem('br.key')) {
+    const r = await api('overview');
+    if (r.status === 200) boot(r.data);
+  }
+})();
+
+/* ── nav ── */
+document.querySelectorAll('nav button').forEach(b => b.onclick = async () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  $('#view').innerHTML = '<p class="msg">Loading…</p>';
+  const v = b.dataset.v;
+  if (v === 'overview') renderOverview((await api('overview')).data);
+  if (v === 'calendar') renderCalendar((await api('days')).data);
+  if (v === 'pool')     renderPool((await api('pool')).data);
+  if (v === 'editor')   renderEditor();
+});
+
+/* ── publish ── */
+$('#publish').onclick = async () => {
+  if (!confirm('Rebuild and redeploy the site? New approved drafts join the pool and the calendar extends.')) return;
+  $('#publish').disabled = true; $('#publish').textContent = 'Publishing…';
+  const r = await api('publish');
+  $('#publish').textContent = r.data?.ok ? 'Build started ✓' : 'Failed — see console';
+  if (!r.data?.ok) console.warn(r);
+  setTimeout(() => { $('#publish').textContent = 'Publish ↻'; $('#publish').disabled = false; }, 5000);
+};
+
+/* ── overview ── */
+function renderOverview(d){
+  if (!d) { $('#view').innerHTML = '<p class="msg err">Could not load.</p>'; return; }
+  const ev = Object.fromEntries((d.events || []).map(e => [e.kind, e]));
+  const n = k => ev[k]?.n || 0, n7 = k => ev[k]?.last7 || 0;
+  const maxPlays = Math.max(1, ...(d.series || []).map(s => s.plays));
+  $('#view').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><b>${d.players.total}</b><i>Players</i></div>
+      <div class="tile"><b>${d.players.seen7}</b><i>Active 7d</i></div>
+      <div class="tile"><b>${d.players.claimed}</b><i>Claimed email</i></div>
+      <div class="tile"><b>${d.rounds.total}</b><i>Rounds</i></div>
+      <div class="tile"><b>${d.rounds.last7}</b><i>Rounds 7d</i></div>
+      <div class="tile"><b>${n('share_card') + n('share_code')}</b><i>Shares</i></div>
+      <div class="tile"><b>${n('nudge')}</b><i>Nudges</i></div>
+    </div>
+    <div class="card">
+      <h2>Rounds per day — last 14</h2>
+      ${(d.series || []).length ? `<div class="bars">${d.series.map(s =>
+        `<span class="bar" style="height:${Math.round(s.plays / maxPlays * 100)}%" title="${s.day}: ${s.plays} plays, avg ${rel(s.avg_diff)}"><i>${s.plays}</i><u>${s.day.slice(8)}</u></span>`).join('')}</div>`
+      : '<p class="msg">No rounds yet.</p>'}
+    </div>
+    <div class="card">
+      <h2>Events — all time · last 7 days</h2>
+      <div class="chips">
+        ${['open','round_start','practice_start','share_card','share_code','nudge','drill_down']
+          .map(k => `<span class="chip">${k.replace('_',' ')} <b>${n(k)}</b> · ${n7(k)}</span>`).join('')}
+      </div>
+      <p class="msg">Completion rate: ${n('round_start') ? Math.min(100, Math.round(d.rounds.total / n('round_start') * 100)) + '% of started rounds get finished' : 'needs round_start data'} · schedule built ${new Date(d.builtAt).toLocaleString()}</p>
+    </div>`;
+}
+
+/* ── calendar ── */
+function renderCalendar(d){
+  if (!d) { $('#view').innerHTML = '<p class="msg err">Could not load.</p>'; return; }
+  const rows = d.days.map(day => {
+    const s = day.stats;
+    const state = day.date === d.today ? '<span class="pill g">today</span>'
+                : day.date < d.today ? '' : '<span class="pill n">upcoming</span>';
+    return `<tr class="clickable" data-date="${day.date}">
+      <td class="mono">${day.date}</td>
+      <td><b>${esc(day.name)}</b> ${state}</td>
+      <td class="words-inline">${day.seeds.join(' · ')}</td>
+      <td class="num">${day.par}</td>
+      <td class="num">${s ? s.plays : '–'}</td>
+      <td class="num ${s ? cls(s.avg_diff) : ''}">${s ? rel(s.avg_diff) : '–'}</td>
+      <td class="num">${s ? s.under : '–'}</td>
+    </tr>`;
+  }).join('');
+  $('#view').innerHTML = `
+    <div class="card"><h2>Every scheduled day — tap one for the hole-by-hole</h2>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Date</th><th>Course</th><th>Seeds</th><th class="num">Par</th><th class="num">Plays</th><th class="num">Avg vs par</th><th class="num">Under par</th></tr>
+      ${rows}
+    </table></div></div>`;
+  document.querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => openDay(tr.dataset.date));
+}
+
+async function openDay(date){
+  const r = await api('day', { date });
+  const d = r.data; if (!d?.ok) return;
+  $('#dlg-in').innerHTML = `
+    <h1 style="font-size:20px">${esc(d.name)} <span class="mono" style="font-size:13px;color:var(--muted)">${d.date} · par ${d.par}</span></h1>
+    <div style="margin:12px 0"><table>
+      <tr><th>Seed</th><th>Chain</th><th class="num">Par</th><th class="num">Avg</th><th class="num">Worst</th></tr>
+      ${d.holes.map(h => `<tr>
+        <td class="flex" style="font-weight:900">${h.seed}</td>
+        <td class="words-inline">${h.words.join(' › ')}</td>
+        <td class="num">${h.par}</td>
+        <td class="num ${h.avg != null ? cls(h.avg - h.par) : ''}">${h.avg ?? '–'}</td>
+        <td class="num">${h.worst ?? '–'}</td>
+      </tr>`).join('')}
+    </table></div>
+    ${d.rounds.length ? `<h2>Rounds (${d.rounds.length})</h2><table>
+      ${d.rounds.map(r2 => `<tr><td>${esc(r2.name)}</td>
+        <td class="num ${cls(r2.strokes - r2.par)}">${rel(r2.strokes - r2.par)}</td>
+        <td class="num">${r2.strokes}</td></tr>`).join('')}
+    </table>` : '<p class="msg">Nobody has played this day yet.</p>'}
+    <p style="margin-top:14px"><button class="act ghost" onclick="dlg.close()">Close</button></p>`;
+  $('#dlg').showModal();
+}
+
+/* ── pool ── */
+function renderPool(d){
+  if (!d) { $('#view').innerHTML = '<p class="msg err">Could not load.</p>'; return; }
+  $('#view').innerHTML = `
+    <div class="card"><h2>Drafts from the editor — join the pool on next Publish</h2>
+      ${d.drafts.length ? `<table>
+        <tr><th>Seed</th><th>Chain</th><th>Status</th><th></th></tr>
+        ${d.drafts.map(dr => `<tr>
+          <td class="flex" style="font-weight:900">${esc(dr.seed)}</td>
+          <td class="words-inline">${dr.words.join(' › ')}</td>
+          <td>${dr.status === 'approved' ? '<span class="pill g">approved</span>' : '<span class="pill n">archived</span>'}</td>
+          <td>${dr.status === 'approved' ? `<button class="act danger" style="padding:5px 12px;font-size:12px" data-arch="${dr.id}">Archive</button>` : ''}</td>
+        </tr>`).join('')}
+      </table>` : '<p class="msg">No drafts yet — the Editor tab makes them.</p>'}
+    </div>
+    <div class="card"><h2>Upcoming days (${d.upcoming.length})</h2>
+      <div style="overflow-x:auto"><table>
+        <tr><th>Date</th><th>Course</th><th>Chains</th><th class="num">Par</th></tr>
+        ${d.upcoming.map(u => `<tr>
+          <td class="mono">${u.date}</td><td><b>${esc(u.name)}</b></td>
+          <td class="words-inline">${u.holes.map(h => h.seed + ': ' + h.words.join(' ')).join('<br>')}</td>
+          <td class="num">${u.par}</td>
+        </tr>`).join('')}
+      </table></div>
+    </div>
+    <div class="card"><h2>Unscheduled pool (${d.leftovers.length} chains in reserve)</h2>
+      <div class="chips">${d.leftovers.slice(0, 400).map(h =>
+        `<span class="chip" title="${h.words.join(' ')}">${h.seed} <b>${h.words.length}</b></span>`).join('')}</div>
+    </div>`;
+  document.querySelectorAll('[data-arch]').forEach(b => b.onclick = async () => {
+    await api('draft_archive', { id: +b.dataset.arch });
+    renderPool((await api('pool')).data);
+  });
+}
+
+/* ── editor ── */
+function renderEditor(){
+  $('#view').innerHTML = `
+    <div class="card">
+      <h2>New puzzle — the seed's letters start each word, neighbours must join</h2>
+      <input class="seedin" id="ed-seed" maxlength="5" placeholder="SEED" autocomplete="off">
+      <div class="wordrow" id="ed-words"></div>
+      <button class="act ghost" id="ed-check">Check links</button>
+      <button class="act" id="ed-save">Save to pool</button>
+      <p class="msg" id="ed-msg"></p>
+      <div class="linkcheck" id="ed-links"></div>
+    </div>`;
+  const wordsBox = $('#ed-words');
+  $('#ed-seed').addEventListener('input', () => {
+    const seed = $('#ed-seed').value.toUpperCase().replace(/[^A-Z]/g, '');
+    $('#ed-seed').value = seed;
+    wordsBox.innerHTML = [...seed].map((c, i) =>
+      `<span class="lead flex">${c}</span><input data-w="${i}" placeholder="${c}…" autocomplete="off">`).join('');
+  });
+  const gather = () => ({
+    seed: $('#ed-seed').value,
+    words: [...document.querySelectorAll('[data-w]')].map(i => i.value)
+  });
+  const run = async check => {
+    const r = await api('draft_save', { ...gather(), check });
+    const m = $('#ed-msg'), lk = $('#ed-links');
+    if (!r.data?.ok) {
+      m.className = 'msg err'; m.textContent = (r.data?.errors || ['Failed']).join('\n'); lk.innerHTML = ''; return false;
+    }
+    m.className = 'msg';
+    lk.innerHTML = (r.data.links || []).map(l =>
+      `<span class="pill ${l.known ? 'g' : 'y'}">${esc(l.link)} ${l.known ? '· known' : '· new — double-check it'}</span>`).join('');
+    return true;
+  };
+  $('#ed-check').onclick = () => run(true).then(ok => { if (ok) $('#ed-msg').textContent = 'Shape is valid. Yellow links are new to the vocabulary — say them out loud.'; });
+  $('#ed-save').onclick = () => run(false).then(ok => {
+    if (ok) { $('#ed-msg').textContent = 'Saved. It joins the pool on the next Publish.'; $('#ed-seed').value=''; wordsBox.innerHTML=''; }
+  });
+}
+const dlg = $('#dlg');
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+</script>
+</body>
+</html>

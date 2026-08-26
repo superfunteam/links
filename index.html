@@ -1175,6 +1175,11 @@ const NET = {
     this.emit();
   },
 
+  // analytics beacon — fire and forget, never awaited by gameplay
+  ping(kind, day){
+    try { this.post('/event', { kind, day: day || null }); } catch (e) {}
+  },
+
   restore(){
     try{
       const raw = JSON.parse(localStorage.getItem('links.club') || 'null');
@@ -1736,12 +1741,13 @@ function renderClub(){
   };
   if($('#cc-copy')) $('#cc-copy').onclick = ()=> withIntro(async ()=>{
     const b = $('#cc-copy');
+    NET.ping('share_code');
     try{ await navigator.clipboard.writeText(ME.code); b.textContent = 'Copied!'; b.classList.add('ok'); Snd.solved(); }
     catch(e){ b.textContent = 'Press and hold to copy'; Snd.bonk(); }
     setTimeout(()=>{ b.textContent = 'Copy'; b.classList.remove('ok'); }, 2000);
   });
   if(navigator.share && $('#cc-share'))
-    $('#cc-share').onclick = ()=> withIntro(()=> navigator.share({ text: shareMsg() }).catch(()=>{}));
+    $('#cc-share').onclick = ()=> withIntro(()=>{ NET.ping('share_code'); navigator.share({ text: shareMsg() }).catch(()=>{}); });
 
   const nameBtn = box.querySelector('[data-setname]');
   if(nameBtn) nameBtn.onclick = e=>{ e.stopPropagation(); Snd.boot(); Snd.blip(); openMe('club'); };
@@ -1750,7 +1756,10 @@ function renderClub(){
 
   // any cell or header in the grid drills into that day
   box.querySelectorAll('[data-day]').forEach(el2=>{
-    el2.onclick = ()=>{ Snd.boot(); Snd.blip(); openDay(el2.dataset.day); };
+    el2.onclick = ()=>{ Snd.boot(); Snd.blip(); NET.ping('drill_down', el2.dataset.day); openDay(el2.dataset.day); };
+  });
+  box.querySelectorAll('a.nudge').forEach(a=>{
+    a.addEventListener('click', ()=> NET.ping('nudge'));
   });
   // and so does the Today card
   const todayCard = box.querySelector('.card.board');
@@ -1914,6 +1923,7 @@ function show(id){
    PLAY
    ═══════════════════════════════════════════════════════════════ */
 function startCourse(i, practice){
+  NET.ping(practice ? 'practice_start' : 'round_start', DAYS[i]?.date);
   S.ci=i; S.practice=!!practice; S.hi=0; S.hs=0; S.holeScores=[]; S.marks=[];
   startHole(); show('s-play');
 }
@@ -2286,6 +2296,7 @@ $('#share-back').onclick = ()=>{ Snd.blip(); $('#sheet-share').classList.remove(
 $('#sheet-share').addEventListener('click', e=>{ if(e.target.id==='sheet-share') $('#sheet-share').classList.remove('on'); });
 
 $('#share-copy').onclick = async ()=>{
+  NET.ping('share_card', shareCtx?.c?.date);
   const btn = $('#share-copy'), txt = $('#share-prev').textContent;
   try{
     await navigator.clipboard.writeText(txt);
@@ -2300,6 +2311,7 @@ $('#share-copy').onclick = async ()=>{
 };
 
 $('#share-native').onclick = async ()=>{
+  NET.ping('share_card', shareCtx?.c?.date);
   try{ await navigator.share({ title:'Links', text: shareText(shareCtx.c, shareCtx.r) }); Snd.blip(); }
   catch(err){ /* user dismissed the share sheet */ }
 };
@@ -2376,6 +2388,13 @@ function confetti(n){
 }
 
 goTab('s-today');
+// one "open" beacon per day — the backroom's DAU
+try {
+  if (localStorage.getItem('links.pinged') !== todayKey()) {
+    localStorage.setItem('links.pinged', todayKey());
+    setTimeout(() => NET.ping('open'), 1200);
+  }
+} catch (e) {}
 // Catch up with the server after the first paint, never before it.
 // requestIdleCallback is missing on iOS before 16.4 — and an iPhone 7 can't go
 // past iOS 15 — so a bare reference here would throw and silently kill sync on
