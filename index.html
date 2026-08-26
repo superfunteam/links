@@ -302,6 +302,82 @@ body.playing .tabs{display:none}
 .thanks-i{width:26px;height:26px;flex:none;color:var(--g-500);opacity:.9}
 .thanks span{max-width:34ch}
 
+/* ─────────────────────────────  crowns + grid  ───────────────────────────── */
+.crown{width:15px;height:15px;flex:none;color:var(--gold);margin-right:5px;vertical-align:-2px;
+  animation:popIn .4s var(--spring) backwards}
+.cr-name{display:flex;align-items:center}
+
+.gridwrap{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  border:1.5px solid var(--line);border-radius:var(--r-lg);background:var(--card);
+  box-shadow:var(--chunk)
+}
+.grid{border-collapse:collapse;width:100%;font-size:12px}
+.grid th,.grid td{padding:0;text-align:center}
+.grid thead th{padding:10px 0 8px;border-bottom:1.5px solid var(--line)}
+.gday{cursor:pointer;min-width:34px}
+.gday span{display:block;font-size:9.5px;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.gday b{display:block;font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:13px;color:var(--ink-soft)}
+.gday.now b{color:var(--g-700)}
+.gday.now::after{content:"";display:block;width:16px;height:2.5px;border-radius:2px;background:var(--g-600);margin:4px auto 0}
+.gname{
+  text-align:left;padding:9px 12px !important;font-weight:700;font-size:12.5px;
+  white-space:nowrap;position:sticky;left:0;background:var(--card);
+  border-right:1.5px solid var(--line);max-width:96px;overflow:hidden;text-overflow:ellipsis
+}
+.grid tbody tr{border-top:1.5px solid var(--line)}
+.gcell{cursor:pointer;position:relative;padding:9px 4px !important;min-width:34px;transition:background var(--t-fast)}
+.gcell:hover{background:var(--g-050)}
+.gcell.won{background:var(--gold-soft)}
+.gcell .crown{position:absolute;top:1px;right:2px;width:10px;height:10px;margin:0}
+.gscore{font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:12.5px}
+.gscore.under{color:var(--g-700)} .gscore.overp{color:var(--red)} .gscore.even{color:var(--muted)}
+.gdot{display:block;width:5px;height:5px;border-radius:50%;background:var(--line-2);margin:0 auto}
+.gridhint{font-size:12px;color:var(--muted);font-weight:600;text-align:center;margin-top:10px}
+
+/* ─────────────────────────────  hole by hole  ───────────────────────────── */
+.holes{display:grid;gap:9px}
+.hrow{
+  background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);
+  padding:12px 13px;box-shadow:0 2px 0 var(--line-2)
+}
+.hhead{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+.hseed{
+  font-weight:1000;font-size:15px;letter-spacing:.06em;color:var(--g-800);
+  background:var(--g-050);border-radius:7px;padding:3px 8px;flex:none
+}
+.hwords{font-size:12.5px;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
+.hwords b{color:var(--ink-soft);font-weight:700}
+.hwords b.given{color:var(--muted);font-weight:600}
+.hwords i{color:var(--line-2);font-style:normal}
+.hwords em{font-style:normal;opacity:.8}
+.hscores{display:flex;flex-wrap:wrap;gap:6px}
+.hcell{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-width:46px;padding:6px 8px;border-radius:9px;background:var(--paper);
+  border:1.5px solid var(--line)
+}
+.hcell.me{border-color:var(--g-300);background:var(--g-050)}
+.hcell.best{background:var(--gold-soft);border-color:var(--gold)}
+.hcell b{font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:15px}
+.hcell i{font-style:normal;font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+
+/* ─────────────────────────────  post-round club strip  ───────────────────────────── */
+.clubstrip{
+  border:1.5px dashed var(--line-2);border-radius:var(--r-lg);
+  padding:13px 14px;margin:0 0 14px;background:var(--paper)
+}
+.cs-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
+.cs-line{font-size:12.5px;font-weight:700;color:var(--g-700)}
+.cs-rows{display:flex;flex-wrap:wrap;gap:7px}
+.cs-row{
+  display:flex;align-items:baseline;gap:6px;background:var(--card);
+  border:1.5px solid var(--line);border-radius:999px;padding:5px 11px
+}
+.cs-row b{font-size:12.5px;font-weight:700}
+.cs-row i{font-style:normal;font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:13px;color:var(--muted)}
+.cs-row i.under{color:var(--g-700)} .cs-row i.overp{color:var(--red)}
+
 /* ─────────────────────────────  identity sheet  ───────────────────────────── */
 .sheet.green .sheet-in{
   background:
@@ -813,6 +889,7 @@ body.playing .tabs{display:none}
     <button class="btn quiet" id="me-skip">Not now</button>
   </div>
 </div></div>
+<div class="sheet" id="sheet-day"><div class="sheet-in" id="sheet-day-in"></div></div>
 <div class="sheet" id="sheet-share"><div class="sheet-in">
   <h2 class="set-h">Share your round</h2>
   <pre class="share-prev" id="share-prev"></pre>
@@ -1224,6 +1301,138 @@ async function playIntroDemo(){
 
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); }
 
+const CROWN_SVG = `<svg class="crown" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M200-160v-80h560v80H200Zm0-140-51-321q-2 0-4.5.5t-4.5.5q-25 0-42.5-17.5T80-680q0-25 17.5-42.5T140-740q25 0 42.5 17.5T200-680q0 7-1.5 13t-3.5 11l125 56 125-171q-11-8-18-21t-7-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820q0 15-7 28t-18 21l125 171 125-56q-2-5-3.5-11t-1.5-13q0-25 17.5-42.5T820-740q25 0 42.5 17.5T880-680q0 25-17.5 42.5T820-620q-2 0-4.5-.5t-4.5-.5l-51 321H200Z"/></svg>`;
+
+/* Who won a given day: fewest strokes against par, and nobody wins alone if
+   it's tied — a shared best shows a crown on every player who managed it. */
+function winnersOn(club, date){
+  let best = Infinity;
+  const played = (club || []).map(p => ({ p, r: (p.rounds || []).find(x => x.date === date) }))
+                             .filter(x => x.r);
+  played.forEach(({ r }) => { const d = r.strokes - r.par; if(d < best) best = d; });
+  return new Set(played.filter(({ r }) => r.strokes - r.par === best).map(({ p }) => p.code));
+}
+
+// Strokes on one hole are recoverable from its marks: every guess and every
+// bought letter cost exactly one.
+const holeStrokes = holeMarks =>
+  (holeMarks || []).reduce((t, m) => t + (m.g || 0) + (m.b || 0), 0);
+
+/* A quiet nod to how the round landed against the club. Your own score stays
+   the headline; this sits underneath and only appears if someone else played. */
+function clubStrip(date, myStrokes, myPar){
+  const club = NET.club || [];
+  const others = club.filter(p => !p.isMe && (p.rounds||[]).some(r => r.date === date));
+  if(!others.length) return '';
+  const mine = myStrokes - myPar;
+  const rows = others
+    .map(p => { const r = (p.rounds||[]).find(x=>x.date===date); return { p, d: r.strokes - r.par, s: r.strokes }; })
+    .sort((a,b)=> a.d - b.d);
+  const beat = rows.filter(r => mine < r.d).length;
+  const lost = rows.filter(r => mine > r.d).length;
+  const line = beat === rows.length ? 'Top of the club today.'
+             : lost === rows.length ? `Behind ${rows.length === 1 ? 'them' : 'the club'} today.`
+             : `Ahead of ${beat} of ${rows.length}.`;
+  return `
+    <div class="clubstrip">
+      <div class="cs-head"><span class="cc-lab">Your club today</span><span class="cs-line">${line}</span></div>
+      <div class="cs-rows">
+        ${rows.map((r,i)=>`
+          <span class="cs-row stagger" style="--i:${i}">
+            <b>${esc((r.p.name || r.p.code).split(' ')[0]).slice(0,8)}</b>
+            <i class="${r.d<0?'under':r.d>0?'overp':''}">${rel(r.d)}</i>
+          </span>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── One day, hole by hole, everyone side by side ───────────────────────────
+   The chain words are only shown to someone who has already played that day —
+   otherwise drilling into a friend's round would hand you the answers. */
+function openDay(date){
+  const day = DAYS.find(d => d.date === date);
+  const club = NET.club || [];
+  const box = $('#sheet-day-in');
+  if(!day){ return; }
+
+  const played = club.filter(p => (p.rounds||[]).some(r => r.date === date));
+  const mine = ROUNDS.get(date);
+  const reveal = !!mine;                       // have I played this day?
+  const champs = winnersOn(club, date);
+  const total = dayPar(day);          // not `par` — that's the per-hole helper
+
+  const ordered = [...played].sort((a,b)=>{
+    const ra=(a.rounds||[]).find(x=>x.date===date), rb=(b.rounds||[]).find(x=>x.date===date);
+    return (ra.strokes-ra.par)-(rb.strokes-rb.par);
+  });
+
+  const head = `
+    <span class="cc-lab">${prettyDay(date)}</span>
+    <h2 class="sheet-h flex" style="color:var(--ink)">${esc(day.name)}</h2>
+    <p class="sheet-p" style="color:var(--muted)">${day.holes.length} holes · par ${total}</p>`;
+
+  if(!ordered.length){
+    box.innerHTML = head + `
+      <div class="empty"><div class="empty-i">⛳</div><h3>Nobody has played this one yet</h3>
+      <p>Scores appear here as your club gets round to it.</p></div>
+      <div class="actions col"><button class="btn" id="day-close">Close</button></div>`;
+    $('#sheet-day').classList.add('on');
+    $('#day-close').onclick = ()=>{ Snd.blip(); $('#sheet-day').classList.remove('on'); };
+    return;
+  }
+
+  const totals = `
+    <div class="card board" style="margin-bottom:16px">
+      <h3><span>Leaderboard</span><span>${ordered.length} played</span></h3>
+      ${ordered.map((p,i)=>{
+        const r = (p.rounds||[]).find(x=>x.date===date);
+        const d = r.strokes - r.par;
+        return `<div class="crow stagger${p.isMe?' me':''}" style="--i:${i}">
+          <span class="cr-who"><span class="cr-name">${champs.has(p.code)?CROWN_SVG:''}${esc(p.name || (p.isMe?'You':'Player '+p.code))}</span></span>
+          <span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes} strokes</small></span>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // hole-by-hole: strokes per hole come back out of the marks
+  const holes = day.holes.map((h, hi) => {
+    const cells = ordered.map(p => {
+      const r = (p.rounds||[]).find(x=>x.date===date);
+      const marks = (r.marks || [])[hi];
+      return { p, n: marks ? holeStrokes(marks) : null, marks };
+    });
+    const valid = cells.filter(c => c.n != null).map(c => c.n);
+    const best = valid.length ? Math.min(...valid) : null;
+    const hp = par(h);
+    return `
+      <div class="hrow">
+        <div class="hhead">
+          <span class="hseed flex">${h.seed}</span>
+          <span class="hwords">${ reveal
+            ? h.words.map((w,i)=>`<b${i?'':' class="given"'}>${w}</b>`).join('<i>›</i>')
+            : `<em>${h.words.length} words · par ${hp}</em>` }</span>
+        </div>
+        <div class="hscores">
+          ${cells.map(c=>`
+            <span class="hcell${c.n===best&&c.n!=null?' best':''}${c.p.isMe?' me':''}">
+              <b>${c.n==null?'–':c.n}</b>
+              <i>${esc((c.p.name || c.p.code).split(' ')[0]).slice(0,6)}</i>
+            </span>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  box.innerHTML = head + totals + `
+    <h2 class="sec-h">Hole by hole</h2>
+    <div class="holes">${holes}</div>
+    ${reveal ? '' : `<p class="foot">Play this round yourself to see the words.</p>`}
+    <div class="actions col"><button class="btn" id="day-close">Close</button></div>`;
+
+  $('#sheet-day').classList.add('on');
+  $('#day-close').onclick = ()=>{ Snd.blip(); $('#sheet-day').classList.remove('on'); };
+}
+$('#sheet-day').addEventListener('click', e=>{ if(e.target.id==='sheet-day') $('#sheet-day').classList.remove('on'); });
+
 /* ── Who you are ───────────────────────────────────────────────────────────
    Friends see a name on the scorecard, so we ask for one before the first
    time you hand your code out — that's the moment it starts to matter. */
@@ -1341,7 +1550,8 @@ function renderClub(){
     </div>`;
 
   const friends = (club || []).filter(p => !p.isMe);
-  let board;
+  let board = '';
+
   if(!club){
     board = `<div class="empty"><div class="empty-i">⛳</div><h3>Getting your club…</h3>
              <p>One moment while we catch up with the clubhouse.</p></div>`;
@@ -1349,52 +1559,93 @@ function renderClub(){
     board = `<div class="empty"><div class="empty-i">⛳</div><h3>Your club is empty</h3>
              <p>Send your code to a friend and you'll both see each other's round every day.</p></div>`;
   } else {
-    const fresh = NET.day === today;   // yesterday's cache can't speak for today
-    const row = (p, idx) => {
-      const r = fresh ? (p.rounds || []).find(x => x.date === today) : null;
-      // A person, not a code. Only fall back when they haven't named themselves.
+    const fresh = NET.day === today;
+    const champs = winnersOn(club, today);
+    const ordered = [...club].sort((a, b) => {
+      const ra = (a.rounds||[]).find(x=>x.date===today), rb = (b.rounds||[]).find(x=>x.date===today);
+      if(ra && rb) return (ra.strokes-ra.par) - (rb.strokes-rb.par);
+      if(ra) return -1; if(rb) return 1;
+      return (a.name||a.code).localeCompare(b.name||b.code);
+    });
+
+    const todayRows = ordered.map((p, idx) => {
+      const r = fresh ? (p.rounds||[]).find(x=>x.date===today) : null;
       const name = esc(p.name || (p.isMe ? 'You' : 'Player ' + p.code));
-      const d = r ? relOf(r) : null;
-      return `<div class="crow stagger${p.isMe ? ' me' : ''}" style="--i:${idx}">
+      const d = r ? r.strokes - r.par : null;
+      const won = r && champs.has(p.code);
+      return `<div class="crow stagger${p.isMe?' me':''}" style="--i:${idx}">
         <span class="cr-who">
-          <span class="cr-name">${name}${p.isMe && !ME.name ? ' <button class="setname" data-setname="1">add your name</button>' : ''}</span>
-          ${formBars(p.rounds || [])}
+          <span class="cr-name">${won ? CROWN_SVG : ''}${name}${p.isMe && !ME.name ? ' <button class="setname" data-setname="1">add your name</button>' : ''}</span>
         </span>
         ${ r
-          ? `<span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes}</small></span>`
-          : !fresh
-            ? `<span class="cr-score"><b class="pending">·</b></span>`
-            : p.isMe
-              ? `<button class="nudge go" data-play="1">Play</button>`
-              : `<a class="nudge" href="${nudgeHref()}">Nudge</a>` }
+          ? `<span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes} strokes</small></span>`
+          : !fresh ? `<span class="cr-score"><b class="pending">·</b></span>`
+          : p.isMe ? `<button class="nudge go" data-play="1">Play</button>`
+                   : `<a class="nudge" href="${nudgeHref()}">Nudge</a>` }
       </div>`;
-    };
-    board = `<div class="card board">
-      <h3><span>Today</span><span>${DAYS[todayIdx()]?.name || ''}</span></h3>
-      ${[...club].sort((a,b)=>{
-          const ra = (a.rounds||[]).find(x=>x.date===today), rb = (b.rounds||[]).find(x=>x.date===today);
-          if(ra && rb) return relOf(ra) - relOf(rb);
-          if(ra) return -1; if(rb) return 1;
-          return (a.name||a.code).localeCompare(b.name||b.code);
-        }).map((p,idx)=>row(p,idx)).join('')}
-    </div>`;
+    }).join('');
+
+    // ── the fortnight grid: a column per day, a crown on each day's winner ──
+    const days = [];
+    for(let i = 13; i >= 0; i--){
+      const dt = new Date(); dt.setDate(dt.getDate() - i);
+      const key = ET(dt);
+      if(DAYS.some(d => d.date === key)) days.push(key);
+    }
+    const grid = `
+      <div class="gridwrap">
+        <table class="grid">
+          <thead><tr><th class="gname"></th>
+            ${days.map(k => {
+              const [ , , dd] = k.split('-');
+              const wd = new Date(k + 'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'narrow'});
+              return `<th class="gday${k===today?' now':''}" data-day="${k}"><span>${wd}</span><b>${+dd}</b></th>`;
+            }).join('')}
+          </tr></thead>
+          <tbody>
+            ${ordered.map(p => {
+              const by = Object.fromEntries((p.rounds||[]).map(r => [r.date, r]));
+              return `<tr>
+                <td class="gname">${esc(p.name || (p.isMe ? 'You' : p.code))}</td>
+                ${days.map(k => {
+                  const r = by[k];
+                  if(!r) return `<td class="gcell" data-day="${k}"><i class="gdot"></i></td>`;
+                  const d = r.strokes - r.par;
+                  const won = winnersOn(club, k).has(p.code);
+                  return `<td class="gcell${won?' won':''}" data-day="${k}">
+                    <span class="gscore ${d<0?'under':d>0?'overp':'even'}">${rel(d)}</span>
+                    ${won ? CROWN_SVG : ''}
+                  </td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="gridhint">Tap any day to see it hole by hole.</p>`;
+
+    board = `
+      <div class="card board">
+        <h3><span>Today</span><span>${DAYS[todayIdx()]?.name || ''}</span></h3>
+        ${todayRows}
+      </div>
+      <h2 class="sec-h">The last fortnight</h2>
+      ${grid}`;
   }
 
   const stale = NET.state === 'offline' && NET.at
     ? `<p class="foot">Showing the last scores we saw — you're offline.</p>` : '';
 
-  box.innerHTML = codeCard + addCard + board + stale;
+  // Once you have a club, the scores are the point — the code card drops below.
+  box.innerHTML = friends.length ? (board + codeCard + addCard + stale)
+                                 : (codeCard + addCard + board + stale);
 
   const shareMsg = ()=> `Play Links with me! My friend code is ${ME.code} — links.superfun.games`;
-
-  // The first time you hand your code out is the moment a name starts to
-  // matter, so that's where we ask rather than nagging on first launch.
   const withIntro = async fn => {
     Snd.boot();
     if(needsIntro()){ const saved = await openMe('share'); if(!saved) return; }
     fn();
   };
-
   if($('#cc-copy')) $('#cc-copy').onclick = ()=> withIntro(async ()=>{
     const b = $('#cc-copy');
     try{ await navigator.clipboard.writeText(ME.code); b.textContent = 'Copied!'; b.classList.add('ok'); Snd.solved(); }
@@ -1403,6 +1654,22 @@ function renderClub(){
   });
   if(navigator.share && $('#cc-share'))
     $('#cc-share').onclick = ()=> withIntro(()=> navigator.share({ text: shareMsg() }).catch(()=>{}));
+
+  const nameBtn = box.querySelector('[data-setname]');
+  if(nameBtn) nameBtn.onclick = e=>{ e.stopPropagation(); Snd.boot(); Snd.blip(); openMe('club'); };
+  const playBtn = box.querySelector('[data-play]');
+  if(playBtn) playBtn.onclick = ()=>{ Snd.boot(); Snd.blip(); goTab('s-today'); };
+
+  // any cell or header in the grid drills into that day
+  box.querySelectorAll('[data-day]').forEach(el2=>{
+    el2.onclick = ()=>{ Snd.boot(); Snd.blip(); openDay(el2.dataset.day); };
+  });
+  // and so does the Today card
+  const todayCard = box.querySelector('.card.board');
+  if(todayCard) todayCard.onclick = e=>{
+    if(e.target.closest('.nudge, .setname')) return;
+    Snd.boot(); Snd.blip(); openDay(today);
+  };
 
   const go = async ()=>{
     const input = $('#add-code'), out = $('#add-msg');
@@ -1420,10 +1687,6 @@ function renderClub(){
       Snd.bonk();
     }
   };
-  const nameBtn = box.querySelector('[data-setname]');
-  if(nameBtn) nameBtn.onclick = e=>{ e.stopPropagation(); Snd.boot(); Snd.blip(); openMe('club'); };
-  const playBtn = box.querySelector('[data-play]');
-  if(playBtn) playBtn.onclick = ()=>{ Snd.boot(); Snd.blip(); goTab('s-today'); };
   $('#add-go').onclick = ()=>{ Snd.boot(); go(); };
   $('#add-code').addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); go(); } });
   $('#add-code').addEventListener('input', e=>{ e.target.value = e.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g,''); });
@@ -1535,7 +1798,14 @@ function renderYou(){
 
 /* ── tabs ── */
 const TAB_RENDER = { 's-today': renderToday, 's-club': renderClub, 's-you': renderYou };
-NET.on(()=>{ if($('#s-club').classList.contains('on')) renderClub(); });
+NET.on(()=>{
+  if($('#s-club').classList.contains('on')) renderClub();
+  // a round just synced: friends' scores may have arrived after the card opened
+  const slot = $('#club-strip');
+  if(slot && $('#sheet-course').classList.contains('on') && slot.dataset.d){
+    slot.innerHTML = clubStrip(slot.dataset.d, +slot.dataset.s, +slot.dataset.p);
+  }
+});
 function goTab(id){
   TAB_RENDER[id]?.();
   if(id === 's-club') NET.sync();
@@ -1962,6 +2232,7 @@ async function endCourse(){
       </div>
     </div>
     ${counted ? '' : `<p class="foot" style="padding:0 0 14px">Practice round — your counting score for ${c.name} still stands.</p>`}
+    <div id="club-strip" data-d="${c.date}" data-s="${total}" data-p="${p}">${clubStrip(c.date, total, p)}</div>
     <div class="actions col">
       <button class="btn" id="share">Share scorecard</button>
     </div>

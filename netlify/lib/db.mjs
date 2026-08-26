@@ -140,7 +140,7 @@ export async function overLimit(sql, key, max, windowMinutes) {
 }
 
 /** Every player in someone's club: themselves plus each mutual friend. */
-export async function clubOf(sql, playerId, sinceDays = 7) {
+export async function clubOf(sql, playerId, sinceDays = 14) {
   return sql`
     with club as (
       select ${playerId}::bigint as id
@@ -152,7 +152,8 @@ export async function clubOf(sql, playerId, sinceDays = 7) {
     select p.id, p.code, p.name,
            coalesce(
              json_agg(json_build_object('date', to_char(r.play_date,'YYYY-MM-DD'),
-                                        'strokes', r.strokes, 'par', r.par)
+                                        'strokes', r.strokes, 'par', r.par,
+                                        'marks', r.marks)
                       order by r.play_date desc)
                filter (where r.play_date is not null),
              '[]') as rounds
