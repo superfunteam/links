@@ -219,12 +219,7 @@ body.playing .tabs{display:none}
   padding:26px 20px 22px;
   box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 12px 34px rgba(21,26,23,.10), 0 2px 6px rgba(21,26,23,.05)
 }
-/* a hairline of brand colour along the top edge instead of a heavy outline */
-.hero-card::before{
-  content:"";position:absolute;left:0;right:0;top:0;height:3px;
-  background:linear-gradient(90deg,var(--g-500),var(--g-700),var(--g-500))
-}
-.hero-card.played::before{background:linear-gradient(90deg,var(--gold),#E2B764,var(--gold))}
+
 .hc-tag{
   display:inline-block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
   color:var(--g-700);font-weight:800;margin-bottom:10px;
@@ -336,7 +331,6 @@ body.playing .tabs{display:none}
   background:#fff;color:var(--g-800);
   box-shadow:0 3px 0 rgba(0,0,0,.28), 0 10px 24px rgba(0,0,0,.22)
 }
-.sheet.green .btn::after{display:none}
 .sheet.green .btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.28)}
 /* needs to out-specify .sheet.green .btn, which paints every button white */
 .sheet.green .btn.quiet{
@@ -380,8 +374,8 @@ body.playing .tabs{display:none}
 .nudge{
   flex:none;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.02em;
   border:none;color:#fff;border-radius:999px;padding:9px 18px;
-  background:linear-gradient(180deg,var(--g-500),var(--g-700));
-  box-shadow:0 2px 0 var(--g-800), 0 6px 14px rgba(10,58,40,.22);
+  background:var(--g-600);
+  box-shadow:0 2px 0 var(--g-800), 0 6px 14px rgba(10,58,40,.20);
   transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)
 }
 .nudge:active{transform:translateY(2px);box-shadow:0 0 0 var(--g-800)}
@@ -568,26 +562,17 @@ body.playing .tabs{display:none}
 .actions{display:flex;gap:9px;padding:16px 0 max(20px,env(safe-area-inset-bottom))}
 .btn{
   flex:1;border-radius:var(--r);padding:15px 12px;font-weight:700;font-size:15.5px;
-  letter-spacing:-.005em;position:relative;overflow:hidden;
-  border:none;color:#fff;
-  background:linear-gradient(180deg, var(--g-500) 0%, var(--g-600) 55%, var(--g-700) 100%);
-  box-shadow:0 3px 0 var(--g-800), 0 8px 20px rgba(10,58,40,.22);
-  transition:transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), filter var(--t-fast)
+  letter-spacing:-.005em;position:relative;
+  border:none;color:#fff;background:var(--g-600);
+  box-shadow:0 3px 0 var(--g-800), 0 8px 20px rgba(10,58,40,.20);
+  transition:transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background var(--t-fast)
 }
-.btn:hover{filter:brightness(1.05)}
+.btn:hover{background:var(--g-500)}
 .btn:active{transform:translateY(3px);box-shadow:0 0 0 var(--g-800), 0 2px 6px rgba(10,58,40,.18)}
-/* a slow sheen crossing the primary action, so it reads as the way forward */
-.btn::after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);
-  transform:translateX(-120%);animation:sheen 5.5s var(--ease) 1.2s infinite
-}
-@keyframes sheen{0%{transform:translateX(-120%)}22%,100%{transform:translateX(120%)}}
 .btn.ghost{
   background:var(--card);color:var(--ink-soft);border:1.5px solid var(--line-2);
   box-shadow:0 2px 0 var(--line-2), 0 4px 12px rgba(21,26,23,.05)
 }
-.btn.ghost::after{display:none}
 .btn.ghost:hover{border-color:var(--g-300);color:var(--ink)}
 .btn.ghost:active{transform:translateY(2px);box-shadow:0 0 0 var(--line-2)}
 .btn:disabled{opacity:.4;pointer-events:none}
@@ -702,6 +687,9 @@ body.playing .tabs{display:none}
   <!-- ══════════════ TODAY ══════════════ -->
   <section id="s-today" class="screen on tabbed">
     <div class="hero sm">
+      <svg class="mark-flag" viewBox="0 0 100 100" aria-hidden="true">
+        <path fill="currentColor" d="m79.688 59.469v-0.09375c0-5.1719-4.2031-9.375-9.375-9.375-4.2344 0-7.8125 2.8281-8.9844 6.6875-3.3594-0.28125-6.6562-0.4375-9.6406-0.4375h-7.8594c-1.0625 0-2.125 0.046875-3.2031 0.10938v-26.594c6.2656 0.34375 9.7656 1.9531 13.406 3.6719 4.0625 1.9219 8.2656 3.9062 16.25 4.0625h0.03125c0.40625 0 0.79688-0.15625 1.0938-0.45312 0.29688-0.28125 0.46875-0.6875 0.46875-1.1094v-23.438c0-0.84375-0.6875-1.5469-1.5312-1.5625-7.3125-0.14062-11.047-1.8906-14.984-3.7656-4.0625-1.9219-8.2656-3.9062-16.266-4.0469h-6.2812c-0.85938 0-1.5625 0.70312-1.5625 1.5625v53.047c-12.281 2.7812-25 9.6875-25 18.828 0 11.203 13.828 20.312 30.828 20.312 9.5938 0 18.453-2.8438 24.328-7.7969 6.8906-5.8281 14.625-10.25 22.969-13.109 6.1406-2.1094 9.375-4.9844 9.375-8.3281 0-1.2188 0-4.8594-14.062-8.1719zm-45.312-53.219h3.125v73.375c-1.0469 0.046875-2.0938 0.046875-3.125 0zm48.984 66.75c-8.7031 3-16.781 7.6094-23.984 13.703-5.2969 4.4688-13.422 7.0469-22.297 7.0469-15.281 0-27.703-7.7031-27.703-17.188 0-6.9688 10.719-12.969 21.875-15.625v6.5312c-6.4375 0.78125-12.5 3.3125-12.5 7.5312 0 4.5312 7 7.125 13.938 7.6875 1.1094 0.078125 2.2031 0.125 3.25 0.125s2.1406-0.046875 3.25-0.125c6.9375-0.5625 13.938-3.1562 13.938-7.6875 0-4.2188-6.0625-6.75-12.5-7.5312v-7.9688c1.0781-0.078125 2.1562-0.125 3.2031-0.125h7.8594c2.8594 0 6.0312 0.14062 9.2656 0.42188 0.21875 4.9688 4.3281 8.9531 9.3594 8.9531 4.0469 0 7.5-2.5938 8.8125-6.2031 9.3281 2.2188 11.5 4.4531 11.5 5.0938 0 1.7656-2.7812 3.8281-7.2656 5.3594z"/>
+      </svg>
       <div class="wordmark flex" id="wordmark"></div>
       <p class="tagline" id="today-date"></p>
     </div>
