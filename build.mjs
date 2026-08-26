@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const HOLES_PER_DAY = 5;
 const COOLDOWN_DAYS = 3;          // a link may not return inside this window
-const MAX_DAYS = 31;               // two months of daily courses
+const MAX_DAYS = 32;               // two months of daily courses
 const SEED_COOLDOWN = 28;          // a seed may return, but never inside a month
 const ECHO_WINDOW = 10;            // days within which two chains may not rhyme
 const ECHO_SHARE = 3;              // ...meaning share this many words or more
