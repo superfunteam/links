@@ -166,7 +166,20 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   line-height:.85;letter-spacing:-.04em;width:100%;text-align:center
 }
 .course.tee .pin-flag,.course.done .pin-flag{background:var(--green)}
-.course.birdie .pin-flag{background:goldenrod}
+/* A gold flag gleams — a slow specular sweep and a twinkle, so it reads as
+   metal rather than yellow. The pennant's clip-path clips both. */
+.course.birdie .pin-flag{background:goldenrod;overflow:hidden}
+.course.birdie .pin-flag::after{
+  content:"";position:absolute;top:-20%;bottom:-20%;left:-45%;width:38%;
+  background:linear-gradient(105deg,transparent 15%,rgba(255,255,255,.55) 50%,transparent 85%);
+  transform:skewX(-12deg);animation:goldSweep 3.6s ease-in-out infinite
+}
+@keyframes goldSweep{0%,55%{left:-45%}85%,100%{left:130%}}
+.course.birdie .pin-flag::before{
+  content:"✦";position:absolute;top:1px;right:9px;font-size:9px;color:#fff;
+  animation:goldTwinkle 3.6s ease-in-out infinite
+}
+@keyframes goldTwinkle{0%,70%,100%{opacity:0;transform:scale(.4) rotate(0deg)}82%{opacity:1;transform:scale(1) rotate(40deg)}}
 .course-b{flex:1;min-width:0}
 .course-t{display:block;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .course-r{flex:none;text-align:center;min-width:44px;margin-right:0}
