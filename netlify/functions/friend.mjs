@@ -1,6 +1,6 @@
 // Add a friend by their public code. Authenticated, budgeted against misses, and
 // capped — otherwise the code space is an oracle for enumerating every player.
-import { db, json, bad, readJson, CODE_RE, authed, clubOf, overLimit } from '../lib/db.mjs';
+import { db, json, bad, readJson, CODE_RE, authed, clubOf, overLimit, oops } from '../lib/db.mjs';
 
 const MAX_FRIENDS = 50;
 const NOT_FOUND = 'No one is using that code.';
@@ -30,10 +30,15 @@ export default async (req) => {
       return bad('That is a lot of friends for one day — try again tomorrow.', 429);
 
     const them = found[0];
-    const low = me.id < them.id ? me.id : them.id;
-    const high = me.id < them.id ? them.id : me.id;
+    // The pair is ordered in SQL, not JS: the driver returns bigint ids as
+    // strings, and '34' < '6' is true lexicographically — which put the pair
+    // in backwards and tripped the low < high check the moment two players'
+    // ids had different digit counts.
     await sql`
-      insert into friendships (low_id, high_id, initiated_by) values (${low}, ${high}, ${me.id})
+      insert into friendships (low_id, high_id, initiated_by)
+      values (least(${me.id}::bigint, ${them.id}::bigint),
+              greatest(${me.id}::bigint, ${them.id}::bigint),
+              ${me.id}::bigint)
       on conflict do nothing`;
 
     const club = await clubOf(sql, me.id);
@@ -43,7 +48,7 @@ export default async (req) => {
       club: club.map(p => ({ code: p.code, name: p.name, isMe: p.code === me.code, rounds: p.rounds }))
     });
   } catch (err) {
-    return bad(err.message, 500);
+    return oops(sql, 'friend', err);
   }
 };
 

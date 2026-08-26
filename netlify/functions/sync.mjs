@@ -1,7 +1,7 @@
 // The workhorse: hand over any rounds the device is holding and get the club
 // board back. Authenticated by device token — the public code proves nothing.
 import { db, json, bad, readJson, DATE_RE, KEY_RE, clampInt, cleanName, cleanMarks,
-         authed, clubOf, todayET } from '../lib/db.mjs';
+         authed, clubOf, todayET, oops } from '../lib/db.mjs';
 
 export default async (req) => {
   if (req.method !== 'POST') return bad('POST only', 405);
@@ -42,7 +42,7 @@ export default async (req) => {
       club: club.map(p => ({ code: p.code, name: p.name, isMe: p.code === me.code, rounds: p.rounds }))
     });
   } catch (err) {
-    return bad(err.message, 500);
+    return oops(sql, 'sync', err);
   }
 };
 

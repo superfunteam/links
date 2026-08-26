@@ -2,7 +2,7 @@
 // email is the only secret here — the owner accepted that deliberately. What we
 // can do is throttle hard, answer identically on every kind of failure, and mint
 // this device its own token so the code itself still never authorises a write.
-import { db, json, bad, readJson, CODE_RE, cleanEmail, clubOf, newToken, attachDevice } from '../lib/db.mjs';
+import { db, json, bad, readJson, CODE_RE, cleanEmail, clubOf, newToken, attachDevice, oops } from '../lib/db.mjs';
 
 const WINDOW_MINUTES = 15;
 const MAX_FAILURES = 8;
@@ -46,7 +46,7 @@ export default async (req) => {
       club: club.map(p => ({ code: p.code, name: p.name, isMe: p.code === me.code, rounds: p.rounds }))
     });
   } catch (err) {
-    return bad(err.message, 500);
+    return oops(sql, 'signin', err);
   }
 };
 

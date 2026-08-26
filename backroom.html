@@ -80,6 +80,12 @@ dialog::backdrop{background:rgba(21,26,23,.5)}
 .words-inline{font-size:12px;color:var(--muted)}
 .hidden{display:none}
 @media (max-width:640px){ .wordrow input{width:120px} }
+.errrow{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:baseline;
+  padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px}
+.errrow b{color:var(--red);font-weight:800}
+.errrow i{font-style:normal;color:var(--muted);font-weight:700}
+.errrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.errrow small{color:var(--muted);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -137,6 +143,7 @@ function boot(overview){
   $('#gate').classList.add('hidden');
   $('#app').classList.remove('hidden');
   renderOverview(overview);
+  loadErrors();
 }
 (async () => {
   if (sessionStorage.getItem('br.key')) {
@@ -150,7 +157,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = async () => {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
   $('#view').innerHTML = '<p class="msg">Loading…</p>';
   const v = b.dataset.v;
-  if (v === 'overview') renderOverview((await api('overview')).data);
+  if (v === 'overview') { renderOverview((await api('overview')).data); loadErrors(); }
   if (v === 'calendar') renderCalendar((await api('days')).data);
   if (v === 'pool')     renderPool((await api('pool')).data);
   if (v === 'editor')   renderEditor();
@@ -167,6 +174,19 @@ $('#publish').onclick = async () => {
 };
 
 /* ── overview ── */
+async function loadErrors(){
+  const r = await api('errors');
+  const box = $('#errors-box'); if (!box) return;
+  const rows = (r.data && r.data.errors) || [];
+  box.innerHTML = rows.length ? rows.map(e => `
+    <div class="errrow">
+      <b>${esc(e.ref)}</b><i>${esc(e.op)}</i>
+      <span title="${esc(e.message)}">${esc(e.message)}</span>
+      <small>${new Date(e.at).toLocaleString()}</small>
+    </div>`).join('')
+  : '<p class="msg">No errors logged. As it should be.</p>';
+}
+
 function renderOverview(d){
   if (!d) { $('#view').innerHTML = '<p class="msg err">Could not load.</p>'; return; }
   const ev = Object.fromEntries((d.events || []).map(e => [e.kind, e]));
@@ -197,7 +217,10 @@ function renderOverview(d){
       <p class="msg">Completion rate: ${n('round_start') ? Math.min(100, Math.round(d.rounds.total / n('round_start') * 100)) + '% of started rounds get finished' : 'needs round_start data'} · schedule built ${new Date(d.builtAt).toLocaleString()} · freeze path: ${d.dbStatus === 'repo-only'
   ? '<span class="pill r">NOT FROZEN — publish again to freeze</span>'
   : '<span class="pill g">' + esc(d.dbStatus) + '</span>'}</p>
-    </div>`;
+    </div>
+    <h2 class="sec">Error log</h2>
+    <div id="errors-box"><p class="msg">Loading…</p></div>
+  `;
 }
 
 /* ── calendar ── */

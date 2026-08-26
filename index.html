@@ -522,6 +522,13 @@ body.playing .tabs{display:none}
 .codein{font-family:"Google Sans Flex",sans-serif;font-weight:900;letter-spacing:.22em;text-transform:uppercase;text-align:center}
 .codein:focus,.textin:focus{outline:none;border-color:var(--ink)}
 .addmsg{font-size:13px;color:var(--muted);font-weight:600;margin-top:9px;min-height:1em}
+.errcopy{
+  display:inline-block;margin-left:6px;padding:2px 9px;border-radius:999px;cursor:pointer;
+  border:1.5px solid var(--line-2);background:var(--card);color:var(--muted);
+  font:inherit;font-size:11px;font-weight:800;letter-spacing:.04em
+}
+.errcopy:hover{color:var(--g-700);border-color:var(--g-300)}
+.errcopy:active{transform:scale(.95)}
 .addnote{font-size:13.5px;color:var(--muted);font-weight:500;line-height:1.5;margin-top:6px}
 .addnote b{color:var(--ink);font-weight:700}
 
@@ -1627,6 +1634,33 @@ const inviteMsg = () => {
 const COPY_SVG  = `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>`;
 const CHECK_SVG = `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>`;
 
+/* When a request fails, the player sees one clean sentence and a small
+   "copy report" chip. The report carries the server's reference, so a pasted
+   blob can be matched to the exact row in the backroom's error log. */
+function failText(res, fallback){
+  if(res.offline) return "Can't reach the clubhouse — try again in a moment.";
+  return (res.data && res.data.error) || fallback || 'That did not work.';
+}
+function showFail(el2, res, op, fallback){
+  if(!el2) return;
+  el2.textContent = failText(res, fallback) + ' ';
+  const ref = res.data && res.data.ref;
+  const chip = document.createElement('button');
+  chip.className = 'errcopy';
+  chip.textContent = ref ? 'copy report · ' + ref : 'copy report';
+  chip.onclick = async e => {
+    e.stopPropagation();
+    const report = ['Links error report',
+      'ref: ' + (ref || 'none'), 'op: ' + op, 'status: ' + res.status,
+      'error: ' + ((res.data && res.data.error) || (res.offline ? 'offline' : 'unknown')),
+      'code: ' + (ME.code || 'none'), 'at: ' + new Date().toISOString(),
+      'app: ' + navigator.userAgent].join('\n');
+    try { await navigator.clipboard.writeText(report); chip.textContent = 'copied — send it to us!'; }
+    catch(err){ chip.textContent = 'could not copy'; }
+  };
+  el2.appendChild(chip);
+}
+
 /* ── Who you are ───────────────────────────────────────────────────────────
    Friends see a name on the scorecard, so we ask for one before the first
    time you hand your code out — that's the moment it starts to matter. */
@@ -1666,7 +1700,7 @@ $('#me-save').onclick = async ()=>{
   if(email){
     const res = await NET.post('/claim', { email, name });
     if(res.ok){ localStorage.setItem('links.email', email); }
-    else if(res.status === 409){ out.textContent = res.data.error; Snd.bonk(); return; }
+    else if(!res.ok && res.status !== 0){ showFail(out, res, 'claim'); Snd.bonk(); return; }
   }
   NET.sync(true);
   Snd.solved();
@@ -1890,8 +1924,7 @@ function renderClub(){
       Snd.solved(); renderClub();
       $('#add-msg').textContent = 'Added ' + (res.data.added.name || res.data.added.code) + '!';
     } else {
-      out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
-                                    : (res.data?.error || 'That did not work.');
+      showFail(out, res, 'friend');
       Snd.bonk();
     }
   };
@@ -1991,8 +2024,7 @@ function renderYou(){
     out.textContent = 'Saving…';
     const res = await NET.post('/claim', { email, name: ME.name || null });
     if(res.ok){ localStorage.setItem('links.email', email); Snd.solved(); renderYou(); }
-    else { out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
-                                         : (res.data?.error || 'That did not work.'); Snd.bonk(); }
+    else { showFail(out, res, 'claim'); Snd.bonk(); }
   };
 
   $('#in-go').onclick = async ()=>{
@@ -2004,8 +2036,7 @@ function renderYou(){
     out.textContent = 'Signing in…';
     const res = await NET.post('/signin', { email, code });
     if(!res.ok){
-      out.textContent = res.offline ? "Can't reach the clubhouse — try again in a moment."
-                                    : (res.data?.error || 'That did not work.');
+      showFail(out, res, 'signin');
       Snd.bonk(); return;
     }
     ME.adopt(res.data.player.code, res.data.token);

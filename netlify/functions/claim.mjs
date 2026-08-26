@@ -1,6 +1,6 @@
 // Attach an email so the account can be recovered elsewhere. Requires the device
 // token: without it, anyone holding the public code could claim someone's account.
-import { db, json, bad, readJson, cleanEmail, cleanName, authed, overLimit } from '../lib/db.mjs';
+import { db, json, bad, readJson, cleanEmail, cleanName, authed, overLimit, oops } from '../lib/db.mjs';
 
 export default async (req) => {
   if (req.method !== 'POST') return bad('POST only', 405);
@@ -23,7 +23,7 @@ export default async (req) => {
       where id = ${me.id} returning code, name`;
     return json({ ok: true, player: { code: rows[0].code, name: rows[0].name, claimed: true } });
   } catch (err) {
-    return bad(err.message, 500);
+    return oops(sql, 'claim', err);
   }
 };
 

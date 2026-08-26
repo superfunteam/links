@@ -35,6 +35,19 @@ export function todayET() {
   }).format(new Date());
 }
 
+/** Log a server error and hand back a short reference the player can quote.
+ *  The raw message stays in the database for the backroom — the player sees a
+ *  clean sentence plus the ref, never SQL. */
+export async function oops(sql, op, err) {
+  const ref = 'LNK-' + [...crypto.getRandomValues(new Uint8Array(3))]
+    .map(b => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[b % 31]).join('');
+  try {
+    await sql`insert into error_log (ref, op, message)
+              values (${ref}, ${op}, ${String(err?.message || err).slice(0, 500)})`;
+  } catch (e) { /* the log must never be the second failure */ }
+  return json({ ok: false, error: 'Something went wrong at the clubhouse — please try again.', ref, op }, 500);
+}
+
 export async function readJson(req) {
   try {
     const body = await req.json();

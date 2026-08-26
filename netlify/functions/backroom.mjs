@@ -131,6 +131,12 @@ export default async (req) => {
       // Netlify's build environment has no database credentials, but it can
       // reach this very function on the live site — which does. The build uses
       // these two ops instead of a direct connection.
+      case 'errors': {
+        const rows = await sql`
+          select ref, op, message, at from error_log order by at desc limit 30`;
+        return json({ ok: true, errors: rows });
+      }
+
       case 'build_data': {
         const frozenDays = await sql`select day::text as day, name, holes from schedule_days order by day`;
         const drafts = await sql`select seed, words, links from drafts where status = 'approved'`;
