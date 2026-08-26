@@ -329,6 +329,57 @@ body.playing .tabs{display:none}
 .thanks span{max-width:34ch}
 .thanks b{color:var(--g-700);font-weight:800;letter-spacing:.01em}
 
+/* ─────────────────────────────  paper scorecard (You)  ───────────────────────────── */
+.paper{
+  background:var(--card);border:1.5px solid var(--line-2);border-radius:6px;
+  padding:0 18px 16px;margin-bottom:14px;
+  box-shadow:0 2px 0 var(--line-2), 0 10px 26px rgba(21,26,23,.07)
+}
+.sp-head{
+  display:flex;justify-content:space-between;margin:0 -18px 4px;padding:11px 18px;
+  background:var(--g-700);color:#fff;border-radius:4.5px 4.5px 0 0;
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800
+}
+.sp-head span:last-child{opacity:.65}
+.sp-name{display:flex;align-items:baseline;gap:10px;padding:14px 0 2px}
+.sp-lab{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:800;flex:none}
+.sp-write{
+  flex:1;min-width:0;border:none;border-bottom:2px dotted var(--line-2);border-radius:0;
+  background:none;padding:4px 2px;font-weight:700;font-style:italic;font-size:17px;color:var(--ink)
+}
+.sp-write:focus{outline:none;border-bottom-color:var(--g-600)}
+.sp-write::placeholder{font-weight:500;color:var(--line-2)}
+.sp-code{flex:none;width:110px;font-style:normal;font-family:"Google Sans Flex",sans-serif;
+  font-weight:900;letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.sp-save{
+  flex:none;border:none;background:none;cursor:pointer;padding:4px 2px;
+  font:inherit;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--g-700)
+}
+.sp-save:active{transform:scale(.94)}
+.sp-rows{padding:10px 0 4px}
+.sp-line{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid var(--g-050)}
+.sp-line:last-child{border-bottom:none}
+.sp-dots{flex:1;border-bottom:2px dotted var(--line-2);transform:translateY(-4px)}
+.sp-val{font-weight:1000;font-size:19px;letter-spacing:-.02em}
+.sp-val.under{color:var(--g-700)} .sp-val.overp{color:var(--red)}
+.sp-sec{
+  margin:16px -18px 8px;padding:7px 18px;border-top:1.5px dashed var(--line-2);
+  font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:800;
+  display:flex;align-items:center;gap:10px
+}
+.sp-stamp{
+  font-style:normal;letter-spacing:.12em;color:var(--g-700);border:1.5px solid var(--g-300);
+  border-radius:4px;padding:2px 8px;transform:rotate(-3deg)
+}
+.sp-note{font-size:13px;color:var(--muted);font-weight:500;line-height:1.55;margin:2px 0 6px}
+.sp-note b{color:var(--ink);font-weight:700}
+.sp-row-in{display:flex;align-items:baseline;gap:10px;margin:6px 0}
+.sp-msg{margin:2px 0 0;min-height:0}
+.sp-foot{
+  margin:14px -18px 0;padding:10px 18px 0;border-top:1.5px dashed var(--line-2);
+  font-size:11px;color:var(--muted);font-weight:600;text-align:center;letter-spacing:.02em
+}
+
 /* ─────────────────────────────  crowns + grid  ───────────────────────────── */
 .crown{width:15px;height:15px;flex:none;color:var(--gold);margin-right:5px;vertical-align:-2px;
   animation:popIn .4s var(--spring) backwards}
@@ -879,7 +930,7 @@ body.playing .tabs{display:none}
   <!-- ══════════════ YOU ══════════════ -->
   <section id="s-you" class="screen tabbed">
     <div class="hero sm"><h1 class="scr-t flex">You</h1>
-      <p class="tagline">Your code and your record.</p></div>
+      <p class="tagline">Your card and your record.</p></div>
     <div id="you-body"></div>
   </section>
 
@@ -1854,52 +1905,69 @@ function renderYou(){
   const diffs = keys.map(k => { const d = DAYS.find(x => x.date === k); return d ? rounds[k].strokes - dayPar(d) : 0; });
   const best = diffs.length ? Math.min(...diffs) : null;
   const avg  = diffs.length ? diffs.reduce((a,b)=>a+b,0) / diffs.length : null;
-  const claimed = !!localStorage.getItem('links.email');
+
+  // All-time right and wrong, straight out of the stored marks: every word
+  // carries its guess count, and all but the last guess were wrong.
+  let right = 0, wrong = 0, bought = 0;
+  keys.forEach(k => (rounds[k].marks || []).forEach(hole => (hole || []).forEach(m => {
+    const g = m.g || 0;
+    if (g >= 1) { right += 1; wrong += g - 1; }
+    bought += m.b || 0;
+  })));
+
+  const claimed = localStorage.getItem('links.email');
+  const lead = (lab, val, cls) => `
+    <div class="sp-line">
+      <span class="sp-lab">${lab}</span><span class="sp-dots"></span>
+      <span class="sp-val flex ${cls || ''}">${val}</span>
+    </div>`;
 
   $('#you-body').innerHTML = `
-    <div class="codecard">
-      <span class="cc-lab">Your friend code</span>
-      <span class="cc-code flex">${ME.code || '····'}</span>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><span class="st-v flex">${keys.length}</span><span class="st-l">Rounds</span></div>
-      <div class="stat"><span class="st-v flex">${best==null?'–':rel(best)}</span><span class="st-l">Best</span></div>
-      <div class="stat"><span class="st-v flex">${avg==null?'–':(avg>0?'+':'')+avg.toFixed(1)}</span><span class="st-l">Average</span></div>
-    </div>
-
-    <div class="addcard">
-      <label class="cc-lab" for="you-name">Your name</label>
-      <div class="addrow">
-        <input id="you-name" class="textin" maxlength="24" placeholder="What friends call you" value="${(ME.name||'').replace(/"/g,'&quot;')}">
-        <button class="btn" id="name-go">Save</button>
+    <div class="paper">
+      <div class="sp-head">
+        <span>Player's Scorecard</span>
+        <span>Links Club</span>
       </div>
-      <p class="addmsg" id="name-msg"></p>
-    </div>
 
-    <div class="addcard">
-      <span class="cc-lab">${claimed ? 'Your account' : 'Keep your account'}</span>
+      <div class="sp-name">
+        <span class="sp-lab">Player</span>
+        <input id="you-name" class="sp-write" maxlength="24" placeholder="write your name"
+               value="${esc(ME.name || '')}" autocomplete="given-name">
+        <button class="sp-save" id="name-go">Save</button>
+      </div>
+      <p class="addmsg sp-msg" id="name-msg"></p>
+
+      <div class="sp-rows">
+        ${lead('Rounds played', keys.length || '–')}
+        ${lead('Best round', best == null ? '–' : rel(best), best != null && best < 0 ? 'under' : '')}
+        ${lead('Average', avg == null ? '–' : (avg > 0 ? '+' : '') + avg.toFixed(1), avg != null && avg < 0 ? 'under' : '')}
+        ${lead('Right guesses', right || '–', 'under')}
+        ${lead('Wrong guesses', wrong || (right ? 0 : '–'), wrong ? 'overp' : '')}
+        ${lead('Letters bought', bought || (right ? 0 : '–'))}
+      </div>
+
+      <div class="sp-sec">Clubhouse records${claimed ? ' <i class="sp-stamp">Member</i>' : ''}</div>
       ${ claimed
-        ? `<p class="addnote">Saved to <b>${esc(localStorage.getItem('links.email'))}</b>. On another device, sign in with that email and the code <b>${esc(ME.code)}</b>.</p>`
-        : `<p class="addnote">Add your email and you can pick this account back up on another device using your code.</p>
-           <div class="addrow">
-             <input id="you-email" class="textin" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
-             <button class="btn" id="email-go">Save</button>
+        ? `<p class="sp-note">Card held under <b>${esc(claimed)}</b>. On another device, sign in with that
+           email and the code <b>${esc(ME.code || '')}</b> — it's on the Club page.</p>`
+        : `<p class="sp-note">Add your email and you can pick this card back up on any device.</p>
+           <div class="sp-row-in">
+             <input id="you-email" class="sp-write" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
+             <button class="sp-save" id="email-go">Save</button>
            </div>` }
-      <p class="addmsg" id="email-msg"></p>
-    </div>
+      <p class="addmsg sp-msg" id="email-msg"></p>
 
-    <div class="addcard">
-      <span class="cc-lab">Already have an account?</span>
-      <p class="addnote">Sign in with the email you saved and your 4-character code.</p>
-      <div class="addrow">
-        <input id="in-email" class="textin" type="email" inputmode="email" placeholder="you@example.com">
+      <div class="sp-sec">Already hold a card?</div>
+      <div class="sp-row-in">
+        <input id="in-email" class="sp-write" type="email" inputmode="email" placeholder="you@example.com">
       </div>
-      <div class="addrow" style="margin-top:8px">
-        <input id="in-code" class="codein flex" maxlength="4" placeholder="A1B2" autocapitalize="characters" spellcheck="false">
-        <button class="btn" id="in-go">Sign in</button>
+      <div class="sp-row-in">
+        <input id="in-code" class="sp-write sp-code" maxlength="4" placeholder="A1B2" autocapitalize="characters" spellcheck="false">
+        <button class="sp-save" id="in-go">Sign in</button>
       </div>
-      <p class="addmsg" id="in-msg"></p>
+      <p class="addmsg sp-msg" id="in-msg"></p>
+
+      <div class="sp-foot">Scores are counted the day they're played · first round of the day stands</div>
     </div>
 
     <button class="opt" id="you-set">
@@ -1940,7 +2008,6 @@ function renderYou(){
                                     : (res.data?.error || 'That did not work.');
       Snd.bonk(); return;
     }
-    // Adopt the account on this device: take its code, name and history.
     ME.adopt(res.data.player.code, res.data.token);
     localStorage.setItem('links.email', email);
     if(res.data.player.name) ME.name = res.data.player.name;
