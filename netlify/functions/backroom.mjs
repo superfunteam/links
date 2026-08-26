@@ -1,7 +1,7 @@
 // The backroom: stats, calendar, pool, editor and publish — one function, one
 // op switch, everything behind the shared key. The schedule and phrase list
 // are baked in at build time so no request ever recomputes them.
-import { db, json, bad, readJson, todayET } from '../lib/db.mjs';
+import { db, json, bad, readJson, todayET, courseKey } from '../lib/db.mjs';
 import { SCHEDULE } from '../lib/scheduledata.mjs';
 import { PAIRS_TEXT } from '../lib/pairsdata.mjs';
 
@@ -68,10 +68,11 @@ export default async (req) => {
         const d = SCHEDULE.days.find(x => x.date === body.date);
         if (!d) return bad('no such day', 404);
         const rounds = await sql`
-          select p.name, p.code, r.strokes, r.par, r.marks, r.created_at
+          select p.name, p.code, r.strokes, r.par, r.marks, r.course_key, r.created_at
           from rounds r join players p on p.id = r.player_id
           where r.play_date = ${body.date}::date
           order by r.strokes - r.par`;
+        const thisKey = courseKey(d.holes);
         const holes = d.holes.map((h, i) => {
           const per = rounds.map(r => (r.marks || [])[i]).filter(Boolean).map(holeStrokes);
           return { seed: h.seed, words: h.words, links: h.links, par: parOf(h),
@@ -79,7 +80,9 @@ export default async (req) => {
                    worst: per.length ? Math.max(...per) : null };
         });
         return json({ ok: true, date: d.date, name: d.name, par: dayPar(d), holes,
-          rounds: rounds.map(r => ({ name: r.name || r.code, strokes: r.strokes, par: r.par, at: r.created_at })) });
+          courseKey: thisKey,
+          rounds: rounds.map(r => ({ name: r.name || r.code, strokes: r.strokes, par: r.par, at: r.created_at,
+                                     edition: !r.course_key ? 'legacy' : r.course_key === thisKey ? 'current' : 'other' })) });
       }
 
       case 'pool': {
@@ -132,6 +135,26 @@ export default async (req) => {
         const frozenDays = await sql`select day::text as day, name, holes from schedule_days order by day`;
         const drafts = await sql`select seed, words, links from drafts where status = 'approved'`;
         return json({ ok: true, frozenDays, drafts });
+      }
+
+      case 'refreeze': {
+        // Replace the frozen schedule outright with a supplied ground truth.
+        // Exists for exactly one situation: the frozen record is wrong — as it
+        // was when a startDate change reshuffled dates people had played.
+        const list = Array.isArray(body.days) ? body.days.slice(0, 100) : [];
+        if (!list.length) return bad('no days supplied');
+        await sql`delete from schedule_days`;
+        let saved = 0;
+        for (const d of list) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.date || ''))) continue;
+          if (!Array.isArray(d.holes) || !d.holes.length || d.holes.length > 8) continue;
+          const res = await sql`
+            insert into schedule_days (day, name, holes)
+            values (${d.date}::date, ${String(d.name || '').slice(0, 40)}, ${JSON.stringify(d.holes)}::jsonb)
+            on conflict (day) do nothing returning day`;
+          if (res.length) saved++;
+        }
+        return json({ ok: true, saved });
       }
 
       case 'freeze': {

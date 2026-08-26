@@ -9,6 +9,17 @@ export function db() {
 }
 
 export const CODE_RE = /^[A-HJ-NP-Z2-9]{4}$/;          // no I, O, 0 or 1
+export const KEY_RE = /^[a-z0-9]{4,12}$/;
+
+/** Fingerprint of a day's puzzle content. Client and server compute this
+ *  identically, so a round is bound to the edition it was played on and can
+ *  never silently attach to a different puzzle that later owns its date. */
+export function courseKey(holes) {
+  const text = holes.map(h => h.words.join(' ')).join('|');
+  let h = 2166136261;
+  for (const ch of text) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36);
+}
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export const json = (body, status = 200) =>
@@ -153,7 +164,7 @@ export async function clubOf(sql, playerId, sinceDays = 14) {
            coalesce(
              json_agg(json_build_object('date', to_char(r.play_date,'YYYY-MM-DD'),
                                         'strokes', r.strokes, 'par', r.par,
-                                        'marks', r.marks)
+                                        'marks', r.marks, 'key', r.course_key)
                       order by r.play_date desc)
                filter (where r.play_date is not null),
              '[]') as rounds

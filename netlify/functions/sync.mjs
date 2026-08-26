@@ -1,6 +1,6 @@
 // The workhorse: hand over any rounds the device is holding and get the club
 // board back. Authenticated by device token — the public code proves nothing.
-import { db, json, bad, readJson, DATE_RE, clampInt, cleanName, cleanMarks,
+import { db, json, bad, readJson, DATE_RE, KEY_RE, clampInt, cleanName, cleanMarks,
          authed, clubOf, todayET } from '../lib/db.mjs';
 
 export default async (req) => {
@@ -26,9 +26,10 @@ export default async (req) => {
       if (strokes > par * 6) continue;                   // nonsense can't reach the table
       // First-write-wins is enforced by the primary key, not by application code,
       // so a retry and a concurrent submit both resolve the same way.
+      const key = KEY_RE.test(String(r?.key || '')) ? String(r.key) : null;
       const res = await sql`
-        insert into rounds (player_id, play_date, strokes, par, marks)
-        values (${me.id}, ${date}::date, ${strokes}, ${par}, ${JSON.stringify(cleanMarks(r?.marks))}::jsonb)
+        insert into rounds (player_id, play_date, strokes, par, marks, course_key)
+        values (${me.id}, ${date}::date, ${strokes}, ${par}, ${JSON.stringify(cleanMarks(r?.marks))}::jsonb, ${key})
         on conflict (player_id, play_date) do nothing
         returning player_id`;
       if (res.length) stored++;

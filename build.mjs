@@ -167,20 +167,27 @@ const endDate = end.toISOString().slice(0, 10);
 const byKey = new Map();
 holes.forEach(h => byKey.set(h.words.join(' '), h));
 
+// Pre-pass: register every frozen day's state and reclaim its holes BEFORE
+// scheduling anything. A gap being filled earlier in the calendar must see
+// the frozen days around it, or it can duplicate a chain a frozen day owns.
+for (let idx = 0; dateOf(idx) <= endDate; idx++) {
+  const f = frozen.get(dateOf(idx));
+  if (!f) continue;
+  f.holes.forEach(h => {
+    linksOf(h).forEach(l => lastUsed.set(l, idx));
+    seedUsed.set(h.seed, idx);
+    recent.push({ day: idx, words: new Set(h.words) });
+    const live = byKey.get(h.words.join(' '));
+    if (live) { const list = pool[h.words.length]; const at = list.indexOf(live); if (at >= 0) list.splice(at, 1); }
+  });
+}
+
 while (!exhausted && dateOf(dayIdx) <= endDate) {
   const date = dateOf(dayIdx);
 
   // a day that already shipped is replayed into the schedule verbatim
   if (frozen.has(date)) {
     const f = frozen.get(date);
-    f.holes.forEach(h => {
-      const ls = linksOf(h);
-      ls.forEach(l => lastUsed.set(l, dayIdx));
-      seedUsed.set(h.seed, dayIdx);
-      recent.push({ day: dayIdx, words: new Set(h.words) });
-      const live = byKey.get(h.words.join(' '));
-      if (live) { const list = pool[h.words.length]; const at = list.indexOf(live); if (at >= 0) list.splice(at, 1); }
-    });
     days.push({ date, name: f.name, holes: f.holes, frozen: true });
     dayIdx++;
     continue;
