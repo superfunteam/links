@@ -193,6 +193,10 @@ body.playing .tabs{display:none}
   transition:color .16s,background .16s
 }
 .tab svg{width:23px;height:23px}
+/* The golf swing is thin, wide artwork in a square box, so at a matched pixel
+   size it reads lighter than the solid figures beside it. Sized up to even the
+   optical weight rather than the measurement. */
+.tab[data-scr="s-today"] svg{width:27px;height:27px;margin:-2px 0}
 /* the highlight is a pill behind the icon, not the whole third of the bar */
 .tab.on{color:var(--green-2)}
 .tab.on svg{background:var(--green-soft);border-radius:999px;padding:3px 15px;box-sizing:content-box}
