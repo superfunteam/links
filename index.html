@@ -218,7 +218,7 @@ body.playing .tabs{display:none}
 .setname:active{transform:scale(.94)}
 .hero-card{
   position:relative;overflow:hidden;text-align:center;margin-bottom:22px;
-  background:radial-gradient(120% 130% at 50% 0%, var(--g-700) 0%, var(--g-800) 55%, var(--g-900) 100%);
+  background:radial-gradient(125% 135% at 50% -10%, var(--g-500) 0%, var(--g-600) 40%, var(--g-700) 100%);
   border:none;border-radius:var(--r-xl);
   padding:26px 20px 24px;color:#EAF3EE;
   box-shadow:0 1px 0 rgba(255,255,255,.10) inset, 0 14px 36px rgba(10,58,40,.30), 0 2px 6px rgba(10,58,40,.20)
@@ -688,6 +688,13 @@ body.playing .tabs{display:none}
 .btn.ghost:active{transform:translateY(2px);box-shadow:0 0 0 var(--line-2)}
 .btn:disabled{opacity:.4;pointer-events:none}
 .btn small{display:block;font-size:11px;font-weight:600;opacity:.65;letter-spacing:.03em;margin-top:1px}
+/* a caveat that sits on the same line as the label rather than under it */
+.btn .note{
+  display:inline-block;vertical-align:1px;margin-left:8px;
+  font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;
+  background:rgba(255,255,255,.14);color:rgba(234,243,238,.88)
+}
 
 /* ─────────────────────────────  scorecards  ───────────────────────────── */
 .sheet{
@@ -1201,8 +1208,8 @@ function renderToday(){
           <span class="hc-str">${r.strokes} strokes</span>
         </div>
         <div class="hc-btns">
-          <button class="btn ghost" id="t-share">Share</button>
-          <button class="btn ghost" id="t-replay">Replay<small>doesn't count</small></button>
+          <button class="btn" id="t-share">Share</button>
+          <button class="btn ghost" id="t-replay">Replay <b class="note">won't count</b></button>
         </div>`
       : `<button class="btn big" id="t-play">Play today's round</button>` }
     </div>`;
