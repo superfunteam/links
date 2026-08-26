@@ -48,34 +48,82 @@ holes.forEach((h, i) => {
 });
 if (errors.length) { console.error('✗ puzzles.json failed validation:\n  ' + errors.join('\n  ')); process.exit(1); }
 
-// ── the database, when reachable, contributes two things ──────────────────
-// 1. approved drafts from the backroom editor join the pool
-// 2. schedule_days freezes what already shipped, so history can't reshuffle
+// ── outside data: approved drafts join the pool, frozen days pin history ──
+// Three tiers: a direct database connection (local dev), then the live site's
+// own backroom API (Netlify builds, which have no database credentials), then
+// the repo pool alone. Whichever answers first wins.
 let sql = null;
+let writeFreeze = null;            // async (newDays) => how many were saved
+let dbStatus = 'repo-only';
 const frozen = new Map();          // date -> {name, holes}
 const DB_URL = process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || null;
+const SITE = process.env.URL || 'https://links.superfun.games';
+const BR_KEY = process.env.BACKROOM_KEY || 'superfunlinks';
+
+const absorb = (draftRows, frozenRows) => {
+  let added = 0;
+  for (const d of draftRows) {
+    const key = d.words.join(' ');
+    if (seen.has(key)) continue;
+    seen.set(key, -1);
+    holes.push({ seed: d.seed, words: d.words, links: d.links });
+    added++;
+  }
+  frozenRows.forEach(r => frozen.set(r.day, { name: r.name, holes: r.holes }));
+  console.log(`db: ${added} draft(s) joined the pool · ${frozenRows.length} day(s) frozen (${dbStatus})`);
+};
+
 if (DB_URL) {
   try {
     const { getDatabase } = await import('@netlify/database');
     sql = getDatabase({ connectionString: DB_URL }).sql;
-    const drafts = await sql`select id, seed, words, links from drafts where status = 'approved'`;
-    let added = 0;
-    for (const d of drafts) {
-      const key = d.words.join(' ');
-      if (seen.has(key)) continue;
-      seen.set(key, -1);
-      holes.push({ seed: d.seed, words: d.words, links: d.links });
-      added++;
-    }
+    const drafts = await sql`select seed, words, links from drafts where status = 'approved'`;
     const rows = await sql`select day::text as day, name, holes from schedule_days order by day`;
-    rows.forEach(r => frozen.set(r.day, { name: r.name, holes: r.holes }));
-    console.log(`db: ${added} draft(s) joined the pool · ${rows.length} day(s) frozen`);
+    dbStatus = 'direct';
+    absorb(drafts, rows);
+    writeFreeze = async newDays => {
+      let saved = 0;
+      for (const d of newDays) {
+        const res = await sql`
+          insert into schedule_days (day, name, holes)
+          values (${d.date}::date, ${d.name}, ${JSON.stringify(d.holes)}::jsonb)
+          on conflict (day) do nothing returning day`;
+        if (res.length) saved++;
+      }
+      return saved;
+    };
   } catch (err) {
-    console.log(`db: unreachable (${err.message.slice(0, 60)}) — building from the repo pool alone`);
+    console.log(`db: direct connection failed (${err.message.slice(0, 60)})`);
     sql = null;
   }
-} else {
-  console.log('db: no connection string — building from the repo pool alone');
+}
+if (!sql) {
+  try {
+    const api = async payload => {
+      const res = await fetch(`${SITE}/api/backroom`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-key': BR_KEY },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(`api ${res.status}: ${data?.error || 'no body'}`);
+      return data;
+    };
+    const data = await api({ op: 'build_data' });
+    dbStatus = 'via-site-api';
+    absorb(data.drafts || [], data.frozenDays || []);
+    writeFreeze = async newDays => {
+      let saved = 0;
+      for (let i = 0; i < newDays.length; i += 40) {
+        const r = await api({ op: 'freeze', days: newDays.slice(i, i + 40)
+          .map(d => ({ date: d.date, name: d.name, holes: d.holes })) });
+        saved += r.saved || 0;
+      }
+      return saved;
+    };
+  } catch (err) {
+    console.log(`db: site api unreachable (${err.message.slice(0, 70)}) — building from the repo pool alone`);
+  }
 }
 
 // ── schedule the pool into days ───────────────────────────────────────────
@@ -202,19 +250,13 @@ if (!slot.test(html)) { console.error('✗ could not find PUZZLE_B64 in index.ht
 writeFileSync('index.html', html.replace(slot, `const PUZZLE_B64 = "${b64}";`));
 
 // freeze every newly scheduled day so the next build can't move it
-if (sql) {
+if (writeFreeze) {
   try {
-    let saved = 0;
-    for (const d of days) {
-      if (d.frozen) continue;
-      const res = await sql`
-        insert into schedule_days (day, name, holes)
-        values (${d.date}::date, ${d.name}, ${JSON.stringify(d.holes)}::jsonb)
-        on conflict (day) do nothing returning day`;
-      if (res.length) saved++;
-    }
-    console.log(`db: froze ${saved} new day(s)`);
+    const saved = await writeFreeze(days.filter(d => !d.frozen));
+    console.log(`db: froze ${saved} new day(s) (${dbStatus})`);
   } catch (err) { console.log(`db: could not freeze days (${err.message.slice(0, 60)})`); }
+} else {
+  console.log('db: NOT FROZEN — a later build with a changed pool could reshuffle these days');
 }
 
 // modules the backroom function imports — generated, never hand-edited
@@ -222,7 +264,7 @@ mkdirSync('netlify/lib', { recursive: true });
 const leftovers = [...pool[3], ...pool[4], ...pool[5]];
 writeFileSync('netlify/lib/scheduledata.mjs',
   '// generated by build.mjs — do not edit\n' +
-  'export const SCHEDULE = ' + JSON.stringify({ builtAt: new Date().toISOString(), days, leftovers }) + ';\n');
+  'export const SCHEDULE = ' + JSON.stringify({ builtAt: new Date().toISOString(), dbStatus, days, leftovers }) + ';\n');
 writeFileSync('netlify/lib/pairsdata.mjs',
   '// generated by build.mjs — do not edit\n' +
   'export const PAIRS_TEXT = ' + JSON.stringify(readFileSync('tools/pairs.txt', 'utf8')) + ';\n');

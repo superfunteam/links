@@ -44,7 +44,7 @@ export default async (req) => {
           select created_at::date::text as day, kind, count(*)::int as n
           from events where created_at > now() - interval '14 days'
           group by 1, 2 order by 1`;
-        return json({ ok: true, players, rounds, series, events, daily, builtAt: SCHEDULE.builtAt });
+        return json({ ok: true, players, rounds, series, events, daily, builtAt: SCHEDULE.builtAt, dbStatus: SCHEDULE.dbStatus || 'unknown' });
       }
 
       case 'days': {
@@ -122,6 +122,31 @@ export default async (req) => {
       case 'draft_archive': {
         await sql`update drafts set status = 'archived' where id = ${Number(body.id) || 0}`;
         return json({ ok: true });
+      }
+
+      // ── build-time endpoints ─────────────────────────────────────────────
+      // Netlify's build environment has no database credentials, but it can
+      // reach this very function on the live site — which does. The build uses
+      // these two ops instead of a direct connection.
+      case 'build_data': {
+        const frozenDays = await sql`select day::text as day, name, holes from schedule_days order by day`;
+        const drafts = await sql`select seed, words, links from drafts where status = 'approved'`;
+        return json({ ok: true, frozenDays, drafts });
+      }
+
+      case 'freeze': {
+        const list = Array.isArray(body.days) ? body.days.slice(0, 100) : [];
+        let saved = 0;
+        for (const d of list) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.date || ''))) continue;
+          if (!Array.isArray(d.holes) || !d.holes.length || d.holes.length > 8) continue;
+          const res = await sql`
+            insert into schedule_days (day, name, holes)
+            values (${d.date}::date, ${String(d.name || '').slice(0, 40)}, ${JSON.stringify(d.holes)}::jsonb)
+            on conflict (day) do nothing returning day`;
+          if (res.length) saved++;
+        }
+        return json({ ok: true, saved });
       }
 
       case 'publish': {
