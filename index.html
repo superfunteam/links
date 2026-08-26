@@ -69,10 +69,6 @@
 html,body{height:100%}
 body{
   background:var(--paper); color:var(--ink);
-  background-image:
-    radial-gradient(1100px 520px at 50% -8%, rgba(23,132,90,.055), transparent 62%),
-    radial-gradient(760px 420px at 92% 4%, rgba(184,135,31,.04), transparent 60%);
-  background-attachment:fixed;
   font-family:"Google Sans","Google Sans Flex",system-ui,-apple-system,sans-serif;
   font-size:16px; line-height:1.4; -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
@@ -209,7 +205,7 @@ body.playing .tabs{display:none}
   font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
   font-weight:800;margin:28px 0 12px;display:flex;align-items:center;gap:10px
 }
-.sec-h::after{content:"";flex:1;height:1.5px;background:linear-gradient(90deg,var(--line),transparent)}
+.sec-h::after{content:"";flex:1;height:1.5px;background:var(--line)}
 /* the small "add your name" prompt beside your own row */
 .setname{
   font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--g-700);
@@ -256,16 +252,14 @@ body.playing .tabs{display:none}
 
 /* ─────────────────────────────  club + you  ───────────────────────────── */
 .codecard{
-  background:linear-gradient(180deg,var(--paper-2),var(--card));
+  background:var(--card);
   border:1.5px solid var(--line);border-radius:var(--r-xl);
   padding:18px;box-shadow:var(--chunk);text-align:center;margin-bottom:16px
 }
 .cc-lab{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
 .cc-code{
   display:block;font-weight:1000;font-size:clamp(44px,15vw,62px);letter-spacing:.14em;
-  line-height:1.15;margin-top:4px;
-  background:linear-gradient(175deg,var(--g-600),var(--g-800));
-  -webkit-background-clip:text;background-clip:text;color:transparent
+  line-height:1.15;margin-top:4px;color:var(--g-700)
 }
 .empty{text-align:center;padding:28px 18px;color:var(--muted)}
 .empty-i{font-size:44px;margin-bottom:8px}
@@ -315,7 +309,7 @@ body.playing .tabs{display:none}
   display:flex;align-items:center;justify-content:center;gap:10px;
   margin:22px 0 4px;padding:14px 16px;
   border:1.5px dashed var(--line-2);border-radius:var(--r-lg);
-  background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.25));
+  background:var(--card);
   color:var(--muted);font-size:13px;font-weight:600;line-height:1.45;text-align:left
 }
 .thanks-i{width:26px;height:26px;flex:none;color:var(--g-500);opacity:.9}
@@ -416,9 +410,8 @@ body.playing .tabs{display:none}
 
 /* ─────────────────────────────  identity sheet  ───────────────────────────── */
 .sheet.green .sheet-in{
-  background:
-    radial-gradient(120% 100% at 50% 0%, var(--g-700) 0%, var(--g-800) 45%, var(--g-900) 100%);
-  border-color:var(--g-900);
+  background:var(--g-700);
+  border-color:var(--g-800);
   box-shadow:0 -1px 0 rgba(255,255,255,.10) inset, 0 12px 40px rgba(10,58,40,.45);
   color:#EAF3EE
 }
@@ -469,13 +462,13 @@ body.playing .tabs{display:none}
 .addnote b{color:var(--ink);font-weight:700}
 
 .card.board{margin-bottom:16px;border-color:var(--ink);box-shadow:var(--chunk)}
-.card.board h3{background:linear-gradient(180deg,var(--g-700),var(--g-800));letter-spacing:.15em}
+.card.board h3{background:var(--g-700);letter-spacing:.15em}
 .crow{
   display:flex;align-items:center;gap:12px;padding:13px 14px;
   border-top:2px solid var(--line)
 }
 .crow:first-of-type{border-top:none}
-.crow.me{background:linear-gradient(90deg,var(--g-050),var(--g-100))}
+.crow.me{background:var(--g-050)}
 .crow{transition:background var(--t) var(--ease)}
 .crow:not(.me):hover{background:var(--paper-2)}
 .cr-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
