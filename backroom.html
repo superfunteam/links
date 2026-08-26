@@ -86,6 +86,12 @@ dialog::backdrop{background:rgba(21,26,23,.5)}
 .errrow i{font-style:normal;color:var(--muted);font-weight:700}
 .errrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .errrow small{color:var(--muted);white-space:nowrap}
+.house{display:flex;gap:10px;align-items:center;padding:10px}
+.house input{width:90px;text-transform:uppercase;letter-spacing:.15em;font-weight:800;text-align:center;
+  padding:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.house button{border:1.5px solid var(--red);color:var(--red);background:none;border-radius:8px;
+  padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
+.house button:hover{background:var(--red);color:#fff}
 </style>
 </head>
 <body>
@@ -144,6 +150,7 @@ function boot(overview){
   $('#app').classList.remove('hidden');
   renderOverview(overview);
   loadErrors();
+  wireHousekeeping();
 }
 (async () => {
   if (sessionStorage.getItem('br.key')) {
@@ -157,7 +164,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = async () => {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
   $('#view').innerHTML = '<p class="msg">Loading…</p>';
   const v = b.dataset.v;
-  if (v === 'overview') { renderOverview((await api('overview')).data); loadErrors(); }
+  if (v === 'overview') { renderOverview((await api('overview')).data); loadErrors(); wireHousekeeping(); }
   if (v === 'calendar') renderCalendar((await api('days')).data);
   if (v === 'pool')     renderPool((await api('pool')).data);
   if (v === 'editor')   renderEditor();
@@ -185,6 +192,23 @@ async function loadErrors(){
       <small>${new Date(e.at).toLocaleString()}</small>
     </div>`).join('')
   : '<p class="msg">No errors logged. As it should be.</p>';
+}
+
+function wireHousekeeping(){
+  const go = $('#rm-go'); if (!go) return;
+  go.onclick = async () => {
+    const code = ($('#rm-code').value || '').toUpperCase().trim();
+    if (code.length !== 4) { $('#rm-msg').textContent = 'A code is 4 characters.'; return; }
+    if (!confirm('Delete player ' + code + ' outright? Their rounds, devices and friendships all go too. This cannot be undone.')) return;
+    const r = await api('delete_player', { code });
+    if (r.data?.ok) {
+      const x = r.data.removed;
+      $('#rm-msg').textContent = 'Removed ' + (x.name || code) + ' — ' + x.rounds + ' round(s), ' + x.friendships + ' friendship(s).';
+      $('#rm-code').value = '';
+    } else {
+      $('#rm-msg').textContent = r.data?.error || 'Failed.';
+    }
+  };
 }
 
 function renderOverview(d){
@@ -220,6 +244,13 @@ function renderOverview(d){
     </div>
     <h2 class="sec">Error log</h2>
     <div id="errors-box"><p class="msg">Loading…</p></div>
+
+    <h2 class="sec">Housekeeping</h2>
+    <div class="house">
+      <input id="rm-code" maxlength="4" placeholder="CODE" autocapitalize="characters" spellcheck="false">
+      <button id="rm-go">Remove player</button>
+      <span class="msg" id="rm-msg"></span>
+    </div>
   `;
 }
 

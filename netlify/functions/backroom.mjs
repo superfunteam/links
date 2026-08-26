@@ -131,6 +131,24 @@ export default async (req) => {
       // Netlify's build environment has no database credentials, but it can
       // reach this very function on the live site — which does. The build uses
       // these two ops instead of a direct connection.
+      case 'delete_player': {
+        // Remove one player outright — a throwaway test account, usually.
+        // Every FK cascades, so rounds, devices and friendships go with them.
+        const code = String(body.code || '').toUpperCase().replace(/[\s-]/g, '');
+        if (!/^[A-HJ-NP-Z2-9]{4}$/.test(code)) return bad('bad code');
+        const who = await sql`
+          select p.id, p.name, p.email,
+                 (select count(*)::int from rounds r where r.player_id = p.id) as rounds,
+                 (select count(*)::int from friendships f where f.low_id = p.id or f.high_id = p.id) as friends
+          from players p where p.code = ${code}`;
+        if (!who.length) return bad('no player with that code', 404);
+        const w = who[0];
+        if (w.email) await sql`delete from signin_attempts where email = ${w.email}`;
+        await sql`delete from players where id = ${w.id}`;
+        return json({ ok: true, removed: {
+          code, name: w.name, claimed: !!w.email, rounds: w.rounds, friendships: w.friends } });
+      }
+
       case 'errors': {
         const rows = await sql`
           select ref, op, message, at from error_log order by at desc limit 30`;
