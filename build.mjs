@@ -167,6 +167,8 @@ const endDate = end.toISOString().slice(0, 10);
 const byKey = new Map();
 holes.forEach(h => byKey.set(h.words.join(' '), h));
 
+const nameUsed = new Map();        // course name -> last day index it appeared
+
 // Pre-pass: register every frozen day's state and reclaim its holes BEFORE
 // scheduling anything. A gap being filled earlier in the calendar must see
 // the frozen days around it, or it can duplicate a chain a frozen day owns.
@@ -180,6 +182,7 @@ for (let idx = 0; dateOf(idx) <= endDate; idx++) {
     const live = byKey.get(h.words.join(' '));
     if (live) { const list = pool[h.words.length]; const at = list.indexOf(live); if (at >= 0) list.splice(at, 1); }
   });
+  nameUsed.set(f.name, idx);
 }
 
 while (!exhausted && dateOf(dayIdx) <= endDate) {
@@ -238,11 +241,15 @@ while (!exhausted && dateOf(dayIdx) <= endDate) {
     break;
   }
   picked.sort((a, b) => a.words.length - b.words.length);   // ramp within the day
-  days.push({
-    date: dateOf(dayIdx),
-    name: courseNames[dayIdx % courseNames.length],
-    holes: picked
-  });
+  // A course name mustn't reappear while anyone would remember it — frozen
+  // days included, or a backfill day echoes a name the week already used.
+  let name = courseNames[dayIdx % courseNames.length];
+  for (let off = 0; off < courseNames.length; off++) {
+    const cand = courseNames[(dayIdx + off) % courseNames.length];
+    if (!nameUsed.has(cand) || Math.abs(dayIdx - nameUsed.get(cand)) >= 45) { name = cand; break; }
+  }
+  nameUsed.set(name, dayIdx);
+  days.push({ date: dateOf(dayIdx), name, holes: picked });
   dayIdx++;
 }
 
