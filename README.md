@@ -40,9 +40,19 @@ whole word. It never shows an answer.
 
 ## Friends play
 
-The **Club** tab shows today's round for you and everyone in your club, a seven-day form
-trend each, and a **Nudge** for anyone who hasn't played — which opens the phone's SMS
-composer with one of ten canned messages ready, so nobody has to hand over a phone number.
+The **Club** tab shows today's round for you and everyone in your club, a crown on whoever
+won, and a **Nudge** for anyone who hasn't played — which opens the phone's SMS composer with
+one of ten canned messages ready, so nobody has to hand over a phone number.
+
+Below that, a fortnight grid gives a column per day and a row per player, with a crown on each
+day's winner. Tap any day to open it hole by hole: that day's leaderboard, then every hole
+with each player's strokes and the best on each highlighted. Per-hole strokes are recovered
+from the stored marks, since a guess and a bought letter each cost exactly one. A day's words
+are only revealed to someone who has already played it, so drilling into a friend's round
+can't hand you the answers.
+
+Finishing a round ends with a quiet club strip: your score stays the headline, with a line
+underneath saying where it put you.
 
 Every device gets a 4-character friend code from an alphabet with no I, O, 0 or 1, so it
 survives being read aloud over the phone. **That code is public** — you give it to friends so
@@ -103,11 +113,15 @@ midnight US Eastern so friends in different time zones compare the same puzzle. 
 are listed below it and stay playable. Your **first completed round** for a date is the one
 that counts; replays are welcome and clearly marked as not counting.
 
-Difficulty follows a weekly rhythm: the number of full-length five-word holes climbs through
-the week, 1 early and 2 from Thursday on. Those quotas are set by what the vocabulary can
-actually supply — a five-word chain needs four strong links in a row with every initial fixed
-in advance, so they are and will remain the scarce resource. `build.mjs` flags any day it
-couldn't fill rather than pretending the day is complete.
+Difficulty follows a weekly rhythm. The number of full-length five-word holes climbs through
+the week — 1 on Monday, 2 Tuesday and Wednesday, 3 Thursday, 4 Friday, 5 at the weekend — so
+par runs from 18 on a Monday to 30 on a Sunday.
+
+That quota is expensive: a five-word chain needs four strong links in a row with every initial
+fixed in advance, so they are and will remain the scarce resource, and the length of the
+calendar is set by how many exist. `build.mjs` flags any day it couldn't fill rather than
+pretending the day is complete — if you see `!` in the build output, the vocabulary needs
+widening before the calendar can grow.
 
 ## Editing puzzles
 

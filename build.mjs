@@ -5,14 +5,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const HOLES_PER_DAY = 5;
-const COOLDOWN_DAYS = 4;          // a link may not return inside this window
-const MAX_DAYS = 62;               // two months of daily courses
+const COOLDOWN_DAYS = 3;          // a link may not return inside this window
+const MAX_DAYS = 31;               // two months of daily courses
 const SEED_COOLDOWN = 28;          // a seed may return, but never inside a month
+const ECHO_WINDOW = 10;            // days within which two chains may not rhyme
+const ECHO_SHARE = 3;              // ...meaning share this many words or more
 // How many of the day's 5 holes are full-length (5-word) chains, by weekday.
 // The week still climbs to a heavier weekend, but the numbers are scaled to the
 // supply of five-word chains — those need four strong links in a row with every
 // initial fixed, so they are and will remain the scarce resource.
-const LONG_BY_WEEKDAY = { Mon: 1, Tue: 1, Wed: 1, Thu: 2, Fri: 2, Sat: 2, Sun: 2 };
+const LONG_BY_WEEKDAY = { Mon: 1, Tue: 2, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 5 };
 const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const data = JSON.parse(readFileSync('puzzles.json', 'utf8'));
@@ -59,6 +61,7 @@ Object.values(pool).forEach(list =>
 
 const lastUsed = new Map();        // link -> day index it last appeared on
 const seedUsed = new Map();        // seed -> day index it last appeared on
+const recent = [];                 // {day, words:Set} for the echo check
 const days = [];
 let dayIdx = 0, exhausted = false;
 
@@ -86,9 +89,17 @@ while (!exhausted && dayIdx < MAX_DAYS) {
       if (ls.some(l => lastUsed.has(l) && dayIdx - lastUsed.get(l) < COOLDOWN_DAYS)) continue;
       if (seedUsed.has(h.seed) && dayIdx - seedUsed.get(h.seed) < SEED_COOLDOWN) continue;
       if (usedSeedToday.has(h.seed)) continue;
+      // Two chains that share most of their words read as the same puzzle even
+      // under different seeds — MOUTH OFF LINE AGE RANGE beside PLAY OFF LINE
+      // AGE RANGE is the sort of thing a daily player notices immediately.
+      const wordSet = new Set(h.words);
+      const echoes = recent.some(r => dayIdx - r.day < ECHO_WINDOW &&
+        [...r.words].filter(w => wordSet.has(w)).length >= ECHO_SHARE);
+      if (echoes) continue;
       pool[len].splice(i, 1);
       ls.forEach(l => { usedToday.add(l); lastUsed.set(l, dayIdx); });
       seedUsed.set(h.seed, dayIdx); usedSeedToday.add(h.seed);
+      recent.push({ day: dayIdx, words: wordSet });
       return h;
     }
     return null;
