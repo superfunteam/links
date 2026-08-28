@@ -96,13 +96,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    at the stack's floor, while .app sits above it. Cards and text occlude the
    ball; the page's open paper does not. */
 .flight{position:absolute;top:0;left:0;width:100%;z-index:0;overflow:hidden;pointer-events:none}
+body:not(:has(#s-today.on)) .flight{display:none}
+body:has(.sheet.on) .flight{display:none}
+body.playing .flight{display:none}
 .app{position:relative;z-index:1}
 .fstage{position:absolute;width:132px;height:42px;margin-left:-66px;visibility:hidden}
 .putt-hole{
   position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
   width:28px;height:10px;border-radius:50%;background:var(--ink);z-index:1
 }
-.putt-clip{position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2}
+.putt-clip{
+  position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2;
+  /* everything above the hole's equator (y=27), plus its lower rim inset .5px —
+     numbers mirror .fstage 132px wide and .putt-hole 28x10 at bottom:10 */
+  clip-path:path('M0 0 H132 V27 H79.5 A13.5 4.5 0 0 1 52.5 27 H0 Z')
+}
 .fstage .putt-ball{left:50%}
 .putt-ball{
   position:absolute;top:11px;left:50%;width:16px;height:16px;margin-left:-8px;
@@ -123,7 +131,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    flown in a fixed full-viewport layer; at the lip it hands off to this
    clipped ball, which only ever falls — so the crop stays pixel-true. */
 .fstage .putt-ball{visibility:hidden}
-.fstage .putt-ball.fall{animation:puttFall .5s cubic-bezier(.45,.05,.85,.9) forwards}
+.fstage .putt-ball.fall{animation:puttFall .34s cubic-bezier(.45,.05,.85,.9) forwards}
 @keyframes puttFall{
   0%  {transform:translateY(0) translateX(0) rotate(0deg)}
   14% {transform:translateY(3px)  translateX(calc(var(--tip,1) * 2px)) rotate(calc(var(--tip,1) * 12deg))}
@@ -2739,17 +2747,24 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
   if(!layer || !stage || !anchor || !drop || !flight) return;
 
   // pin the stage to the spacer in PAGE coordinates, so it scrolls with the page
+  // (offset chain, not getBoundingClientRect: entrance animations translate the
+  // hero for a moment, and the pin must use the resting layout position)
   const layout = () => {
-    const r = anchor.getBoundingClientRect();
+    if(!anchor.offsetParent) return;             // hidden tab — keep the last good position
+    let x = 0, y = 0;
+    for(let n = anchor; n; n = n.offsetParent){ x += n.offsetLeft; y += n.offsetTop; }
     layer.style.height = document.documentElement.scrollHeight + 'px';
-    stage.style.left = (r.left + scrollX + r.width / 2) + 'px';
-    stage.style.top  = (r.top + scrollY) + 'px';
+    stage.style.left = (x + anchor.offsetWidth / 2) + 'px';
+    stage.style.top  = y + 'px';
   };
   const place = () => { layout(); stage.style.visibility = 'visible'; };
   place();
   addEventListener('resize', place);
   addEventListener('load', place);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+  new MutationObserver(() => {
+    if($('#s-today').classList.contains('on')) place();
+  }).observe($('#s-today'), { attributes:true, attributeFilter:['class'] });
 
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
     drop.style.visibility = 'visible';
@@ -2760,9 +2775,15 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
   const SPEED = 0.32;                              // px per ms — a gentle roll
   let i = 0, flying = false;
 
+  const onHome = () =>
+    document.visibilityState === 'visible' &&
+    $('#s-today').classList.contains('on') &&
+    !document.body.classList.contains('playing') &&
+    !sheetOpen();
+
   const putt = () => {
     if(flying) return;
-    if(document.visibilityState !== 'visible' || !$('#s-today').classList.contains('on')) return;
+    if(!onHome()) return;
     const ar = anchor.getBoundingClientRect();
     if(ar.bottom < 0 || ar.top > innerHeight) return;    // the green is scrolled away
     layout();
@@ -2803,13 +2824,12 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
     ).onfinish = () => {
       flight.getAnimations().forEach(a => a.cancel());
       flight.style.transform = 'translate(-200px,-200px)';
+      if(!onHome()){ flying = false; return; }
       drop.style.visibility = 'visible';           // inline both ways — never fights the class
       drop.classList.add('fall');
-      if(document.visibilityState === 'visible' && $('#s-today').classList.contains('on')){
-        Snd.thunk();
-        try { navigator.vibrate && navigator.vibrate(25); } catch(e){}
-      }
-      setTimeout(() => { drop.classList.remove('fall'); drop.style.visibility = 'hidden'; flying = false; }, 650);
+      Snd.thunk();
+      try { navigator.vibrate && navigator.vibrate(25); } catch(e){}
+      setTimeout(() => { drop.classList.remove('fall'); drop.style.visibility = 'hidden'; flying = false; }, 480);
     };
   };
   setTimeout(putt, 900);
