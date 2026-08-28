@@ -1015,8 +1015,8 @@ body.playing .tabs{display:none}
     <span class="opt-b"><span class="opt-t">Master mode</span><span class="opt-d">Hide how many letters are in each word</span></span>
     <span class="sw"></span>
   </button>
-  <button class="opt" id="opt-remind">
-    <span class="opt-b"><span class="opt-t">Remind me to play daily</span><span class="opt-d" id="remind-d">A nudge at 9 each morning when the new course opens</span></span>
+  <button class="opt remind-row">
+    <span class="opt-b"><span class="opt-t">Remind me to play daily</span><span class="opt-d remind-note">A nudge at 9 each morning when the new course opens</span></span>
     <span class="sw"></span>
   </button>
   <div class="actions"><button class="btn" id="set-done">Done</button></div>
@@ -1913,9 +1913,15 @@ function renderClub(){
   const stale = NET.state === 'offline' && NET.at
     ? `<p class="foot">Showing the last scores we saw — you're offline.</p>` : '';
 
+  const remindRow = `
+    <button class="opt remind-row" style="margin-top:2px">
+      <span class="opt-b"><span class="opt-t">Remind me to play daily</span><span class="opt-d remind-note">A nudge at 9 each morning when the new course opens</span></span>
+      <span class="sw"></span>
+    </button>`;
+
   // Once you have a club, the scores are the point — the code card drops below.
-  box.innerHTML = friends.length ? (board + codeCard + addCard + stale)
-                                 : (codeCard + addCard + board + stale);
+  box.innerHTML = friends.length ? (board + codeCard + addCard + remindRow + stale)
+                                 : (codeCard + addCard + remindRow + board + stale);
 
   const withIntro = async fn => {
     Snd.boot();
@@ -1940,6 +1946,7 @@ function renderClub(){
     setTimeout(()=> b.textContent = 'Invite a friend', 2400);
   });
 
+  wireRemind(box);
   const nameBtn = box.querySelector('[data-setname]');
   if(nameBtn) nameBtn.onclick = e=>{ e.stopPropagation(); Snd.boot(); Snd.blip(); openMe('club'); };
   const playBtn = box.querySelector('[data-play]');
@@ -2375,12 +2382,19 @@ async function pushSub(){
   try { const reg = await navigator.serviceWorker.getRegistration(); return reg ? await reg.pushManager.getSubscription() : null; }
   catch(e){ return null; }
 }
+const REMIND_DEFAULT = 'A nudge at 9 each morning when the new course opens';
 async function paintRemind(){
   const sub = await pushSub();
-  $('#opt-remind')?.classList.toggle('on', !!sub);
+  document.querySelectorAll('.remind-row').forEach(r => r.classList.toggle('on', !!sub));
 }
-async function toggleRemind(){
-  const row = $('#opt-remind'), note = $('#remind-d');
+function wireRemind(scope){
+  (scope || document).querySelectorAll('.remind-row').forEach(r => {
+    if(!r.dataset.wired){ r.dataset.wired = '1'; r.onclick = ()=>{ Snd.boot(); toggleRemind(r); }; }
+  });
+  paintRemind();
+}
+async function toggleRemind(row){
+  const note = row.querySelector('.remind-note');
   const iosTab = /iPhone|iPad/.test(navigator.userAgent) && !matchMedia('(display-mode: standalone)').matches;
   if(!pushReady()){
     note.textContent = iosTab
@@ -2392,15 +2406,15 @@ async function toggleRemind(){
   if(existing){
     try { await existing.unsubscribe(); } catch(e){}
     NET.post('/push', { action: 'off', endpoint: existing.endpoint });
-    note.textContent = 'A nudge at 9 each morning when the new course opens';
-    row.classList.remove('on'); Snd.blip();
+    note.textContent = REMIND_DEFAULT;
+    paintRemind(); Snd.blip();
     return;
   }
   const perm = await Notification.requestPermission();
   if(perm !== 'granted'){
     note.textContent = perm === 'denied'
       ? 'Notifications are blocked for this site in your browser settings.'
-      : 'A nudge at 9 each morning when the new course opens';
+      : REMIND_DEFAULT;
     Snd.bonk(); return;
   }
   try {
@@ -2415,7 +2429,7 @@ async function toggleRemind(){
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(VAPID_PUB) });
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
     const res = await NET.post('/push', { action: 'on', sub: sub.toJSON(), tz });
-    if(res.ok){ row.classList.add('on'); note.textContent = 'On — see you at 9.'; Snd.solved(); }
+    if(res.ok){ paintRemind(); note.textContent = 'On — see you at 9.'; Snd.solved(); }
     else { try { await sub.unsubscribe(); } catch(e){} showFail(note, res, 'push'); Snd.bonk(); }
   } catch(err){
     note.textContent = 'Could not turn notifications on — ' + (err.message || err.name);
@@ -2428,7 +2442,7 @@ function paintSettings(){
   $('#opt-master').classList.toggle('on', MASTER.on);
   paintRemind();
 }
-$('#opt-remind').onclick = ()=>{ Snd.boot(); toggleRemind(); };
+wireRemind($('#sheet-set'));
 $('#gear').onclick = ()=>{ Snd.boot(); Snd.blip(); paintSettings(); $('#sheet-set').classList.add('on'); };
 $('#set-done').onclick = ()=>{ Snd.blip(); $('#sheet-set').classList.remove('on'); };
 $('#sheet-set').addEventListener('click', e=>{ if(e.target.id==='sheet-set'){ $('#sheet-set').classList.remove('on'); } });
