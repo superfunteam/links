@@ -4,7 +4,7 @@
 // serving them would hand out every answer in plaintext.
 import { mkdirSync, copyFileSync, existsSync, rmSync } from 'node:fs';
 
-const ASSETS = ['index.html', 'favicon.png', 'ogimage.png', 'site.webmanifest'];
+const ASSETS = ['index.html', 'favicon.png', 'ogimage.png', 'site.webmanifest', 'sw.js'];
 const NESTED = { 'backroom.html': 'backroom/index.html' };
 
 rmSync('public', { recursive: true, force: true });
