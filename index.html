@@ -88,35 +88,46 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    and drops STRAIGHT down; .putt-clip's bottom edge sits exactly at the
    hole's bottom edge, so the ball is cropped as it sinks — into the hole,
    never faded out. */
-.putt{position:relative;width:132px;height:42px;margin:0 auto 8px}
+/* Full bleed: the green spans the whole viewport so balls enter from the
+   actual screen edge. The ball layer sits ABOVE the hole — it rolls over the
+   lip, and only the clip's bottom edge (at the hole's bottom) swallows it. */
+.putt{position:relative;width:100vw;height:42px;margin:0 calc(50% - 50vw) 8px}
 .putt-hole{
   position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
-  width:28px;height:10px;border-radius:50%;background:var(--ink)
+  width:28px;height:10px;border-radius:50%;background:var(--ink);z-index:1
 }
-.putt-clip{position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden}
+.putt-clip{position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2}
 .putt-ball{
   position:absolute;top:15px;left:50%;width:13px;height:13px;margin-left:-6.5px;
   border-radius:50%;background:var(--pb,#D93636);
-  transform:translateX(-64px);will-change:transform
+  transform:translateX(-100vw);will-change:transform
 }
 .putt-ball b{
   position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
-  animation:puttSpin 
- .55s linear infinite;
+  animation:puttSpin .3s linear infinite;
 }
 .putt-ball b::before{
   content:"";position:absolute;left:8.5px;top:5px;width:2.5px;height:2.5px;
   border-radius:50%;background:rgba(0,0,0,.28)
 }
 @keyframes puttSpin{to{transform:rotate(360deg)}}
-.putt-ball.go{animation:puttCycle 3.2s cubic-bezier(.3,.1,.7,.9) forwards}
-@keyframes puttCycle{
-  0%   {transform:translateX(-64px) translateY(0)}
-  58%  {transform:translateX(-2px)  translateY(0)}   /* rolls up to the lip   */
-  66%  {transform:translateX(1px)   translateY(0)}   /* teeters over the edge */
-  70%  {transform:translateX(1px)   translateY(2px)}
-  88%  {transform:translateX(1px)   translateY(26px)}/* straight down; the clip crops it */
-  100% {transform:translateX(1px)   translateY(26px)}
+.putt-ball.go{animation:puttL 1.9s cubic-bezier(.25,.1,.65,.95) forwards}
+.putt-ball.go.r{animation-name:puttR}
+@keyframes puttL{
+  0%   {transform:translateX(calc(-50vw - 20px)) translateY(0)}
+  70%  {transform:translateX(-2px) translateY(0)}    /* zips in from the screen edge */
+  78%  {transform:translateX(1px)  translateY(0)}    /* teeters on the lip           */
+  82%  {transform:translateX(1px)  translateY(3px)}
+  96%  {transform:translateX(1px)  translateY(26px)} /* straight down; the clip crops */
+  100% {transform:translateX(1px)  translateY(26px)}
+}
+@keyframes puttR{
+  0%   {transform:translateX(calc(50vw + 20px)) translateY(0)}
+  70%  {transform:translateX(2px)  translateY(0)}
+  78%  {transform:translateX(-1px) translateY(0)}
+  82%  {transform:translateX(-1px) translateY(3px)}
+  96%  {transform:translateX(-1px) translateY(26px)}
+  100% {transform:translateX(-1px) translateY(26px)}
 }
 @keyframes pinDrop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
 .wordmark{
@@ -2726,18 +2737,20 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
   const COLOURS = ['#D93636','#E7CE3C','#3EC97B','#7C4FC4','#2D5BD1','#E93A9A','#F0705F'];
   let i = 0;
   const putt = () => {
-    ball.style.setProperty('--pb', COLOURS[i % COLOURS.length]); i++;
+    ball.style.setProperty('--pb', COLOURS[i % COLOURS.length]);
+    ball.classList.toggle('r', i % 2 === 1);      // alternate screen edges
+    i++;
     ball.classList.remove('go'); void ball.offsetWidth; ball.classList.add('go');
-    // the drop begins ~70% into a 3.2s cycle
+    // the drop begins ~80% into a 1.9s cycle
     setTimeout(() => {
       if(document.visibilityState === 'visible' && $('#s-today').classList.contains('on')){
         Snd.thunk();
         try { navigator.vibrate && navigator.vibrate(25); } catch(e){}
       }
-    }, 2300);
+    }, 1500);
   };
   putt();
-  setInterval(putt, 5200);
+  setInterval(putt, 3600);
 })();
 
 goTab('s-today');
