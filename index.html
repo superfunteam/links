@@ -91,7 +91,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* Full bleed: the green spans the whole viewport so balls enter from the
    actual screen edge. The ball layer sits ABOVE the hole — it rolls over the
    lip, and only the clip's bottom edge (at the hole's bottom) swallows it. */
-.putt{position:relative;height:42px;margin:18px 0 22px}
+.putt{position:relative;height:84px;margin:18px 0 22px}
 /* the whole animation lives BEHIND the page: an absolute page-spanning layer
    at the stack's floor, while .app sits above it. Cards and text occlude the
    ball; the page's open paper does not. */
@@ -100,31 +100,39 @@ body:not(:has(#s-today.on)) .flight{display:none}
 body:has(.sheet.on) .flight{display:none}
 body.playing .flight{display:none}
 .app{position:relative;z-index:1}
-.fstage{position:absolute;width:132px;height:42px;margin-left:-66px;visibility:hidden}
+.fstage{position:absolute;width:264px;height:84px;margin-left:-132px;visibility:hidden}
 .putt-hole{
-  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
-  width:28px;height:10px;border-radius:50%;background:var(--ink);z-index:1
+  position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
+  width:56px;height:20px;border-radius:50%;background:var(--ink);z-index:1
 }
 .putt-clip{
-  position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2;
-  /* everything above the hole's equator (y=27), plus its lower rim inset .5px —
-     numbers mirror .fstage 132px wide and .putt-hole 28x10 at bottom:10 */
-  clip-path:path('M0 0 H132 V27 H79.5 A13.5 4.5 0 0 1 52.5 27 H0 Z')
+  position:absolute;left:0;right:0;top:0;height:64px;overflow:hidden;z-index:2;
+  /* everything above the hole's equator (y=54), plus its lower rim inset 1px —
+     numbers mirror .fstage 264px wide and .putt-hole 56x20 at bottom:20 */
+  clip-path:path('M0 0 H264 V54 H159 A27 9 0 0 1 105 54 H0 Z')
 }
 .fstage .putt-ball{left:50%}
 .putt-ball{
-  position:absolute;top:11px;left:50%;width:16px;height:16px;margin-left:-8px;
+  position:absolute;top:22px;left:50%;width:32px;height:32px;margin-left:-16px;
   border-radius:50%;background:var(--pb,#D93636);will-change:transform
 }
 .putt-ball b{
-  position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+  position:absolute;left:50%;top:50%;width:32px;height:32px;margin:-16px 0 0 -16px;
   animation:puttSpin .34s linear infinite;
 }
 /* a ball coming from the right rolls leftward, so it spins the other way */
 .putt-ball.ccw b{animation-direction:reverse}
 .putt-ball b::before{
-  content:"";position:absolute;left:10.5px;top:6px;width:3px;height:3px;
-  border-radius:50%;background:rgba(0,0,0,.28)
+  content:"";position:absolute;left:0;top:0;width:4px;height:4px;
+  border-radius:50%;background:transparent;
+  box-shadow:
+    21px 12px 0 0 rgba(0,0,0,.28),
+    10px  7px 0 0 rgba(0,0,0,.28),
+    15px 20px 0 0 rgba(0,0,0,.28),
+     7px 16px 0 0 rgba(0,0,0,.28),
+    22px 21px 0 0 rgba(0,0,0,.26),
+    14px  4px 0 0 rgba(0,0,0,.26),
+     6px 10px 0 0 rgba(0,0,0,.24)
 }
 @keyframes puttSpin{to{transform:rotate(360deg)}}
 /* The approach is a straight line from a random point on the screen's edge,
@@ -134,8 +142,8 @@ body.playing .flight{display:none}
 .fstage .putt-ball.fall{animation:puttFall .34s cubic-bezier(.45,.05,.85,.9) forwards}
 @keyframes puttFall{
   0%  {transform:translateY(0) translateX(0) rotate(0deg)}
-  14% {transform:translateY(3px)  translateX(calc(var(--tip,1) * 2px)) rotate(calc(var(--tip,1) * 12deg))}
-  100%{transform:translateY(28px) translateX(calc(var(--tip,1) * 3px)) rotate(calc(var(--tip,1) * 20deg))}
+  14% {transform:translateY(6px)  translateX(calc(var(--tip,1) * 4px)) rotate(calc(var(--tip,1) * 12deg))}
+  100%{transform:translateY(56px) translateX(calc(var(--tip,1) * 6px)) rotate(calc(var(--tip,1) * 20deg))}
 }
 .flight > .putt-ball{top:0;left:0;margin:0;transform:translate(-200px,-200px);z-index:3}
 @keyframes pinDrop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
@@ -463,7 +471,7 @@ body.playing .tabs{display:none}
 .gday.now::after{content:"";display:block;width:16px;height:2.5px;border-radius:2px;background:var(--g-600);margin:4px auto 0}
 .gname{
   text-align:left;padding:9px 12px !important;font-weight:700;font-size:12.5px;
-  white-space:nowrap;position:sticky;left:0;background:var(--card);
+  white-space:nowrap;position:sticky;left:0;background:var(--card);z-index:2;
   border-right:1.5px solid var(--line);max-width:96px;overflow:hidden;text-overflow:ellipsis
 }
 .grid tbody tr{border-top:1.5px solid var(--line)}
@@ -1229,6 +1237,8 @@ const ME = {
 // markup unescaped.
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
   c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+// display-only: "Tom I" reads better as "Tom I." — never stored, just shown
+const dotName = n => /\s[A-Za-z]$/.test(n) ? n + '.' : n;
 
 /* ═══════════════════════════════════════════════════════════════
    STATE
@@ -1669,7 +1679,7 @@ function openDay(date){
         const r = (p.rounds||[]).find(x=>x.date===date);
         const d = r.strokes - r.par;
         return `<div class="crow stagger${p.isMe?' me':''}" style="--i:${i}">
-          <span class="cr-who"><span class="cr-name">${champs.has(p.code)?CROWN_SVG:''}${esc(p.name || (p.isMe?'You':'Player '+p.code))}</span></span>
+          <span class="cr-who"><span class="cr-name">${champs.has(p.code)?CROWN_SVG:''}${esc(dotName(p.name || (p.isMe?'You':'Player '+p.code)))}</span></span>
           <span class="cr-score"><b class="${d<0?'under':d>0?'overp':''}">${rel(d)}</b><small>${r.strokes} strokes</small></span>
         </div>`;
       }).join('')}
@@ -1903,7 +1913,7 @@ function renderClub(){
 
     const todayRows = ordered.map((p, idx) => {
       const r = fresh ? (p.rounds||[]).find(x=>x.date===today) : null;
-      const name = esc(p.name || (p.isMe ? 'You' : 'Player ' + p.code));
+      const name = esc(dotName(p.name || (p.isMe ? 'You' : 'Player ' + p.code)));
       const d = r ? r.strokes - r.par : null;
       const won = r && champs.has(p.code);
       return `<div class="crow stagger${p.isMe?' me':''}" style="--i:${idx}">
@@ -1940,7 +1950,7 @@ function renderClub(){
             ${ordered.map(p => {
               const by = Object.fromEntries((p.rounds||[]).map(r => [r.date, r]));
               return `<tr>
-                <td class="gname">${esc(p.name || (p.isMe ? 'You' : p.code))}</td>
+                <td class="gname">${esc(dotName(p.name || (p.isMe ? 'You' : p.code)))}</td>
                 ${days.map(k => {
                   const r = by[k];
                   if(!r) return `<td class="gcell" data-day="${k}"><i class="gdot"></i></td>`;
@@ -2032,7 +2042,7 @@ function renderClub(){
     if(res.ok){
       NET.club = res.data.club; NET.at = Date.now();
       Snd.solved(); renderClub();
-      $('#add-msg').textContent = 'Added ' + (res.data.added.name || res.data.added.code) + '!';
+      $('#add-msg').textContent = 'Added ' + dotName(res.data.added.name || res.data.added.code) + '!';
     } else {
       showFail(out, res, 'friend');
       Snd.bonk();
@@ -2157,7 +2167,8 @@ function renderYou(){
     localStorage.setItem('links.rounds', JSON.stringify(local));
     NET.club = res.data.club; NET.at = Date.now();
     Snd.win(1); renderYou(); renderToday();
-    $('#in-msg').textContent = 'Signed in as ' + (res.data.player.name || res.data.player.code) + '.';
+    const who = dotName(res.data.player.name || res.data.player.code);
+    $('#in-msg').textContent = 'Signed in as ' + who + (who.endsWith('.') ? '' : '.');
   };
 }
 
@@ -2768,7 +2779,7 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
 
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
     drop.style.visibility = 'visible';
-    drop.style.transform = 'translateX(-26px)';    // still life beside the hole
+    drop.style.transform = 'translateX(-52px)';    // still life beside the hole
     return;
   }
   const COLOURS = ['#D93636','#E7CE3C','#3EC97B','#7C4FC4','#2D5BD1','#E93A9A','#F0705F'];
@@ -2793,7 +2804,7 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
     const tx = t.left + scrollX, ty = t.top + scrollY;
 
     // a random point just beyond the viewport perimeter, in page coordinates
-    const W = innerWidth, H = innerHeight, P = 20;
+    const W = innerWidth, H = innerHeight, P = 40;   // clears the 32px ball on every edge
     const pick = Math.random() * (2*W + 2*H);
     let sx, sy;
     if(pick < W)            { sx = pick;         sy = -P; }
@@ -2858,7 +2869,7 @@ const afterBoot = async () => {
       NET.club = res.data.club; NET.at = Date.now();
       renderClub(); Snd.solved();
       const out = $('#add-msg');
-      if (out) out.textContent = 'Added ' + (res.data.added.name || res.data.added.code) + ' — you are in their club!';
+      if (out) out.textContent = 'Added ' + dotName(res.data.added.name || res.data.added.code) + ' — you are in their club!';
     } else {
       const input = $('#add-code'), out = $('#add-msg');
       if (input) input.value = code;
