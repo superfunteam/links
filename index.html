@@ -97,7 +97,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    ball; the page's open paper does not. */
 .flight{position:absolute;top:0;left:0;width:100%;z-index:0;overflow:hidden;pointer-events:none}
 .app{position:relative;z-index:1}
-.fstage{position:absolute;width:132px;height:42px;margin-left:-66px}
+.fstage{position:absolute;width:132px;height:42px;margin-left:-66px;visibility:hidden}
 .putt-hole{
   position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
   width:28px;height:10px;border-radius:50%;background:var(--ink);z-index:1
@@ -105,15 +105,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .putt-clip{position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2}
 .fstage .putt-ball{left:50%}
 .putt-ball{
-  position:absolute;top:15px;left:50%;width:13px;height:13px;margin-left:-6.5px;
+  position:absolute;top:11px;left:50%;width:16px;height:16px;margin-left:-8px;
   border-radius:50%;background:var(--pb,#D93636);will-change:transform
 }
 .putt-ball b{
-  position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
-  animation:puttSpin .3s linear infinite;
+  position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+  animation:puttSpin .34s linear infinite;
 }
+/* a ball coming from the right rolls leftward, so it spins the other way */
+.putt-ball.ccw b{animation-direction:reverse}
 .putt-ball b::before{
-  content:"";position:absolute;left:8.5px;top:5px;width:2.5px;height:2.5px;
+  content:"";position:absolute;left:10.5px;top:6px;width:3px;height:3px;
   border-radius:50%;background:rgba(0,0,0,.28)
 }
 @keyframes puttSpin{to{transform:rotate(360deg)}}
@@ -123,9 +125,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .fstage .putt-ball{visibility:hidden}
 .fstage .putt-ball.fall{animation:puttFall .5s cubic-bezier(.45,.05,.85,.9) forwards}
 @keyframes puttFall{
-  0%  {transform:translateY(0)}
-  12% {transform:translateY(3px)}
-  100%{transform:translateY(26px)}
+  0%  {transform:translateY(0) translateX(0) rotate(0deg)}
+  14% {transform:translateY(3px)  translateX(calc(var(--tip,1) * 2px)) rotate(calc(var(--tip,1) * 12deg))}
+  100%{transform:translateY(28px) translateX(calc(var(--tip,1) * 3px)) rotate(calc(var(--tip,1) * 20deg))}
 }
 .flight > .putt-ball{top:0;left:0;margin:0;transform:translate(-200px,-200px);z-index:3}
 @keyframes pinDrop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
@@ -2743,8 +2745,11 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
     stage.style.left = (r.left + scrollX + r.width / 2) + 'px';
     stage.style.top  = (r.top + scrollY) + 'px';
   };
-  layout();
-  addEventListener('resize', layout);
+  const place = () => { layout(); stage.style.visibility = 'visible'; };
+  place();
+  addEventListener('resize', place);
+  addEventListener('load', place);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
     drop.style.visibility = 'visible';
@@ -2780,14 +2785,21 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
     drop.style.setProperty('--pb', col);
     flight.style.setProperty('--pb', col);
 
-    // constant speed whatever the distance: linear easing, duration ∝ distance
+    // Cruise at the same pace whatever the distance, then die at the hole:
+    // 85% of the path is linear, the last 15% takes an ease-out crawl.
     const dist = Math.hypot(tx - sx, ty - sy);
-    const dur = Math.min(4500, Math.max(500, dist / SPEED));
+    const dur = Math.min(5200, Math.max(600, (dist / SPEED) * 1.12));
+    const dir = tx >= sx ? 1 : -1;                 // travelling right or left
+    flight.classList.toggle('ccw', dir < 0);
+    drop.classList.toggle('ccw', dir < 0);
+    drop.style.setProperty('--tip', dir);
+    const midX = sx + (tx - sx) * 0.85, midY = sy + (ty - sy) * 0.85;
     flying = true;
     flight.animate(
-      [{ transform: `translate(${sx}px, ${sy}px)` },
-       { transform: `translate(${tx}px, ${ty}px)` }],
-      { duration: dur, easing: 'linear', fill: 'forwards' }
+      [{ transform: `translate(${sx}px, ${sy}px)`, offset: 0, easing: 'linear' },
+       { transform: `translate(${midX}px, ${midY}px)`, offset: 0.72, easing: 'cubic-bezier(.16,.62,.44,.99)' },
+       { transform: `translate(${tx}px, ${ty}px)`, offset: 1 }],
+      { duration: dur, fill: 'forwards' }
     ).onfinish = () => {
       flight.getAnimations().forEach(a => a.cancel());
       flight.style.transform = 'translate(-200px,-200px)';
