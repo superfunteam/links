@@ -91,7 +91,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* Full bleed: the green spans the whole viewport so balls enter from the
    actual screen edge. The ball layer sits ABOVE the hole — it rolls over the
    lip, and only the clip's bottom edge (at the hole's bottom) swallows it. */
-.putt{position:relative;width:100vw;height:42px;margin:0 calc(50% - 50vw) 8px}
+.putt{position:relative;width:100vw;height:42px;margin:18px calc(50% - 50vw) 22px}
 .putt-hole{
   position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
   width:28px;height:10px;border-radius:50%;background:var(--ink);z-index:1
@@ -99,8 +99,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .putt-clip{position:absolute;left:0;right:0;top:0;height:32px;overflow:hidden;z-index:2}
 .putt-ball{
   position:absolute;top:15px;left:50%;width:13px;height:13px;margin-left:-6.5px;
-  border-radius:50%;background:var(--pb,#D93636);
-  transform:translateX(-100vw);will-change:transform
+  border-radius:50%;background:var(--pb,#D93636);will-change:transform
 }
 .putt-ball b{
   position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
@@ -111,24 +110,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border-radius:50%;background:rgba(0,0,0,.28)
 }
 @keyframes puttSpin{to{transform:rotate(360deg)}}
-.putt-ball.go{animation:puttL 1.9s cubic-bezier(.25,.1,.65,.95) forwards}
-.putt-ball.go.r{animation-name:puttR}
-@keyframes puttL{
-  0%   {transform:translateX(calc(-50vw - 20px)) translateY(0)}
-  70%  {transform:translateX(-2px) translateY(0)}    /* zips in from the screen edge */
-  78%  {transform:translateX(1px)  translateY(0)}    /* teeters on the lip           */
-  82%  {transform:translateX(1px)  translateY(3px)}
-  96%  {transform:translateX(1px)  translateY(26px)} /* straight down; the clip crops */
-  100% {transform:translateX(1px)  translateY(26px)}
+/* The approach is a straight line from a random point on the screen's edge,
+   flown in a fixed full-viewport layer; at the lip it hands off to this
+   clipped ball, which only ever falls — so the crop stays pixel-true. */
+.putt .putt-ball{visibility:hidden}
+.putt .putt-ball.fall{visibility:visible;animation:puttFall .5s cubic-bezier(.45,.05,.85,.9) forwards}
+@keyframes puttFall{
+  0%  {transform:translateY(0)}
+  12% {transform:translateY(3px)}
+  100%{transform:translateY(26px)}
 }
-@keyframes puttR{
-  0%   {transform:translateX(calc(50vw + 20px)) translateY(0)}
-  70%  {transform:translateX(2px)  translateY(0)}
-  78%  {transform:translateX(-1px) translateY(0)}
-  82%  {transform:translateX(-1px) translateY(3px)}
-  96%  {transform:translateX(-1px) translateY(26px)}
-  100% {transform:translateX(-1px) translateY(26px)}
-}
+.flight{position:fixed;inset:0;pointer-events:none;z-index:25;overflow:hidden}
+.flight .putt-ball{top:0;left:0;margin:0;transform:translate(-100px,-100px)}
 @keyframes pinDrop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
 .wordmark{
   font-family:"Google Sans Flex",sans-serif; font-weight:1000;
@@ -1030,6 +1023,8 @@ body.playing .tabs{display:none}
     </div>
   </section>
 </div>
+
+<div class="flight" aria-hidden="true"><i class="putt-ball" id="flight-ball"><b></b></i></div>
 
 <nav class="tabs" id="tabs">
   <button class="tab on" data-scr="s-today">
@@ -2728,28 +2723,60 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
 
 /* ── putt putt ── */
 (function(){
-  const ball = $('#putt-ball');
-  if(!ball || matchMedia('(prefers-reduced-motion: reduce)').matches){
-    // still life: a ball resting by the hole
-    if(ball) ball.style.transform = 'translateX(-26px)';
+  const drop = $('#putt-ball'), flight = $('#flight-ball');
+  if(!drop || !flight) return;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+    drop.style.visibility = 'visible';
+    drop.style.transform = 'translateX(-26px)';    // still life beside the hole
     return;
   }
   const COLOURS = ['#D93636','#E7CE3C','#3EC97B','#7C4FC4','#2D5BD1','#E93A9A','#F0705F'];
-  let i = 0;
+  let i = 0, flying = false;
+
   const putt = () => {
-    ball.style.setProperty('--pb', COLOURS[i % COLOURS.length]);
-    ball.classList.toggle('r', i % 2 === 1);      // alternate screen edges
-    i++;
-    ball.classList.remove('go'); void ball.offsetWidth; ball.classList.add('go');
-    // the drop begins ~80% into a 1.9s cycle
-    setTimeout(() => {
+    if(flying) return;
+    if(document.visibilityState !== 'visible' || !$('#s-today').classList.contains('on')) return;
+    const hole = document.querySelector('.putt-hole');
+    if(!hole) return;
+    const hr = hole.getBoundingClientRect();
+    if(hr.bottom < 0 || hr.top > innerHeight) return;   // green is scrolled away
+
+    // where the drop ball rests — the flight must end exactly there
+    drop.classList.remove('fall'); drop.style.visibility = 'hidden';
+    const t = drop.getBoundingClientRect();
+
+    // a random point just beyond the viewport perimeter, weighted by edge length
+    const W = innerWidth, H = innerHeight, P = 20;
+    const pick = Math.random() * (2*W + 2*H);
+    let sx, sy;
+    if(pick < W)            { sx = pick;            sy = -P; }
+    else if(pick < W + H)   { sx = W + P;           sy = pick - W; }
+    else if(pick < 2*W + H) { sx = pick - W - H;    sy = H + P; }
+    else                    { sx = -P;              sy = pick - 2*W - H; }
+
+    const col = COLOURS[i % COLOURS.length]; i++;
+    drop.style.setProperty('--pb', col);
+    flight.style.setProperty('--pb', col);
+
+    const dist = Math.hypot(t.left - sx, t.top - sy);
+    const dur = Math.min(1600, Math.max(420, dist / 0.9));   // ~900px/s, clamped
+    flying = true;
+    flight.animate(
+      [{ transform: `translate(${sx}px, ${sy}px)` },
+       { transform: `translate(${t.left}px, ${t.top}px)` }],
+      { duration: dur, easing: 'cubic-bezier(.3,.1,.6,.95)', fill: 'forwards' }
+    ).onfinish = () => {
+      flight.getAnimations().forEach(a => a.cancel());
+      flight.style.transform = 'translate(-100px,-100px)';
+      drop.classList.add('fall');                            // the clip takes it from here
       if(document.visibilityState === 'visible' && $('#s-today').classList.contains('on')){
         Snd.thunk();
         try { navigator.vibrate && navigator.vibrate(25); } catch(e){}
       }
-    }, 1500);
+      setTimeout(() => { drop.classList.remove('fall'); drop.style.visibility = 'hidden'; flying = false; }, 650);
+    };
   };
-  putt();
+  setTimeout(putt, 900);
   setInterval(putt, 3600);
 })();
 
