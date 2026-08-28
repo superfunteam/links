@@ -125,14 +125,16 @@ body.playing .flight{display:none}
 .putt-ball b::before{
   content:"";position:absolute;left:0;top:0;width:4px;height:4px;
   border-radius:50%;background:transparent;
+  /* honest dimpling: centre dot plus a hexagonal ring at radius 9 —
+     every neighbouring pair of dimples is exactly 9px apart */
   box-shadow:
-    21px 12px 0 0 rgba(0,0,0,.28),
-    10px  7px 0 0 rgba(0,0,0,.28),
-    15px 20px 0 0 rgba(0,0,0,.28),
-     7px 16px 0 0 rgba(0,0,0,.28),
-    22px 21px 0 0 rgba(0,0,0,.26),
-    14px  4px 0 0 rgba(0,0,0,.26),
-     6px 10px 0 0 rgba(0,0,0,.24)
+      14px 14px 0 0 rgba(0,0,0,.26),
+      23px 14px 0 0 rgba(0,0,0,.26),
+    18.5px 21.8px 0 0 rgba(0,0,0,.26),
+     9.5px 21.8px 0 0 rgba(0,0,0,.26),
+       5px 14px 0 0 rgba(0,0,0,.26),
+     9.5px 6.2px 0 0 rgba(0,0,0,.26),
+    18.5px 6.2px 0 0 rgba(0,0,0,.26)
 }
 @keyframes puttSpin{to{transform:rotate(360deg)}}
 /* The approach is a straight line from a random point on the screen's edge,
