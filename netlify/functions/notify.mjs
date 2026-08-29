@@ -90,7 +90,7 @@ export default async () => {
   const { sql } = getDatabase();
   const subs = await sql`select endpoint, keys, tz, player_id, last_sent::text as last_sent from push_subs`;
   const etToday = localParts('America/New_York')?.date;
-  let sent = 0, dropped = 0;
+  let sent = 0, dropped = 0, skipped = 0;
   for (const s of subs) {
     const at = localParts(s.tz);
     if (!at || at.hour !== 9 || s.last_sent === at.date) continue;
@@ -99,11 +99,13 @@ export default async () => {
 
     // what's true for THIS player this morning: their streak, and any clubmate
     // who has already put up a score today (rounds are kept on ET dates)
-    let streak = 0, friend = null;
+    let streak = 0, friend = null, playedToday = false;
     if (s.player_id && etToday) {
       try {
         const mine = await sql`select play_date::text as d from rounds
           where player_id = ${s.player_id} order by play_date desc limit 60`;
+        // already played today? the nudge has nothing left to say — stay quiet
+        playedToday = mine.some(r => r.d === etToday);
         streak = streakOf(mine.map(r => r.d), etToday);
         const played = await sql`select p.name from rounds r
           join players p on p.id = r.player_id
@@ -113,6 +115,11 @@ export default async () => {
               from friendships where low_id = ${s.player_id} or high_id = ${s.player_id})`;
         if (played.length) friend = played[Math.floor(Math.random() * played.length)].name;
       } catch (err) { console.log('notify: personalize failed', err.message); }
+    }
+    if (playedToday) {
+      await sql`update push_subs set last_sent = ${at.date}::date where endpoint = ${s.endpoint}`;
+      skipped++;
+      continue;
     }
     const msg = composeReminder({ streak, friend, day: day?.name, par });
     const payload = JSON.stringify({ title: msg.title, body: msg.body, url: '/' });
@@ -130,7 +137,7 @@ export default async () => {
       }
     }
   }
-  console.log(`notify: ${subs.length} sub(s), ${sent} sent, ${dropped} dropped`);
+  console.log(`notify: ${subs.length} sub(s), ${sent} sent, ${skipped} already played, ${dropped} dropped`);
   return new Response(`sent ${sent}`);
 };
 
