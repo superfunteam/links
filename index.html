@@ -921,8 +921,13 @@ body.playing .tabs{display:none}
 .sheet{
   position:fixed;inset:0;z-index:40;display:none;
   background:rgba(22,25,29,.42);backdrop-filter:blur(3px);
-  align-items:flex-end;justify-content:center;padding:14px
+  align-items:flex-end;justify-content:center;padding:14px;
+  overscroll-behavior:contain
 }
+/* while a sheet is open the page behind it holds perfectly still —
+   and the gutter stays reserved so desktop scrollbars can't reflow the page */
+html{scrollbar-gutter:stable}
+body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .sheet.on{display:flex;animation:fade .28s var(--ease)}
 /* share and settings open on top of a scorecard, so they must outrank it —
    equal z-index would let the later element in the DOM win */
@@ -932,7 +937,7 @@ body.playing .tabs{display:none}
   width:100%;max-width:532px;background:var(--paper);border:2px solid var(--ink);
   border-radius:26px;padding:22px 20px max(22px,env(safe-area-inset-bottom));
   box-shadow:0 8px 0 rgba(0,0,0,.22);animation:rise .46s var(--spring);
-  max-height:94vh;overflow-y:auto
+  max-height:94vh;overflow-y:auto;overscroll-behavior:contain
 }
 @keyframes rise{from{transform:translateY(64px);opacity:0}to{transform:none;opacity:1}}
 
@@ -2444,6 +2449,38 @@ const KB_ROWS = [
   });
 })();
 const sheetOpen = () => document.querySelector('.sheet.on') !== null;
+
+/* ── sheet scroll hygiene ──
+   iOS lets a touch scroll chain from a sheet to the page behind it: the body
+   drifts under the scrim, and the sheet can then refuse to scroll back to its
+   own top. While any sheet is open the body is frozen in place (and restored
+   to the same spot after), and a sheet always opens scrolled to its top. */
+(function(){
+  let lockedY = null;
+  const sync = () => {
+    const open = sheetOpen();
+    if(open && lockedY === null){
+      lockedY = scrollY;
+      document.body.style.top = -lockedY + 'px';
+      document.body.classList.add('locked');
+    } else if(!open && lockedY !== null){
+      document.body.classList.remove('locked');
+      document.body.style.top = '';
+      scrollTo(0, lockedY);
+      lockedY = null;
+    }
+  };
+  const wasOn = new WeakMap();
+  const mo = new MutationObserver(() => {
+    document.querySelectorAll('.sheet').forEach(sh => {
+      const on = sh.classList.contains('on');
+      if(on && !wasOn.get(sh)) sh.querySelector('.sheet-in')?.scrollTo(0, 0);
+      wasOn.set(sh, on);
+    });
+    sync();
+  });
+  document.querySelectorAll('.sheet').forEach(sh => mo.observe(sh, { attributes:true, attributeFilter:['class'] }));
+})();
 // Master mode hides how many letters a word has, so the board can't be counted.
 const MASTER = {
   on: JSON.parse(localStorage.getItem('links.master') ?? 'false'),
