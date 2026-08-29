@@ -543,8 +543,12 @@ body.playing .tabs{display:none}
 .gname{
   text-align:left;padding:9px 12px !important;font-weight:700;font-size:12.5px;
   white-space:nowrap;position:sticky;left:0;background:var(--card);z-index:2;
-  border-right:1.5px solid var(--line);max-width:96px;overflow:hidden;text-overflow:ellipsis
+  max-width:96px;overflow:hidden;text-overflow:ellipsis;
+  /* collapsed table borders stay behind when a cell sticks, so the stuck cell
+     paints its own separators as shadows that travel with it */
+  box-shadow:inset -1.5px 0 0 var(--line), inset 0 1.5px 0 var(--line)
 }
+.grid thead .gname{box-shadow:inset -1.5px 0 0 var(--line)}
 .grid tbody tr{border-top:1.5px solid var(--line)}
 .gcell{cursor:pointer;position:relative;padding:9px 4px !important;min-width:34px;transition:background var(--t-fast)}
 .gcell:hover{background:var(--g-050)}
