@@ -17,8 +17,20 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Join links: links.superfun.games/AB12 opens the app with the code prefilled.
-# A non-forced rewrite, so real files (/backroom, assets) are served first.
+# The invite card image a shared code unfurls into
+[[redirects]]
+  from = "/og/:code"
+  to = "/.netlify/functions/og?code=:code"
+  status = 200
+
+# Join links: links.superfun.games/AB12 opens the app with the code prefilled,
+# and the invite function swaps the OG tags so the link unfurls personally.
+# Non-forced, so real files (/backroom, assets) are still served first.
+[[redirects]]
+  from = "/:code"
+  to = "/.netlify/functions/invite?code=:code"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

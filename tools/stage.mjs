@@ -13,6 +13,9 @@ mkdirSync('public', { recursive: true });
 let copied = 0;
 for (const f of ASSETS) {
   if (existsSync(f)) { copyFileSync(f, `public/${f}`); copied++; }
+  // index.html must ship: without it, /index.html falls through to the invite
+  // function, whose self-fetch would then recurse. Fail the build instead.
+  else if (f === 'index.html') { console.error('  FATAL: index.html missing'); process.exit(1); }
   else console.warn(`  (skipped missing ${f})`);
 }
 for (const [src, dest] of Object.entries(NESTED)) {
