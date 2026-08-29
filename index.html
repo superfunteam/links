@@ -118,10 +118,7 @@ body.playing .flight{display:none}
 }
 .putt-ball b{
   position:absolute;left:50%;top:50%;width:32px;height:32px;margin:-16px 0 0 -16px;
-  animation:puttSpin .34s linear infinite;
 }
-/* a ball coming from the right rolls leftward, so it spins the other way */
-.putt-ball.ccw b{animation-direction:reverse}
 .putt-ball b::before{
   content:"";position:absolute;left:0;top:0;width:4px;height:4px;
   border-radius:50%;background:transparent;
@@ -136,7 +133,6 @@ body.playing .flight{display:none}
      9.5px 6.2px 0 0 rgba(0,0,0,.26),
     18.5px 6.2px 0 0 rgba(0,0,0,.26)
 }
-@keyframes puttSpin{to{transform:rotate(360deg)}}
 /* The approach is a straight line from a random point on the screen's edge,
    flown in a fixed full-viewport layer; at the lip it hands off to this
    clipped ball, which only ever falls — so the crop stays pixel-true. */
@@ -2824,18 +2820,25 @@ if('serviceWorker' in navigator){ try { navigator.serviceWorker.register('/sw.js
     const dist = Math.hypot(tx - sx, ty - sy);
     const dur = Math.min(5200, Math.max(600, (dist / SPEED) * 1.12));
     const dir = tx >= sx ? 1 : -1;                 // travelling right or left
-    flight.classList.toggle('ccw', dir < 0);
-    drop.classList.toggle('ccw', dir < 0);
     drop.style.setProperty('--tip', dir);
+    // roll, don't whirl: 2° of spin per px travelled, easing locked to the travel
+    const spinDeg = dir * dist * 2;
     const midX = sx + (tx - sx) * 0.85, midY = sy + (ty - sy) * 0.85;
     flying = true;
+    flight.querySelector('b').animate(
+      [{ transform: 'rotate(0deg)', offset: 0, easing: 'linear' },
+       { transform: `rotate(${spinDeg * 0.85}deg)`, offset: 0.72, easing: 'cubic-bezier(.16,.62,.44,.99)' },
+       { transform: `rotate(${spinDeg}deg)`, offset: 1 }],
+      { duration: dur, fill: 'forwards' });
     flight.animate(
       [{ transform: `translate(${sx}px, ${sy}px)`, offset: 0, easing: 'linear' },
        { transform: `translate(${midX}px, ${midY}px)`, offset: 0.72, easing: 'cubic-bezier(.16,.62,.44,.99)' },
        { transform: `translate(${tx}px, ${ty}px)`, offset: 1 }],
       { duration: dur, fill: 'forwards' }
     ).onfinish = () => {
-      flight.getAnimations().forEach(a => a.cancel());
+      flight.getAnimations({ subtree: true }).forEach(a => a.cancel());
+      // the dropped ball's face keeps the pose the roll ended on
+      drop.querySelector('b').style.transform = `rotate(${spinDeg % 360}deg)`;
       flight.style.transform = 'translate(-200px,-200px)';
       if(!onHome()){ flying = false; return; }
       drop.style.visibility = 'visible';           // inline both ways — never fights the class
