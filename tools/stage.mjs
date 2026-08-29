@@ -4,7 +4,7 @@
 // serving them would hand out every answer in plaintext.
 import { mkdirSync, copyFileSync, existsSync, rmSync } from 'node:fs';
 
-const ASSETS = ['index.html', 'favicon.png', 'ogimage.png', 'site.webmanifest', 'sw.js'];
+const ASSETS = ['index.html', 'favicon.png', 'ogimage.png', 'site.webmanifest', 'sw.js', 'words.txt'];
 const NESTED = { 'backroom.html': 'backroom/index.html' };
 
 rmSync('public', { recursive: true, force: true });
@@ -15,7 +15,9 @@ for (const f of ASSETS) {
   if (existsSync(f)) { copyFileSync(f, `public/${f}`); copied++; }
   // index.html must ship: without it, /index.html falls through to the invite
   // function, whose self-fetch would then recurse. Fail the build instead.
-  else if (f === 'index.html') { console.error('  FATAL: index.html missing'); process.exit(1); }
+  // words.txt too: without the file, the catch-all serves HTML with a 200 and
+  // the client-side validation just disables the typo check — fail loudly instead
+  else if (f === 'index.html' || f === 'words.txt') { console.error(`  FATAL: ${f} missing`); process.exit(1); }
   else console.warn(`  (skipped missing ${f})`);
 }
 for (const [src, dest] of Object.entries(NESTED)) {
