@@ -459,6 +459,16 @@ body.playing .tabs{display:none}
   #sheet-howto .sheet-in{max-width:560px}
 }
 
+/* ─────────────────────────────  streak  ───────────────────────────── */
+.streak{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  margin:12px auto 0;padding:8px 15px;width:fit-content;
+  border:1.5px dashed var(--line-2);border-radius:999px;background:var(--card);
+  font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:.02em
+}
+.streak svg{width:15px;height:15px;color:var(--gold);flex:none}
+.streak b{color:var(--ink)}
+
 /* ─────────────────────────────  thanks  ───────────────────────────── */
 .thanks{
   display:flex;align-items:center;justify-content:center;gap:10px;
@@ -1300,6 +1310,24 @@ const ROUNDS = {
   }
 };
 
+// Consecutive days finished, counted back from today — or from yesterday, so
+// an unplayed today doesn't zero the streak before the day is over. Archive
+// days land in ROUNDS under their own date, so filling in the past counts too.
+const prevKey = k => { const t = new Date(k + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
+function streakLen(){
+  const have = ROUNDS.all();
+  let k = todayKey();
+  if(!have[k]) k = prevKey(k);
+  let n = 0;
+  while(have[k]){ n++; k = prevKey(k); }
+  return n;
+}
+const STREAK_FLAME = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>`;
+const streakHTML = () => {
+  const n = streakLen();
+  return n ? `<div class="streak">${STREAK_FLAME}<span><b>${n}-day</b> streak</span></div>` : '';
+};
+
 // A player is identified by a 4-character code they can read aloud over the
 // phone. The SERVER issues it — a device that picked its own could squat the
 // namespace or land on someone else's account. The code is public and only
@@ -1524,7 +1552,8 @@ function renderToday(){
           <button class="btn ghost" id="t-replay">Replay <b class="note">won't count</b></button>
         </div>`
       : `<button class="btn big" id="t-play">Play today's round</button>` }
-    </div>`;
+    </div>
+    ${streakHTML()}`;
 
   if(r){
     $('#t-replay').onclick = ()=>{ Snd.boot(); Snd.blip(); startCourse(i, true); };
@@ -2055,6 +2084,7 @@ function renderClub(){
         <h3><span>Today</span><span>${DAYS[todayIdx()]?.name || ''}</span></h3>
         ${todayRows}
       </div>
+      ${streakHTML()}
       <h2 class="sec-h">Club Scorecard</h2>
       ${grid}`;
   }
@@ -2822,6 +2852,7 @@ async function endCourse(){
       <div class="term flex" style="color:${d<0?'var(--green)':d>0?'var(--red)':'var(--ink)'}">${rel(d)}</div>
       <div class="sub">${c.name} · <b>${total} strokes</b> · par ${p}</div>
     </div>
+    ${streakHTML()}
     <div class="card">
       <h3><span>Scorecard</span><span>${c.name}</span></h3>
       <div class="card-row head"><span>#</span><span>Seed</span><span>Par</span><span>Score</span></div>
