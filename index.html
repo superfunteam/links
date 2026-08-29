@@ -483,10 +483,14 @@ body.playing .tabs{display:none}
 .streak b{color:var(--ink)}
 .streak-dots{display:flex;align-items:center;gap:4px;margin-left:5px}
 .streak-dots .sd{
-  width:7px;height:7px;border-radius:50%;
+  width:8px;height:8px;border-radius:50%;position:relative;
   border:1.5px solid var(--line-2);background:transparent
 }
-.streak-dots .sd.on{background:var(--g-600);border-color:var(--g-600)}
+.streak-dots .sd.on{background:var(--sb,var(--g-600));border-color:var(--sb,var(--g-600))}
+.streak-dots .sd.on::after{
+  content:"";position:absolute;right:1px;top:1.5px;width:2px;height:2px;
+  border-radius:50%;background:rgba(0,0,0,.22)
+}
 
 /* ─────────────────────────────  thanks  ───────────────────────────── */
 .thanks{
@@ -1349,6 +1353,7 @@ const ROUNDS = {
 // Consecutive days finished, counted back from today — or from yesterday, so
 // an unplayed today doesn't zero the streak before the day is over. Archive
 // days land in ROUNDS under their own date, so filling in the past counts too.
+const BALL_COLOURS = ['#D93636','#E7CE3C','#3EC97B','#7C4FC4','#2D5BD1','#E93A9A','#F0705F'];
 const prevKey = k => { const t = new Date(k + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
 function streakLen(){
   const have = ROUNDS.all();
@@ -1362,8 +1367,9 @@ const STREAK_FLAME = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="
 const streakHTML = () => {
   const n = streakLen();
   if(!n) return '';
-  // the run so far as filled dots (capped at five), two hollow ones ahead
-  const dots = Array.from({length: Math.min(n, 5)}, () => '<i class="sd on"></i>').join('')
+  // the run so far as little golf balls (capped at five), two hollow days ahead
+  const dots = Array.from({length: Math.min(n, 5)}, (_, i) =>
+      `<i class="sd on" style="--sb:${BALL_COLOURS[i % BALL_COLOURS.length]}"></i>`).join('')
              + '<i class="sd"></i><i class="sd"></i>';
   return `<div class="streak">${STREAK_FLAME}<span><b>${n}-day</b> streak</span><span class="streak-dots">${dots}</span></div>`;
 };
@@ -3062,7 +3068,7 @@ setTimeout(() => DICT.load(), 2500);   // have the word list warm before the fir
     drop.style.transform = 'translateX(-52px)';    // still life beside the hole
     return;
   }
-  const COLOURS = ['#D93636','#E7CE3C','#3EC97B','#7C4FC4','#2D5BD1','#E93A9A','#F0705F'];
+  const COLOURS = BALL_COLOURS;
   const SPEED = 0.32;                              // px per ms — a gentle roll
   let i = 0, flying = false;
 
