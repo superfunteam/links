@@ -386,6 +386,41 @@ body.playing .tabs{display:none}
 .sheet-in{animation:rise .44s var(--spring)}
 .codecard,.addcard,.stats,.card.board{animation:riseIn .44s var(--ease) backwards}
 
+/* ───────────────────────────  how to play  ─────────────────────────── */
+.howto-tile{
+  width:100%;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:14px;
+  background:var(--g-600);border:2px solid var(--g-800);border-radius:16px;padding:15px;
+  box-shadow:0 3px 0 var(--g-800);color:#fff
+}
+.howto-q{
+  flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px
+}
+.howto-b{flex:1;display:flex;flex-direction:column;gap:2px}
+.howto-b b{font-size:16px;font-weight:800}
+.howto-b span{font-size:12.5px;font-weight:600;opacity:.85}
+.howto-chev{font-size:22px;font-weight:800;opacity:.85}
+.ht-kicker{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--g-700);font-weight:800;margin-bottom:8px}
+.ht-title{font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:24px;letter-spacing:-.01em;margin-bottom:10px}
+.ht-p{font-size:15px;line-height:1.6;color:var(--ink-soft);font-weight:500;margin-bottom:12px}
+.ht-p b{color:var(--ink)}
+.ht-demo{margin:16px 0 4px;padding:16px;border:1.5px dashed var(--line-2);border-radius:var(--r-lg);background:var(--card)}
+.ht-club{display:flex;justify-content:center;margin:4px 0 14px;color:var(--g-600)}
+.ht-club svg{width:64px;height:64px}
+.ht-dots{display:flex;justify-content:center;gap:7px;margin:18px 0 14px}
+.ht-dot{width:8px;height:8px;border-radius:50%;background:var(--line-2);transition:background var(--t-fast),transform var(--t-fast)}
+.ht-dot.on{background:var(--g-600);transform:scale(1.25)}
+.ht-nav{display:flex;gap:10px}
+.ht-back{
+  flex:none;padding:15px 18px;border-radius:var(--r);border:2px solid var(--line);background:var(--card);
+  font-weight:700;font-size:15.5px;color:var(--ink);box-shadow:0 3px 0 var(--line-2)
+}
+/* on a wide screen the walkthrough is a centred modal, not a bottom sheet */
+@media (min-width:700px){
+  #sheet-howto{align-items:center}
+  #sheet-howto .sheet-in{max-width:560px}
+}
+
 /* ─────────────────────────────  thanks  ───────────────────────────── */
 .thanks{
   display:flex;align-items:center;justify-content:center;gap:10px;
@@ -839,7 +874,7 @@ body.playing .tabs{display:none}
 .sheet.on{display:flex;animation:fade .28s var(--ease)}
 /* share and settings open on top of a scorecard, so they must outrank it —
    equal z-index would let the later element in the DOM win */
-#sheet-share,#sheet-set{z-index:50}
+#sheet-share,#sheet-set,#sheet-howto{z-index:50}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet-in{
   width:100%;max-width:532px;background:var(--paper);border:2px solid var(--ink);
@@ -1069,6 +1104,11 @@ body.playing .tabs{display:none}
 <!-- ══════════════ SHEETS ══════════════ -->
 <div class="sheet" id="sheet-set"><div class="sheet-in">
   <h2 class="set-h">Settings</h2>
+  <button class="howto-tile" id="howto-open">
+    <span class="howto-q">?</span>
+    <span class="howto-b"><b>How to Play</b><span>The chain, the strokes, the club</span></span>
+    <span class="howto-chev">›</span>
+  </button>
   <button class="opt" id="opt-snd">
     <span class="opt-b"><span class="opt-t">Sound</span><span class="opt-d">Blips, bonks and fanfares</span></span>
     <span class="sw"></span>
@@ -1083,6 +1123,8 @@ body.playing .tabs{display:none}
   </button>
   <div class="actions"><button class="btn" id="set-done">Done</button></div>
 </div></div>
+
+<div class="sheet" id="sheet-howto"><div class="sheet-in" id="sheet-howto-in"></div></div>
 <div class="sheet green" id="sheet-me"><div class="sheet-in">
   <span class="cc-lab">Before you share</span>
   <h2 class="sheet-h flex">Who are you?</h2>
@@ -2339,7 +2381,7 @@ function flashKey(k){
 
 document.addEventListener('keydown', e=>{
   if(!$('#s-play').classList.contains('on') || S.busy) return;
-  if($('#sheet-hole').classList.contains('on') || $('#sheet-course').classList.contains('on')){
+  if(sheetOpen()){
     if(e.key==='Enter'){ e.preventDefault(); $('.sheet.on .btn')?.click(); }
     return;
   }
@@ -2512,6 +2554,61 @@ wireRemind($('#sheet-set'));
 $('#gear').onclick = ()=>{ Snd.boot(); Snd.blip(); paintSettings(); $('#sheet-set').classList.add('on'); };
 $('#set-done').onclick = ()=>{ Snd.blip(); $('#sheet-set').classList.remove('on'); };
 $('#sheet-set').addEventListener('click', e=>{ if(e.target.id==='sheet-set'){ $('#sheet-set').classList.remove('on'); } });
+
+/* ── how to play ── */
+(function(){
+  const sheet = $('#sheet-howto'), body = $('#sheet-howto-in');
+  const clubIcon = `<div class="ht-club">${document.querySelector('.tab[data-scr="s-club"] svg').outerHTML}</div>`;
+  const demoDone = () => `<div class="ht-demo"><div class="demo" aria-hidden="true">` +
+    DEMO_CHAIN.map(r =>
+      `<div class="demo-row"><div class="demo-tiles">${[...r.word].map(c=>`<div class="tile ok">${c}</div>`).join('')}</div>` +
+      `<i class="demo-link">${(r.link||[]).map((w,j)=>`<span style="animation-delay:${(.15+j*.14).toFixed(2)}s">${w}</span>`).join('')}</i></div>`
+    ).join('') + `</div></div>`;
+
+  const pages = [
+    { k:'How to play', t:'It\u2019s all one chain', b: () => `
+        <p class="ht-p">Every hole is a chain of words, and each word links to the one below it \u2014 <b>SNAKE OIL</b>, <b>OIL FIELD</b>, <b>FIELD TRIP</b>.</p>
+        <p class="ht-p">Sometimes the link is a compound word like <b>OVERHEAD</b>, sometimes a before-and-after pair like <b>PARTY ANIMAL</b>.</p>` + demoDone() },
+    { k:'Step one', t:'Guess the words', b: () => `
+        <p class="ht-p">We give you the first word, plus the first letter of every word after it. Type what you think comes next.</p>
+        <p class="ht-p">Every guess costs <b class="pen">1 stroke</b> \u2014 golf rules, the low score wins the day.</p>` },
+    { k:'Step two', t:'You\u2019re never stuck', b: () => `
+        <p class="ht-p">Need a hand? Buy the next letter any time for <b class="pen">1 stroke</b>.</p>
+        <p class="ht-p">And when a guess misses, we gift you the next letter for free. Either way, every swing moves you forward.</p>` },
+    { k:'For the sharks', t:'Master mode', b: () => `
+        <p class="ht-p">Master mode hides how many letters are in each word \u2014 no counting the blanks, just you and the chain.</p>
+        <p class="ht-p">Flip it on in Settings when you\u2019re feeling brave.</p>` },
+    { k:'The whole point', t:'Play it with your people', b: () => clubIcon + `
+        <p class="ht-p"><b>Links is a club game.</b> Share your code with friends and family and every day becomes a tiny tournament \u2014 one shared scorecard, crowns for the day\u2019s winner, bragging rights at dinner.</p>
+        <p class="ht-p">Playing alone is fine. <b>Playing in a club is the game.</b> Go add somebody \u2014 right now.</p>`, cta:true },
+  ];
+
+  let pi = 0;
+  const close = () => sheet.classList.remove('on');
+  const render = () => {
+    const p = pages[pi], last = !!p.cta;
+    body.innerHTML = `
+      <p class="ht-kicker">${p.k}</p>
+      <h2 class="ht-title">${p.t}</h2>
+      ${p.b()}
+      <div class="ht-dots">${pages.map((_,j)=>`<i class="ht-dot${j===pi?' on':''}"></i>`).join('')}</div>
+      <div class="ht-nav">
+        ${pi ? `<button class="ht-back" id="ht-back">Back</button>` : ''}
+        ${last ? `<button class="btn" id="ht-club">Open my Club</button>` : `<button class="btn" id="ht-next">Next</button>`}
+      </div>
+      ${last ? `<div class="ht-nav" style="margin-top:10px"><button class="ht-back" id="ht-done" style="flex:1">Done</button></div>` : ''}`;
+    body.scrollTop = 0;
+    if(pi) $('#ht-back').onclick = ()=>{ Snd.blip(); pi--; render(); };
+    if(last){
+      $('#ht-club').onclick = ()=>{ Snd.boot(); Snd.blip(); close(); goTab('s-club'); };
+      $('#ht-done').onclick = ()=>{ Snd.blip(); close(); };
+    } else {
+      $('#ht-next').onclick = ()=>{ Snd.blip(); pi++; render(); };
+    }
+  };
+  $('#howto-open').onclick = ()=>{ Snd.boot(); Snd.blip(); $('#sheet-set').classList.remove('on'); pi = 0; render(); sheet.classList.add('on'); };
+  sheet.addEventListener('click', e=>{ if(e.target===sheet) close(); });
+})();
 $('#opt-snd').onclick = ()=>{
   Snd.on = !Snd.on; localStorage.setItem('links.snd', JSON.stringify(Snd.on));
   paintSettings(); if(Snd.on){ Snd.boot(); Snd.blip(); }
