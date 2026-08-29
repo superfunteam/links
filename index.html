@@ -459,6 +459,19 @@ body.playing .tabs{display:none}
   #sheet-howto .sheet-in{max-width:560px}
 }
 
+/* ──────────────────────────  typo sheet  ────────────────────────── */
+.word-big{
+  font-family:"Google Sans Flex",sans-serif;font-weight:900;font-size:40px;
+  letter-spacing:.02em;text-align:center;color:var(--ink);
+  margin:14px 0 2px;overflow-wrap:anywhere
+}
+.word-sub{
+  text-align:center;font-size:14px;font-weight:600;color:var(--muted);
+  margin:16px 0 14px
+}
+/* .sheet-p's default ink is for the green sheets — this one sits on paper */
+#sheet-word .sheet-p{color:var(--ink-soft)}
+
 /* ─────────────────────────────  streak  ───────────────────────────── */
 .streak{
   display:flex;align-items:center;justify-content:center;gap:7px;
@@ -1184,8 +1197,9 @@ body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 <div class="sheet" id="sheet-howto"><div class="sheet-in" id="sheet-howto-in"></div></div>
 
 <div class="sheet" id="sheet-word"><div class="sheet-in">
-  <h2 class="sheet-h flex">“<span id="word-word"></span>” — is that a word?</h2>
-  <p class="sheet-p">It’s not one we know. Strokes are precious — fixing a typo is free, but the swing is yours to take.</p>
+  <div class="word-big flex" id="word-word"></div>
+  <p class="word-sub">is not a word we know</p>
+  <p class="sheet-p" style="text-align:center">Strokes are precious. Fixing a typo is free, but the swing is yours to take.</p>
   <div class="actions col">
     <button class="btn" id="word-fix">Try Another Word</button>
   </div>
