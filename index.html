@@ -1524,6 +1524,14 @@ const NET = {
       }catch(e){}
       this.club = res.data.club; this.day = res.data.today; this.at = Date.now(); this.state = 'ok';
       try{ localStorage.setItem('links.club', JSON.stringify({ at: this.at, day: this.day, club: this.club })); }catch(e){}
+      // rounds played on another device flow back into the local book, so the
+      // You stats, streak and flags agree everywhere. First write still wins.
+      try{
+        const mine = (this.club || []).find(p => p.isMe);
+        for(const r of (mine && mine.rounds) || []){
+          ROUNDS.save(r.date, { strokes: r.strokes, par: r.par, key: r.key, marks: r.marks || [] });
+        }
+      }catch(e){}
     } else {
       this.state = res.offline ? 'offline' : 'error';
     }
@@ -2345,9 +2353,9 @@ function renderYou(){
     ME.adopt(res.data.player.code, res.data.token);
     localStorage.setItem('links.email', email);
     if(res.data.player.name) ME.name = res.data.player.name;
-    const local = ROUNDS.all();
-    for(const r of res.data.rounds || []) if(!local[r.date]) local[r.date] = { strokes: r.strokes, par: r.par, marks: [] };
-    localStorage.setItem('links.rounds', JSON.stringify(local));
+    for(const r of res.data.rounds || []){
+      ROUNDS.save(r.date, { strokes: r.strokes, par: r.par, key: r.key, marks: r.marks || [] });
+    }
     NET.club = res.data.club; NET.at = Date.now();
     Snd.win(1); renderYou(); renderToday();
     const who = dotName(res.data.player.name || res.data.player.code);
