@@ -85,7 +85,11 @@ export function cleanMarks(v) {
   return v.slice(0, 12).map(hole =>
     (Array.isArray(hole) ? hole : []).slice(0, 12).map(m => ({
       g: clampInt(m?.g, 0, 99) ?? 0,
-      b: clampInt(m?.b, 0, 99) ?? 0
+      b: clampInt(m?.b, 0, 99) ?? 0,
+      // gifted-letter count arrived later; absence means "old round, infer".
+      // Single digit keeps worst-case jsonb text inside the 4096 bound, and a
+      // gift is a revealed letter, so f can never legitimately exceed b.
+      ...(m?.f != null ? { f: Math.min(clampInt(m.f, 0, 9) ?? 0, clampInt(m?.b, 0, 99) ?? 0) } : {})
     })));
 }
 
