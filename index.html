@@ -505,39 +505,36 @@ body.playing .tabs{display:none}
 /* one ball per day: newest sits at the visible right edge, history scrolls
    off to the left (an rtl scroller opens at its right end for free) */
 .streak-dots{
-  flex:1;display:flex;align-items:center;gap:5px;
+  flex:1;display:flex;align-items:center;gap:7px;
   overflow-x:auto;direction:rtl;padding:2px 0;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
   /* history dips out of sight where the rack starts to scroll */
-  mask-image:linear-gradient(to right,transparent 0,#000 26px);
-  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 26px)
+  mask-image:linear-gradient(to right,transparent 0,#000 34px);
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 34px)
 }
 .streak-dots::-webkit-scrollbar{display:none}
 .streak-dots .sd{
-  flex:none;width:14px;height:14px;border-radius:50%;position:relative;
+  flex:none;width:26px;height:26px;border-radius:50%;position:relative;
   border:2px solid var(--line-2);background:transparent
 }
 .streak-dots .sd .ball{
   position:absolute;inset:-2px;border-radius:50%;background:var(--sb,var(--g-600));
-  animation:ballRoll .7s var(--ease) backwards
+  /* mostly linear, so the turn is visible the whole way, then a soft settle */
+  animation:ballRoll .9s cubic-bezier(.3,.1,.35,1) backwards
 }
+/* the pool-ball marker: a bold off-centre dot that sweeps a wide arc */
 .streak-dots .sd .ball::after{
-  content:"";position:absolute;right:3px;top:3.5px;width:4px;height:4px;
-  border-radius:50%;background:rgba(0,0,0,.22)
-}
-/* a second, light fleck opposite the dark one — rotation you can't miss */
-.streak-dots .sd .ball::before{
-  content:"";position:absolute;left:3.5px;bottom:3px;width:3px;height:3px;
-  border-radius:50%;background:rgba(255,255,255,.4)
+  content:"";position:absolute;left:50%;top:3.5px;width:11px;height:11px;margin-left:-5.5px;
+  border-radius:50%;background:rgba(255,255,255,.85)
 }
 .streak-dots .sd.hole{
   background:var(--ink);border-color:var(--ink);
   display:flex;align-items:center;justify-content:center
 }
-.streak-dots .sd.hole svg{width:10px;height:10px}
+.streak-dots .sd.hole svg{width:15px;height:15px}
 @keyframes ballRoll{
-  0%  {transform:translateX(-60px) rotate(-360deg);opacity:0}
-  12% {opacity:1}
+  0%  {transform:translateX(-90px) rotate(-345deg);opacity:0}
+  8%  {opacity:1}
   100%{transform:translateX(0) rotate(0deg);opacity:1}
 }
 
@@ -1429,7 +1426,7 @@ const streakHTML = () => {
   // rtl, so the DOM runs newest-first and still READS oldest-to-newest.
   const RACK = 10;
   const balls = Array.from({length: n}, (_, i) =>
-      `<i class="sd slot"><b class="ball" style="--sb:${BALL_COLOURS[(n - 1 - i) % BALL_COLOURS.length]};animation-delay:${i * 150}ms"></b></i>`).join('');
+      `<i class="sd slot"><b class="ball" style="--sb:${BALL_COLOURS[(n - 1 - i) % BALL_COLOURS.length]};animation-delay:${i * 180}ms"></b></i>`).join('');
   const pad = Array.from({length: Math.max(0, RACK - n - 1)}, () => '<i class="sd slot"></i>').join('');
   return `<div class="streak">${STREAK_FLAME}<span><b>${n}-day</b> streak</span><span class="streak-dots">${STREAK_HOLE}${balls}${pad}</span></div>`;
 };
