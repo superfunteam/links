@@ -519,11 +519,16 @@ body.playing .tabs{display:none}
 }
 .streak-dots .sd .ball{
   position:absolute;inset:-2px;border-radius:50%;background:var(--sb,var(--g-600));
-  animation:ballRoll .55s var(--ease) backwards
+  animation:ballRoll .7s var(--ease) backwards
 }
 .streak-dots .sd .ball::after{
   content:"";position:absolute;right:3px;top:3.5px;width:4px;height:4px;
   border-radius:50%;background:rgba(0,0,0,.22)
+}
+/* a second, light fleck opposite the dark one — rotation you can't miss */
+.streak-dots .sd .ball::before{
+  content:"";position:absolute;left:3.5px;bottom:3px;width:3px;height:3px;
+  border-radius:50%;background:rgba(255,255,255,.4)
 }
 .streak-dots .sd.hole{
   background:var(--ink);border-color:var(--ink);
@@ -531,9 +536,9 @@ body.playing .tabs{display:none}
 }
 .streak-dots .sd.hole svg{width:10px;height:10px}
 @keyframes ballRoll{
-  0%  {transform:translateX(46px) rotate(180deg);opacity:0}
-  30% {opacity:1}
-  100%{transform:translateX(0) rotate(0);opacity:1}
+  0%  {transform:translateX(-60px) rotate(-360deg);opacity:0}
+  12% {opacity:1}
+  100%{transform:translateX(0) rotate(0deg);opacity:1}
 }
 
 /* ─────────────────────────────  thanks  ───────────────────────────── */
@@ -1424,7 +1429,7 @@ const streakHTML = () => {
   // rtl, so the DOM runs newest-first and still READS oldest-to-newest.
   const RACK = 10;
   const balls = Array.from({length: n}, (_, i) =>
-      `<i class="sd slot"><b class="ball" style="--sb:${BALL_COLOURS[(n - 1 - i) % BALL_COLOURS.length]};animation-delay:${(n - 1 - i) * 70}ms"></b></i>`).join('');
+      `<i class="sd slot"><b class="ball" style="--sb:${BALL_COLOURS[(n - 1 - i) % BALL_COLOURS.length]};animation-delay:${i * 150}ms"></b></i>`).join('');
   const pad = Array.from({length: Math.max(0, RACK - n - 1)}, () => '<i class="sd slot"></i>').join('');
   return `<div class="streak">${STREAK_FLAME}<span><b>${n}-day</b> streak</span><span class="streak-dots">${STREAK_HOLE}${balls}${pad}</span></div>`;
 };
