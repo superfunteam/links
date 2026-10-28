@@ -95,13 +95,16 @@ netlify dev
 
 ## The backroom
 
-`links.superfun.games/backroom` is the admin — password `superfunlinks`, checked server-side
-on every request. Four surfaces: **Overview** (players, rounds, shares, nudges, a 14-day
-plays chart, completion rate), **Calendar** (every scheduled day with plays and average vs
-par; tap a day for hole-by-hole difficulty and every round played), **Pool** (drafts,
-upcoming days, and the unscheduled reserve), and an **Editor** that validates a new chain's
-shape and checks each link against the vocabulary — known links show green, new ones yellow
-so you say them out loud before saving.
+`links.superfun.games/backroom` is the admin ("Links Backroom"). There is no shared password:
+the first visit runs owner setup, which asks for the `BACKROOM_KEY` environment variable (there
+is no default; with it unset, setup refuses). After that everyone signs in with a named staff
+account (owner, editor or viewer) that an owner invites from **Team**; every change lands in the
+audit log under **Activity**. `BACKROOM_KEY` must also be set for builds (Builds and Functions
+scopes): the build sends it as `x-build-key` to read and freeze the schedule, and a Netlify build
+without it fails rather than reshuffle days people already played. Surfaces: **Dashboard**,
+**Calendar** and per-day editing, **Puzzles** (drafts, approved chains and the reserve, with a
+live link check: known links green, new ones yellow so you say them out loud before saving),
+**Analytics**, **Team**, **Settings** and **Activity**.
 
 New puzzles flow: Editor → drafts table → **Publish** button → Netlify build hook → the
 build pulls approved drafts into the pool and reschedules. The game itself never changes

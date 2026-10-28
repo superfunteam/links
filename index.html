@@ -2563,8 +2563,24 @@ function resumeCourse(p){
   show('s-play');
 }
 
+/* Newsroom nods written in the backroom ride alongside a day, fetched when it
+   starts. Silent on any failure; a hole that already carries a nod keeps it. */
+function loadNods(d){
+  if(!d || !d.date || d.demo || d.nodsLoaded) return;
+  d.nodsLoaded = true;
+  const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 4000);
+  fetch('/api/nods?day=' + encodeURIComponent(d.date), { signal: ctrl.signal })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      const nods = data && data.nods; if(!nods || typeof nods !== 'object') return;
+      d.holes.forEach((h, k) => { if(h && !h.nod && nods[k]) h.nod = nods[k]; });
+    })
+    .catch(() => { d.nodsLoaded = false; });
+}
+
 function startCourse(i, practice){
   DICT.load();
+  if(i >= 0) loadNods(DAYS[i]);
   S.ci=i; S.practice=!!practice; S.hi=0; S.hs=0; S.holeScores=[]; S.marks=[];
   const saved = !practice && i >= 0 ? PLAY.take(DAYS[i].date, courseKey(DAYS[i])) : null;
   NET.ping(practice ? 'practice_start' : saved ? 'round_resume' : 'round_start', DAYS[i]?.date);
@@ -3033,6 +3049,7 @@ paintSettings();
 const NOD_ICONS = {
   listen: `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M320-200v-560l440 280-440 280Z"/></svg>`,
   read:   `<svg viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M320-440h320v-80H320v80Zm0 120h320v-80H320v80Zm0 120h200v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520Z"/></svg>`,
+  watch:  `<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm-.847-9.766A.75.75 0 0 0 6 5.866v4.268a.75.75 0 0 0 1.153.633l3.353-2.134a.75.75 0 0 0 0-1.266L7.153 5.234Z" clip-rule="evenodd"/></svg>`,
 };
 
 async function endHole(){
@@ -3078,6 +3095,8 @@ async function endHole(){
       <span class="nod-b"><b>${esc(h.nod.text)}</b><span>${esc(h.nod.label)}</span></span>
     </a>` : ''}
     <div class="actions"><button class="btn" id="nexthole">${S.hi+1 < course().holes.length ? 'Next hole' : 'See scorecard'}</button></div>`;
+  const nodA = box.querySelector('.nod');
+  if(nodA && course().date) nodA.addEventListener('click', () => NET.ping('nod_click', course().date));
   // wire the button before any await, or it's dead while the card animates
   const nb = $('#nexthole');
   nb.onclick = ()=>{

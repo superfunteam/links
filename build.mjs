@@ -58,7 +58,7 @@ let dbStatus = 'repo-only';
 const frozen = new Map();          // date -> {name, holes}
 const DB_URL = process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL || null;
 const SITE = process.env.URL || 'https://links.superfun.games';
-const BR_KEY = process.env.BACKROOM_KEY || 'superfunlinks';
+const BR_KEY = process.env.BACKROOM_KEY || null;   // no fallback: unset means skip the API tier
 
 const absorb = (draftRows, frozenRows) => {
   let added = 0;
@@ -97,12 +97,13 @@ if (DB_URL) {
     sql = null;
   }
 }
-if (!sql) {
+if (!sql && !BR_KEY) console.log('db: BACKROOM_KEY unset — skipping the site api, building from the repo pool alone');
+if (!sql && BR_KEY) {
   try {
     const api = async payload => {
       const res = await fetch(`${SITE}/api/backroom`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-key': BR_KEY },
+        headers: { 'content-type': 'application/json', 'x-build-key': BR_KEY },
         body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => null);
@@ -124,6 +125,13 @@ if (!sql) {
   } catch (err) {
     console.log(`db: site api unreachable (${err.message.slice(0, 70)}) — building from the repo pool alone`);
   }
+}
+
+// On Netlify, never build from the repo pool alone: without the frozen days the
+// scheduler reshuffles history, so past days change content and courseKeys break.
+if (dbStatus === 'repo-only' && process.env.NETLIFY === 'true') {
+  console.error('✗ no frozen schedule available (set BACKROOM_KEY for builds and functions); refusing to reshuffle history');
+  process.exit(1);
 }
 
 // ── schedule the pool into days ───────────────────────────────────────────

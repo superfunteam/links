@@ -2,7 +2,7 @@
 // is invisible — losing an event is always better than slowing the game.
 import { db, json, bad, readJson, DATE_RE, authed, overLimit } from '../lib/db.mjs';
 
-const KINDS = new Set(['open','round_start','practice_start','share_card','share_code','nudge','drill_down']);
+const KINDS = new Set(['open','round_start','round_resume','practice_start','share_card','share_code','nudge','drill_down','nod_click']);
 
 export default async (req) => {
   if (req.method !== 'POST') return bad('POST only', 405);

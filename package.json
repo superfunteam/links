@@ -10,7 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "@netlify/database": "^2.0.0",
+    "@tailwindcss/cli": "^4.3.3",
+    "heroicons": "^2.2.0",
     "pngjs": "^7.0.0",
+    "tailwindcss": "^4.3.3",
     "web-push": "^3.6.7"
   },
   "private": true

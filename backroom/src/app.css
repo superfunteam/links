@@ -1,0 +1,40 @@
+/* Links Backroom — Tailwind v4 input. Compiled by tools/stage.mjs into public/backroom/app.css.
+   Inter is loaded with a <link> in backroom/index.html. Only backroom/ is scanned for classes. */
+@import "tailwindcss" source(none);
+@source "../";
+
+@theme {
+  --font-sans: "InterVariable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans--font-feature-settings: "cv11", "ss01";
+
+  --color-brand-50: #f1f7f3;
+  --color-brand-100: #e2f0e8;
+  --color-brand-300: #7fc3a5;
+  --color-brand-500: #22a070;
+  --color-brand-600: #17845a;
+  --color-brand-700: #136a48;
+  --color-brand-800: #0e4e36;
+  --color-brand-900: #0a3a28;
+}
+
+@layer base {
+  html { color-scheme: light dark; }
+  [hidden] { display: none !important; }
+  dialog::backdrop { background: transparent; }
+}
+
+/* Toast / dialog entrance — these elements move, so a transition is appropriate. */
+@utility animate-enter {
+  animation: br-enter 160ms ease-out;
+}
+@utility animate-pop {
+  animation: br-pop 160ms ease-out;
+}
+@keyframes br-enter {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes br-pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
